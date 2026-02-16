@@ -1,0 +1,1533 @@
+- id: '01000001'
+  alias: 'Geolocation: Lights & Thermostat On When Arriving Home'
+  description: Turn HVAC to normal and bring up main lights when someone arrives;
+    also turn on middle stairwell to 1%.
+  triggers:
+  - id: andrew_arrives
+    entity_id: person.andrew
+    to: home
+    trigger: state
+  - id: amy_arrives
+    entity_id: person.amy
+    to: home
+    trigger: state
+  conditions: []
+  actions:
+  - choose:
+    - conditions:
+      - condition: trigger
+        id: andrew_arrives
+      - condition: not
+        conditions:
+        - condition: state
+          entity_id: person.amy
+          state: home
+      sequence:
+      - target:
+          entity_id: climate.thermostat
+        data:
+          preset_mode: none
+        action: climate.set_preset_mode
+      - target:
+          area_id: main_level_lights
+        data:
+          transition: 5
+          brightness_pct: 100
+        action: light.turn_on
+      - target:
+          entity_id: light.hue_white_lamp_hallway_middle
+        data:
+          brightness_pct: 1
+        action: light.turn_on
+    - conditions:
+      - condition: trigger
+        id: amy_arrives
+      - condition: not
+        conditions:
+        - condition: state
+          entity_id: person.andrew
+          state: home
+      sequence:
+      - target:
+          entity_id: climate.thermostat
+        data:
+          preset_mode: none
+        action: climate.set_preset_mode
+      - target:
+          area_id: main_level_lights
+        data:
+          transition: 5
+          brightness_pct: 100
+        action: light.turn_on
+      - target:
+          entity_id: light.hue_white_lamp_hallway_middle
+        data:
+          brightness_pct: 1
+        action: light.turn_on
+  mode: single
+- id: '01000002'
+  alias: 'Geolocation: Lights & Thermostat Off When Leaving Home'
+  description: ''
+  triggers:
+  - entity_id: person.andrew
+    from: home
+    trigger: state
+  - entity_id: person.amy
+    from: home
+    trigger: state
+  conditions:
+  - condition: not
+    conditions:
+    - condition: state
+      entity_id: person.andrew
+      state: home
+  - condition: not
+    conditions:
+    - condition: state
+      entity_id: person.amy
+      state: home
+  actions:
+  - data:
+      preset_mode: eco
+    action: climate.set_preset_mode
+    target:
+      entity_id: climate.thermostat
+  - target:
+      area_id:
+      - basement_hue_lights
+      - crawl_space_hue_lights
+      - kitchen_deck
+      - tv_play_lights
+      - crawl_space
+      - hallways_lights
+      - living_room_hue_lights
+      - main_level_lights
+      - master_bedroom_lights
+      - office_lights
+    data:
+      transition: 10
+    action: light.turn_off
+  - type: turn_off
+    device_id: 38c1108cd980f3202ed7bb5897d2e0e0
+    entity_id: 243f87a8269b1f3cf446847dbfa0795d
+    domain: remote
+  mode: single
+- id: '02020101'
+  alias: 'Living Room: Cap Hue 2 & 5 at 70%'
+  description: Keep Hue Living Room lamps 2 and 5 from exceeding 70% brightness.
+  trigger:
+  - platform: numeric_state
+    entity_id: light.hue_color_lamp_living_room_2
+    attribute: brightness
+    above: 179
+  - platform: numeric_state
+    entity_id: light.hue_color_lamp_living_room_5
+    attribute: brightness
+    above: 179
+  action:
+  - service: light.turn_on
+    target:
+      entity_id: '{{ trigger.entity_id }}'
+    data:
+      brightness_pct: 70
+      transition: 1
+  mode: single
+- id: '02020102'
+  alias: 'Living Room: Bar Cart Brightness Based on Room Brightness'
+  description: Keep the bar cart switch in sync with Living Room lamp brightness and
+    presence.
+  triggers:
+  - trigger: numeric_state
+    entity_id: light.hue_color_lamp_living_room_1
+    attribute: brightness
+    above: 10
+  - trigger: numeric_state
+    entity_id: light.hue_color_lamp_living_room_1
+    attribute: brightness
+    below: 11
+  - trigger: state
+    entity_id: light.hue_color_lamp_living_room_1
+  actions:
+  - choose:
+    - conditions:
+      - condition: state
+        entity_id: group.household_anyone_home
+        state: not_home
+      sequence:
+      - action: switch.turn_off
+        target:
+          device_id: 0bd4a90c86eae6fe3052348e14462756
+    - conditions:
+      - condition: state
+        entity_id: light.hue_color_lamp_living_room_1
+        state: 'off'
+      sequence:
+      - action: switch.turn_off
+        target:
+          device_id: 0bd4a90c86eae6fe3052348e14462756
+    - conditions:
+      - condition: state
+        entity_id: light.hue_color_lamp_living_room_1
+        state: 'on'
+      sequence:
+      - action: switch.turn_on
+        target:
+          device_id: 0bd4a90c86eae6fe3052348e14462756
+  mode: single
+- id: '02030201'
+  alias: 'Stairwell: Keep Lower Wall Light On'
+  description: Maintain a nightlight on the lower stairwell wall (1% after 8pm, 20%
+    during day) when anyone is home.
+  triggers:
+  - event: start
+    trigger: homeassistant
+  - at: 08:00:00
+    trigger: time
+  - at: '20:00:00'
+    trigger: time
+  - entity_id: person.andrew
+    to: home
+    trigger: state
+  - entity_id: person.amy
+    to: home
+    trigger: state
+  - entity_id: light.hue_candle_lower_staircase
+    trigger: state
+  - entity_id: light.hue_candle_lower_staircase
+    from: unavailable
+    trigger: state
+  conditions:
+  - condition: state
+    entity_id: group.household_anyone_home
+    state: home
+  actions:
+  - variables:
+      pct: '{{ 1 if (now().hour >= 1 or now().hour < 8) else 20 }}'
+  - target:
+      entity_id: light.hue_candle_lower_staircase
+    data:
+      brightness_pct: '{{ pct }}'
+      color_temp: 450
+    action: light.turn_on
+  mode: single
+- id: '02030301'
+  alias: 'Stairwell: Sync Top Stairwell Light to Middle Hallway Light'
+  description: Keep the top stairwell light matched to the middle hallway; uses warm
+    1% when turning on.
+  trigger:
+  - platform: state
+    entity_id: light.hue_white_lamp_hallway_middle
+  action:
+  - choose:
+    - conditions:
+      - condition: state
+        entity_id: light.hue_white_lamp_hallway_middle
+        state: 'on'
+      sequence:
+      - service: light.turn_on
+        target:
+          entity_id: light.stairwell_upper_wall_light
+        data:
+          brightness_pct: 1
+          color_temp: 450
+          transition: 1
+    default:
+    - service: light.turn_off
+      target:
+        entity_id: light.stairwell_upper_wall_light
+      data:
+        transition: 1
+  mode: single
+- id: '02040101'
+  alias: 'Stairwell: Turn Off Top Stairwell Light in 30s if Bedroom Light Is Off'
+  description: Small pathlight after bedroom lights go off late at night; top stairwell
+    warm 1% for 30s.
+  triggers:
+  - trigger: state
+    entity_id:
+    - light.hue_white_lamp_guest_bath_2
+    to:
+    - 'off'
+    from:
+    - 'on'
+  actions:
+  - target:
+      entity_id: light.hue_candle_upper_staircase
+    data:
+      brightness_pct: 1
+      color_temp: 450
+    action: light.turn_on
+  - delay: 00:00:30
+  - target:
+      entity_id: light.hue_candle_upper_staircase
+    action: light.turn_off
+  mode: single
+- id: '03000002'
+  alias: 'Thermostat: Exit Eco at 1:30PM if >76° and Both at Work'
+  description: Midday comfort rule for hot days when both are at work.
+  triggers:
+  - trigger: time
+    at:
+    - '13:30:00'
+    - '14:00:00'
+    - '14:30:00'
+    - '15:00:00'
+  conditions:
+  - condition: state
+    entity_id: input_boolean.guest_mode
+    state: 'off'
+  - condition: zone
+    entity_id: person.amy
+    zone: zone.amy_work
+  - condition: zone
+    entity_id: person.andrew
+    zone: zone.andrew_work
+  - condition: device
+    device_id: f3c1f908ad1c39e5ed8dfa9044b5928b
+    domain: climate
+    entity_id: 83bf4ddaf2623abe339f2f951a0d157f
+    type: is_hvac_mode
+    hvac_mode: cool
+  - condition: numeric_state
+    entity_id: sensor.thermostat_temperature
+    above: 76
+  actions:
+  - target:
+      entity_id: climate.thermostat
+    data:
+      preset_mode: none
+    action: climate.set_preset_mode
+  mode: single
+- id: '03000003'
+  alias: 'Thermostat: Exit Eco at 1:30PM if ≤64° heat modes and Both at Work'
+  description: Midday comfort rule for cold days when both are at work (heat/heat_cool
+    and temp under 64).
+  triggers:
+  - trigger: time
+    at:
+    - '13:30:00'
+    - '14:00:00'
+    - '14:30:00'
+    - '15:00:00'
+  conditions:
+  - condition: state
+    entity_id: input_boolean.guest_mode
+    state: 'off'
+  - condition: zone
+    entity_id: person.amy
+    zone: zone.amy_work
+  - condition: zone
+    entity_id: person.andrew
+    zone: zone.andrew_work
+  - condition: numeric_state
+    entity_id: sensor.thermostat_temperature
+    below: 64
+  - condition: or
+    conditions:
+    - condition: device
+      device_id: f3c1f908ad1c39e5ed8dfa9044b5928b
+      domain: climate
+      entity_id: 83bf4ddaf2623abe339f2f951a0d157f
+      type: is_hvac_mode
+      hvac_mode: heat
+    - condition: device
+      device_id: f3c1f908ad1c39e5ed8dfa9044b5928b
+      domain: climate
+      entity_id: 83bf4ddaf2623abe339f2f951a0d157f
+      type: is_hvac_mode
+      hvac_mode: heat_cool
+  actions:
+  - device_id: f3c1f908ad1c39e5ed8dfa9044b5928b
+    domain: climate
+    entity_id: 83bf4ddaf2623abe339f2f951a0d157f
+    type: set_preset_mode
+    preset_mode: none
+  mode: single
+- id: '04000001'
+  alias: 'Sonos: Reset Volume After One Hour Of Inactivity'
+  description: Reset volumes for Sonos Roam, Basement, and Living Room after 1 hour
+    idle.
+  triggers:
+  - domain: media_player
+    device_id: 19a18dd32cb6553f44f2d8117fe73257
+    entity_id: 1526a2ec01dc2d73b689073541f2e108
+    type: idle
+    trigger: device
+    for:
+      hours: 1
+      minutes: 0
+      seconds: 0
+  - domain: media_player
+    device_id: 9f706e4db5e220cea4b1d8e7bfd5f9d2
+    entity_id: 99ec58ba146d897624b9351d3ac689cc
+    type: idle
+    trigger: device
+    for:
+      hours: 1
+      minutes: 0
+      seconds: 0
+  - domain: media_player
+    device_id: d51ead46754dd8f64183cb5268262e24
+    entity_id: 112e7e1cdbe969d838b8d3739eb4b6c2
+    type: idle
+    trigger: device
+    for:
+      hours: 1
+      minutes: 0
+      seconds: 0
+  conditions:
+  - condition: not
+    conditions:
+    - condition: state
+      entity_id: media_player.sonos_roam
+      state:
+      - playing
+  - condition: not
+    conditions:
+    - condition: state
+      entity_id: media_player.basement
+      state: playing
+  - condition: not
+    conditions:
+    - condition: state
+      entity_id: media_player.living_room
+      state: playing
+  actions:
+  - choose:
+    - conditions:
+      - condition: not
+        conditions:
+        - condition: state
+          entity_id: media_player.sonos_roam
+          state: unavailable
+      sequence:
+      - action: media_player.volume_set
+        target:
+          entity_id: media_player.sonos_roam
+        data:
+          volume_level: 0.28
+  - choose:
+    - conditions:
+      - condition: not
+        conditions:
+        - condition: state
+          entity_id: media_player.basement
+          state: unavailable
+      sequence:
+      - action: media_player.volume_set
+        target:
+          entity_id: media_player.basement
+        data:
+          volume_level: 0.3
+  - choose:
+    - conditions:
+      - condition: not
+        conditions:
+        - condition: state
+          entity_id: media_player.living_room
+          state: unavailable
+      sequence:
+      - action: media_player.volume_set
+        target:
+          entity_id: media_player.living_room
+        data:
+          volume_level: 0.18
+  mode: parallel
+- id: '04030001'
+  alias: 'Stairwell/Nursery: Middle Hue & Sonos Roam follow Hatch'
+  description: Turn off middle stairwell light and lower Sonos Roam when Hatch plays;
+    restore when it stops. If Hatch stops between 6:00–9:00 AM, turn on first-floor
+    lights.
+  triggers:
+  - entity_id: media_player.my_rest_media_player
+    to: playing
+    trigger: state
+  - entity_id: media_player.my_rest_media_player
+    to: idle
+    trigger: state
+  - entity_id: media_player.my_rest_media_player
+    to: 'off'
+    trigger: state
+  actions:
+  - choose:
+    - conditions:
+      - condition: state
+        entity_id: media_player.my_rest_media_player
+        state: playing
+      sequence:
+      - action: light.turn_off
+        target:
+          entity_id: light.hue_white_lamp_hallway_middle
+      - action: media_player.volume_set
+        data:
+          volume_level: 0.04
+        target:
+          entity_id: media_player.sonos_roam
+      - action: media_player.volume_set
+        data:
+          volume_level: 0.14
+        target:
+          entity_id:
+          - media_player.living_room
+      - type: turn_on
+        device_id: c1b871d5b16a58666e4203019013ed71
+        entity_id: 350ea9fb02988c5e6aa30a179eaaf495
+        domain: light
+        brightness_pct: 5
+    - conditions:
+      - condition: or
+        conditions:
+        - condition: state
+          entity_id: media_player.my_rest_media_player
+          state: 'off'
+        - condition: state
+          entity_id: media_player.my_rest_media_player
+          state: idle
+      - condition: time
+        after: 06:00:00
+        before: 09:00:00
+      sequence:
+      - action: light.turn_on
+        data:
+          brightness_pct: 100
+        target:
+          entity_id: light.living_room
+      - type: turn_on
+        device_id: 04e5ec7ea7ad3c6181ea16ab5c6a8aa7
+        entity_id: 238fb0e74da17beb1b0bc7e194da08ad
+        domain: light
+        brightness_pct: 25
+      - action: media_player.volume_set
+        data:
+          volume_level: 0.22
+        target:
+          entity_id: media_player.sonos_roam
+    default:
+    - action: light.turn_on
+      target:
+        entity_id: light.hue_white_lamp_hallway_middle
+      data:
+        brightness_pct: 1
+    - action: media_player.volume_set
+      data:
+        volume_level: 0.32
+      target:
+        entity_id: media_player.sonos_roam
+  mode: single
+- id: '05000001'
+  alias: 'Geolocation: Notify Andrew When Amy Leaves Work'
+  description: Sends a push to Andrew when Amy exits her work zone.
+  triggers:
+  - entity_id: person.amy
+    zone: zone.amy_work
+    event: leave
+    trigger: zone
+  conditions: []
+  actions:
+  - data:
+      title: Location
+      message: Amy Leaving Work
+      data:
+        ttl: 0
+        priority: high
+    action: notify.mobile_app_andrews_s24
+  mode: single
+- id: '05000002'
+  alias: 'Geolocation: Notify Amy When Andrew Leaves Work'
+  description: Sends a push to Amy when Andrew exits his work zone.
+  triggers:
+  - entity_id: person.andrew
+    zone: zone.andrew_work
+    event: leave
+    trigger: zone
+  actions:
+  - data:
+      message: Andrew Leaving Work
+    action: notify.mobile_app_amys_iphone
+  mode: single
+- id: '06000001'
+  alias: 'System: Auto Update All'
+  description: Nightly at 2am, install all available updates (no backups).
+  triggers:
+  - trigger: time
+    at: 02:00:00
+  conditions: []
+  actions:
+  - variables:
+      to_update: "{{ states.update\n   | selectattr('state','eq','on')\n   | map(attribute='entity_id')
+        | list }}"
+  - repeat:
+      for_each: '{{ to_update }}'
+      sequence:
+      - condition: template
+        value_template: '{{ is_state(repeat.item, ''on'') }}'
+      - action: update.install
+        target:
+          entity_id: '{{ repeat.item }}'
+        data:
+          backup: false
+  mode: single
+- id: '07010101'
+  alias: 'Basement Hue Tap Dial: Rotary — Sonos Volume Control'
+  description: Rotate to adjust Sonos Basement volume with smooth steps.
+  triggers:
+  - device_id: f51ebbabc5d2ee26b85cd5fcce863ac1
+    domain: hue
+    type: repeat
+    subtype: clock_wise
+    id: clockwise
+    trigger: device
+  - device_id: f51ebbabc5d2ee26b85cd5fcce863ac1
+    domain: hue
+    type: repeat
+    subtype: counter_clock_wise
+    id: counterclockwise
+    trigger: device
+  actions:
+  - variables:
+      steps: '{{ trigger.event.data.steps | int(1) }}'
+      current: '{{ state_attr(''media_player.basement'',''volume_level'')|float(0)
+        }}'
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ trigger.id == ''clockwise'' }}'
+      sequence:
+      - target:
+          entity_id: media_player.basement
+        data:
+          volume_level: '{{ [current + (0.002 * steps), 1] | min }}
+
+            '
+        action: media_player.volume_set
+    - conditions:
+      - condition: template
+        value_template: '{{ trigger.id == ''counterclockwise'' }}'
+      sequence:
+      - target:
+          entity_id: media_player.basement
+        data:
+          volume_level: '{{ [current - (0.002 * steps), 0] | max }}
+
+            '
+        action: media_player.volume_set
+  mode: queued
+  max: 50
+- id: '07010102'
+  alias: 'Basement Hue Tap Dial: Button 3 Press — Unmute Sonos'
+  description: Quick unmute of Sonos Basement.
+  trigger:
+  - platform: device
+    domain: hue
+    device_id: f51ebbabc5d2ee26b85cd5fcce863ac1
+    type: initial_press
+    subtype: 3
+  action:
+  - service: media_player.volume_mute
+    target:
+      entity_id: media_player.basement
+    data:
+      is_volume_muted: false
+  mode: single
+- id: '07010103'
+  alias: 'Basement Hue Tap Dial: Button 3 Hold — Mute Sonos'
+  description: Hold to mute Sonos Basement.
+  trigger:
+  - platform: device
+    domain: hue
+    device_id: f51ebbabc5d2ee26b85cd5fcce863ac1
+    type: repeat
+    subtype: 3
+  action:
+  - service: media_player.volume_mute
+    target:
+      entity_id: media_player.basement
+    data:
+      is_volume_muted: true
+  mode: single
+- id: 08040101
+  alias: 'Master Bedroom: Humidifier Overnight Cycle'
+  description: Cycle humidifier on/off during overnight windows when Andrew is home.
+  triggers:
+  - at: 02:30:00
+    id: on1
+    trigger: time
+  - at: 04:30:00
+    id: on2
+    trigger: time
+  - at: 06:00:00
+    id: on3
+    trigger: time
+  - at: 03:00:00
+    id: off1
+    trigger: time
+  - at: 05:00:00
+    id: off2
+    trigger: time
+  - at: 06:15:00
+    id: off3
+    trigger: time
+  conditions:
+  - condition: or
+    conditions:
+    - condition: zone
+      entity_id: person.andrew
+      zone: zone.home
+    - condition: state
+      entity_id: input_boolean.guest_mode
+      state: 'on'
+  actions:
+  - choose:
+    - conditions:
+      - condition: template
+        value_template: '{{ trigger.id in [''on1'',''on2'',''on3''] }}'
+      sequence:
+      - target:
+          device_id: 788c5fd6f09f75f04e76cb3a805de6aa
+        action: switch.turn_on
+        data: {}
+    - conditions:
+      - condition: template
+        value_template: '{{ trigger.id in [''off1'',''off2'',''off3''] }}'
+      sequence:
+      - target:
+          device_id: 788c5fd6f09f75f04e76cb3a805de6aa
+        action: switch.turn_off
+        data: {}
+  mode: single
+- alias: 'Guest Mode: Sync Thermostat Automations'
+  mode: single
+  trigger:
+  - platform: state
+    entity_id: input_boolean.guest_mode
+  variables:
+    target_autos: "{% set ids = states.automation\n   | selectattr('attributes.friendly_name','search','^(Thermostat:|Geolocation:
+      Lights & Thermostat)')\n   | map(attribute='entity_id') | list %}\n{{ ids }}\n"
+  action:
+  - choose:
+    - conditions: '{{ is_state(''input_boolean.guest_mode'',''on'') }}'
+      sequence:
+      - service: climate.set_preset_mode
+        target:
+          entity_id: climate.thermostat
+        data:
+          preset_mode: none
+      - repeat:
+          for_each: '{{ target_autos }}'
+          sequence:
+          - service: automation.turn_off
+            target:
+              entity_id: '{{ repeat.item }}'
+    - conditions: '{{ is_state(''input_boolean.guest_mode'',''off'') }}'
+      sequence:
+      - repeat:
+          for_each: '{{ target_autos }}'
+          sequence:
+          - service: automation.turn_on
+            target:
+              entity_id: '{{ repeat.item }}'
+  - service: homeassistant.update_entity
+    target:
+      entity_id: sensor.guest_mode_status
+  id: e489e17d0d1743568cdf4fc3215d90de
+- id: '1761095702248'
+  alias: 'Printer: Print Test Page Once A Month'
+  description: Prevent ink drying
+  triggers:
+  - at: '13:15:00'
+    trigger: time
+  conditions:
+  - condition: template
+    value_template: '{{ now().day == 1 }}'
+  actions:
+  - event: plz_print_purge
+    event_data: {}
+  mode: single
+- id: '1761615054765'
+  alias: 'Geolocation: Turn Off Thermostat Eco on Fast Approach Home ≥30mph'
+  description: Exit Eco when both are away and Andrew is headed home ≥30 mph for 10
+    minutes.
+  triggers:
+  - trigger: template
+    value_template: '{{ states(''sensor.andrew_approach_speed_mph'')|float(0) <= -30
+      }}'
+    for:
+      minutes: 10
+  - trigger: time_pattern
+    minutes: /2
+  conditions:
+  - condition: state
+    entity_id: input_boolean.guest_mode
+    state: 'off'
+  - condition: state
+    entity_id: person.andrew
+    state: not_home
+  - condition: state
+    entity_id: person.amy
+    state: not_home
+  - condition: numeric_state
+    entity_id: sensor.andrew_distance_to_home_mi
+    above: 10
+  - condition: template
+    value_template: "{{ is_state_attr('climate.thermostat','preset_mode','eco')\n
+      \  and states('sensor.andrew_approach_speed_mph')|float(0) <= -30 }}\n"
+  actions:
+  - action: climate.set_preset_mode
+    target:
+      entity_id: climate.thermostat
+    data:
+      preset_mode: none
+  - action: notify.mobile_app_andrews_s24
+    data:
+      message: Eco Mode turned off — fast approach detected (≥40 mph for 10 min)
+  mode: single
+- id: '1761698231251'
+  alias: 'Nursery: Heater on/off 69/71 degrees with Hatch'
+  description: 'Turns heater ON only when Hatch is ON and room is below 69. Turns
+    heater OFF when room is above 71 or whenever Hatch is OFF. Re-checks every 10
+    minutes to self-correct.
+
+    '
+  triggers:
+  - id: temp_low
+    entity_id:
+    - sensor.govee_thermometer_nursery_h5075_temperature
+    below: 69
+    trigger: numeric_state
+    enabled: true
+  - id: temp_high
+    entity_id:
+    - sensor.govee_thermometer_nursery_h5075_temperature
+    above: 71
+    trigger: numeric_state
+    enabled: true
+  - trigger: state
+    entity_id:
+    - climate.thermostat
+    attribute: hvac_action
+    to:
+    - heating
+  - device_id: 54376091c5980b4a3ea7b981389db0df
+    domain: media_player
+    entity_id: b08609d1c4a650ea08bb26c14de1564b
+    type: playing
+    trigger: device
+  - id: periodic
+    minutes: /10
+    trigger: time_pattern
+  - id: ha_start
+    event: start
+    trigger: homeassistant
+  conditions: []
+  actions:
+  - choose:
+    - conditions:
+      - condition: device
+        device_id: 54376091c5980b4a3ea7b981389db0df
+        domain: media_player
+        entity_id: b08609d1c4a650ea08bb26c14de1564b
+        type: is_idle
+      sequence:
+      - type: turn_off
+        device_id: e3414be67e3e5199c322dcab3887e2a4
+        entity_id: 19864e4daa9c6e9d9e462f40e093e53c
+        domain: switch
+    - conditions:
+      - condition: state
+        entity_id: climate.thermostat
+        state:
+        - heating
+        attribute: hvac_action
+      - condition: device
+        device_id: 54376091c5980b4a3ea7b981389db0df
+        domain: media_player
+        entity_id: b08609d1c4a650ea08bb26c14de1564b
+        type: is_playing
+      sequence:
+      - type: turn_off
+        device_id: e3414be67e3e5199c322dcab3887e2a4
+        entity_id: 19864e4daa9c6e9d9e462f40e093e53c
+        domain: switch
+    - conditions:
+      - condition: numeric_state
+        entity_id: sensor.govee_thermometer_nursery_h5075_temperature
+        above: 71
+      - condition: device
+        device_id: 54376091c5980b4a3ea7b981389db0df
+        domain: media_player
+        entity_id: b08609d1c4a650ea08bb26c14de1564b
+        type: is_playing
+      sequence:
+      - target:
+          entity_id: switch.nursery_heater
+        action: switch.turn_off
+        data: {}
+    - conditions:
+      - condition: numeric_state
+        entity_id: sensor.govee_thermometer_nursery_h5075_temperature
+        below: 69
+      - condition: state
+        entity_id: climate.thermostat
+        state:
+        - idle
+        - 'off'
+        attribute: hvac_action
+      - condition: device
+        device_id: 54376091c5980b4a3ea7b981389db0df
+        domain: media_player
+        entity_id: b08609d1c4a650ea08bb26c14de1564b
+        type: is_playing
+      sequence:
+      - target:
+          entity_id: switch.nursery_heater
+        action: switch.turn_on
+    default:
+    - type: turn_off
+      device_id: e3414be67e3e5199c322dcab3887e2a4
+      entity_id: 19864e4daa9c6e9d9e462f40e093e53c
+      domain: switch
+  mode: single
+- id: '1761782105588'
+  alias: 'Nursery: Turn Off Heater When Central Heat Turns On'
+  description: ''
+  triggers:
+  - trigger: state
+    entity_id: climate.thermostat
+    attribute: hvac_action
+    to: heating
+  conditions: []
+  actions:
+  - choose:
+    - conditions:
+      - condition: state
+        entity_id: switch.nursery_heater
+        state: 'on'
+      sequence:
+      - action: switch.turn_off
+        data: {}
+        target:
+          entity_id: switch.nursery_heater
+  mode: single
+- id: '1761791366230'
+  alias: 'Nursery: Temperature Alerts (66/76 for 5m)'
+  description: Alerts if nursery temp is too hot or too cold. Re-checks every 10 minutes
+    and on HA start.
+  triggers:
+  - trigger: numeric_state
+    id: too_cold
+    entity_id: sensor.govee_thermometer_nursery_h5075_temperature
+    below: 66
+    for:
+      minutes: 5
+  - trigger: numeric_state
+    id: too_hot
+    entity_id: sensor.govee_thermometer_nursery_h5075_temperature
+    above: 74
+    for:
+      minutes: 5
+  - trigger: time_pattern
+    id: periodic
+    minutes: /10
+  - trigger: homeassistant
+    id: ha_start
+    event: start
+  conditions:
+  - condition: device
+    device_id: 54376091c5980b4a3ea7b981389db0df
+    domain: media_player
+    entity_id: b08609d1c4a650ea08bb26c14de1564b
+    type: is_playing
+  actions:
+  - choose:
+    - conditions:
+      - condition: numeric_state
+        entity_id: sensor.govee_thermometer_nursery_h5075_temperature
+        above: 76
+      sequence:
+      - action: notify.mobile_app_andrews_s24
+        data:
+          title: Nursery Alert
+          message: 'Nursery temperature is above 74°F (current: {{ states(''sensor.govee_thermometer_nursery_h5075_temperature'')
+            }}).
+
+            '
+          data:
+            ttl: 0
+            priority: high
+      - action: input_boolean.turn_on
+        target:
+          entity_id: input_boolean.nursery_alert_cooldown
+      - delay:
+          minutes: 30
+      - action: input_boolean.turn_off
+        target:
+          entity_id: input_boolean.nursery_alert_cooldown
+    - conditions:
+      - condition: numeric_state
+        entity_id: sensor.govee_thermometer_nursery_h5075_temperature
+        below: 66
+      sequence:
+      - action: notify.mobile_app_andrews_s24
+        data:
+          title: Nursery Alert
+          message: 'Nursery temperature is below 66°F (current: {{ states(''sensor.govee_thermometer_nursery_h5075_temperature'')
+            }}).
+
+            '
+          data:
+            ttl: 0
+            priority: high
+      - action: input_boolean.turn_on
+        target:
+          entity_id: input_boolean.nursery_alert_cooldown
+      - delay:
+          minutes: 30
+      - action: input_boolean.turn_off
+        target:
+          entity_id: input_boolean.nursery_alert_cooldown
+  mode: single
+- id: '1762715716399'
+  alias: 'Living Room: TV Play Lights Brightness Follow Room Brightness'
+  description: Adjust TV Hue Play lights (Singapore scene) based on Living Room brightness.
+  triggers:
+  - trigger: state
+    entity_id: light.living_room
+    to: 'on'
+  - trigger: state
+    entity_id: light.living_room
+    to: 'off'
+  - trigger: numeric_state
+    entity_id:
+    - light.hue_color_lamp_living_room_1
+    attribute: brightness
+    above: 69
+    for:
+      seconds: 2
+  - trigger: numeric_state
+    entity_id:
+    - light.hue_color_lamp_living_room_1
+    attribute: brightness
+    below: 70
+    for:
+      seconds: 2
+  conditions: []
+  actions:
+  - choose:
+    - conditions:
+      - condition: state
+        entity_id: light.living_room
+        state: 'off'
+      sequence:
+      - action: scene.turn_on
+        target:
+          entity_id: scene.tv_play_lights_singapore
+        data:
+          transition: 2
+      - action: light.turn_on
+        target:
+          entity_id: light.tv_play_lights
+        data:
+          brightness_pct: 5
+          transition: 2
+    - conditions:
+      - condition: state
+        entity_id: light.living_room
+        state: 'on'
+      - condition: numeric_state
+        entity_id: light.hue_color_lamp_living_room_1
+        attribute: brightness
+        below: 70
+      sequence:
+      - action: scene.turn_on
+        target:
+          entity_id: scene.tv_play_lights_singapore
+        data:
+          transition: 2
+      - action: light.turn_on
+        target:
+          entity_id: light.tv_play_lights
+        data:
+          brightness_pct: 30
+          transition: 2
+    default:
+    - condition: state
+      entity_id: light.living_room
+      state: 'on'
+    - action: scene.turn_on
+      target:
+        entity_id: scene.tv_play_lights_singapore
+      data:
+        transition: 2
+    - action: light.turn_on
+      target:
+        entity_id: light.tv_play_lights
+      data:
+        transition: 2
+        brightness_pct: 75
+  mode: restart
+- id: '1762718811619'
+  alias: 'Hue Switches: Button 4 Hold - Entire Home Off + Stair Path'
+  description: 'Bottom button hold on any listed Hue switch turns the home off, leaves
+    TV Play lights on Singapore at 5%, and runs the stairwell path. Lower stairwell
+    turns on immediately at 1% and stays on at least 8 seconds. Upper stairwell stays
+    as-is if already on, otherwise turns on after 8 seconds at 1%. If master bedroom
+    lights are on at press time, they fade off and are never turned back on.
+
+    '
+  triggers:
+  - domain: hue
+    device_id: b15d677491a7497de59365f5dea4c945
+    type: repeat
+    subtype: 4
+    trigger: device
+  - domain: hue
+    device_id: 48b9d3de2efffbfed643a5ac00f13926
+    type: repeat
+    subtype: 4
+    trigger: device
+  - domain: hue
+    device_id: e03fa8af8290ae5c57c0776d82a416d9
+    type: repeat
+    subtype: 4
+    trigger: device
+  - domain: hue
+    device_id: 698d6ba5799b5b5ca23efd22f8351e5a
+    type: repeat
+    subtype: 4
+    trigger: device
+  - domain: hue
+    device_id: b375919e018ef239c9a07a3402ed2aee
+    type: repeat
+    subtype: 4
+    trigger: device
+  - domain: hue
+    device_id: 423448d0af3195726f2bf3482315d5c8
+    type: repeat
+    subtype: 4
+    trigger: device
+  actions:
+  - target:
+      entity_id: light.hue_candle_lower_staircase
+    data:
+      brightness_pct: 1
+      color_temp: 450
+      transition: 1
+    action: light.turn_on
+  - target:
+      entity_id: light.living_room
+    data:
+      transition: 2
+    action: light.turn_off
+  - target:
+      entity_id: remote.sony_tv_remote_2
+    action: remote.turn_off
+  - target:
+      entity_id: remote.bedroom_tv
+    action: remote.turn_off
+  - type: turn_off
+    device_id: eb723052d686772cbb03644acf154c78
+    entity_id: 5ba8366816b23d49c73bf2781e09616f
+    domain: switch
+  - delay:
+      seconds: 1
+  - target:
+      entity_id: scene.tv_play_lights_singapore
+    data:
+      transition: 2
+    action: scene.turn_on
+  - target:
+      entity_id: light.tv_play_lights
+    data:
+      brightness_pct: 5
+      transition: 2
+    action: light.turn_on
+  - target:
+      area_id:
+      - basement_hue_lights
+      - main_level_lights
+      - kitchen_deck
+      - crawl_space
+      - office_lights
+    data:
+      transition: 2
+    action: light.turn_off
+  - target:
+      entity_id: light.hue_white_lamp_hallway_middle
+    action: light.turn_off
+    data: {}
+  - choose:
+    - conditions:
+      - condition: device
+        device_id: 8c72c4756616621d91cb09e12224f94d
+        domain: light
+        entity_id: 4aa7834896049e0c3a9783be3eff1044
+        type: is_on
+      sequence:
+      - delay:
+          hours: 0
+          minutes: 0
+          seconds: 2
+          milliseconds: 0
+      - choose:
+        - conditions:
+          - condition: state
+            entity_id: light.hue_candle_upper_staircase
+            state: 'off'
+          sequence:
+          - target:
+              entity_id: light.hue_candle_lower_staircase
+            data:
+              brightness_pct: 1
+              color_temp: 450
+            action: light.turn_on
+          - target:
+              area_id: master_bedroom_lights
+            data:
+              transition: 105
+            action: light.turn_off
+          - repeat:
+              count: 7
+              sequence:
+              - delay:
+                  hours: 0
+                  minutes: 0
+                  seconds: 10
+                  milliseconds: 0
+              - target:
+                  entity_id:
+                  - light.hue_candle_lower_staircase
+                  - light.hue_candle_upper_staircase
+                data:
+                  brightness_pct: 1
+                  color_temp: 450
+                action: light.turn_on
+          - target:
+              entity_id:
+              - light.hue_candle_lower_staircase
+              - light.hue_candle_upper_staircase
+            action: light.turn_off
+        default:
+        - target:
+            area_id: master_bedroom_lights
+          data:
+            transition: 105
+          action: light.turn_off
+        - repeat:
+            count: 7
+            sequence:
+            - target:
+                entity_id: light.hue_candle_upper_staircase
+              data:
+                brightness_pct: 1
+                color_temp: 450
+              action: light.turn_on
+        - delay:
+            seconds: 15
+        - target:
+            entity_id: light.hue_candle_upper_staircase
+          action: light.turn_off
+          data: {}
+    default:
+    - delay:
+        hours: 0
+        minutes: 0
+        seconds: 2
+        milliseconds: 0
+    - choose:
+      - conditions:
+        - condition: state
+          entity_id: light.hue_candle_lower_staircase
+          state: 'off'
+        sequence:
+        - target:
+            entity_id: light.hue_candle_lower_staircase
+          data:
+            brightness_pct: 1
+            color_temp: 450
+            transition: 1
+          action: light.turn_on
+        - repeat:
+            count: 7
+            sequence:
+            - delay:
+                seconds: 15
+            - target:
+                entity_id:
+                - light.hue_candle_lower_staircase
+                - light.hue_candle_upper_staircase
+              data:
+                brightness_pct: 1
+                color_temp: 450
+                transition: 0
+              action: light.turn_on
+        - target:
+            entity_id:
+            - light.hue_candle_lower_staircase
+            - light.hue_candle_upper_staircase
+          action: light.turn_off
+      default:
+      - repeat:
+          count: 7
+          sequence:
+          - delay:
+              seconds: 15
+          - target:
+              entity_id: light.hue_candle_upper_staircase
+            data:
+              brightness_pct: 1
+              color_temp: 450
+              transition: 0
+            action: light.turn_on
+      - target:
+          entity_id: light.hue_candle_upper_staircase
+        action: light.turn_off
+  mode: single
+- id: '1762737154334'
+  alias: 'Stairwell: Follow Middle + Smart Nightlight'
+  description: 'Upper stair follows middle hallway; lower is a nightlight at 1% only
+    when the middle is off. If middle is on at ≥30% both stair lights go 100%; if
+    middle is on between 1–29% both go 30%.
+
+    '
+  triggers:
+  - trigger: state
+    entity_id: light.hue_white_lamp_hallway_middle
+  - trigger: state
+    entity_id: light.hue_candle_upper_staircase
+    to: 'off'
+  actions:
+  - choose:
+    - conditions:
+      - condition: state
+        entity_id: light.hue_white_lamp_hallway_middle
+        state: 'on'
+      - condition: template
+        value_template: '{{ (state_attr(''light.hue_white_lamp_hallway_middle'',''brightness'')|int(0))
+          >= 77 }}
+
+          '
+      sequence:
+      - action: light.turn_on
+        target:
+          entity_id:
+          - light.hue_candle_lower_staircase
+          - light.hue_candle_upper_staircase
+        data:
+          color_temp: 450
+          transition: 1
+          brightness_pct: 3
+    - conditions:
+      - condition: state
+        entity_id: light.hue_white_lamp_hallway_middle
+        state: 'on'
+      - condition: template
+        value_template: '{% set b = state_attr(''light.hue_white_lamp_hallway_middle'',''brightness'')|int(0)
+          %} {{ b > 0 and b < 77 }}
+
+          '
+      sequence:
+      - action: light.turn_on
+        target:
+          entity_id:
+          - light.hue_candle_lower_staircase
+          - light.hue_candle_upper_staircase
+        data:
+          brightness_pct: 3
+          color_temp: 450
+          transition: 1
+    - conditions:
+      - condition: state
+        entity_id: light.hue_white_lamp_hallway_middle
+        state: 'off'
+      sequence:
+      - action: light.turn_off
+        target:
+          entity_id: light.hue_candle_upper_staircase
+        data:
+          transition: 1
+      - action: light.turn_on
+        target:
+          entity_id: light.hue_candle_lower_staircase
+        data:
+          brightness_pct: 1
+          color_temp: 450
+          transition: 1
+    default:
+    - choose:
+      - conditions:
+        - condition: state
+          entity_id: light.hue_white_lamp_hallway_middle
+          state: 'off'
+        sequence:
+        - action: light.turn_on
+          target:
+            entity_id: light.hue_candle_lower_staircase
+          data:
+            brightness_pct: 1
+            color_temp: 450
+            transition: 1
+  mode: single
+- id: '1764032637877'
+  alias: 'Living Room: Dim Lights to 80% After Sunset'
+  description: Slowly dim Main Level lights to 65% over 1 hour after sunset if they
+    were brighter.
+  triggers:
+  - trigger: sun
+    event: sunset
+  conditions:
+  - condition: state
+    entity_id: light.living_room
+    state: 'on'
+  - condition: numeric_state
+    entity_id: light.living_room
+    attribute: brightness
+    above: 166
+  actions:
+  - action: light.turn_on
+    target:
+      entity_id: light.living_room
+    data:
+      transition: 3600
+      brightness_pct: 80
+  mode: single
+- id: '1765587351000'
+  alias: 'Living Room: Dyson Heater Follows Living Room Light'
+  description: ''
+  triggers:
+  - trigger: state
+    entity_id: light.living_room
+    to: 'off'
+  - trigger: state
+    entity_id: light.living_room
+    to: 'on'
+  conditions: []
+  actions:
+  - choose:
+    - conditions:
+      - condition: state
+        entity_id: light.living_room
+        state: 'off'
+      sequence:
+      - type: turn_off
+        device_id: 8eb53185a2bc6133516bb05b5b51017a
+        entity_id: 9b7e188f89321693221091ce119f4d25
+        domain: switch
+    - conditions:
+      - condition: state
+        entity_id: light.living_room
+        state: 'on'
+      sequence:
+      - type: turn_on
+        device_id: 8eb53185a2bc6133516bb05b5b51017a
+        entity_id: 9b7e188f89321693221091ce119f4d25
+        domain: switch
+  mode: single
+- id: '1768008079253'
+  alias: 'Nursery: Govee battery low or missing (6hr nag)'
+  description: Alerts every 6 hours if Govee battery is <5% or state is null/unknown/unavailable.
+  triggers:
+  - hours: /6
+    trigger: time_pattern
+  - entity_id: sensor.govee_thermometer_nursery_h5104_battery
+    below: 5
+    for:
+      minutes: 5
+    trigger: numeric_state
+  conditions: []
+  actions:
+  - choose:
+    - conditions:
+      - condition: or
+        conditions:
+        - condition: numeric_state
+          entity_id: sensor.govee_thermometer_nursery_h5104_battery
+          below: 5
+        - condition: state
+          entity_id: sensor.govee_thermometer_nursery_h5104_battery
+          state: unknown
+        - condition: state
+          entity_id: sensor.govee_thermometer_nursery_h5104_battery
+          state: unavailable
+        - condition: template
+          value_template: '{% set s = states(''sensor.govee_thermometer_nursery_h5104_battery'')
+            | lower %} {{ s in [''none'',''null'',''''] }}
+
+            '
+      sequence:
+      - action: notify.mobile_app_andrews_s24
+        data:
+          title: Nursery Sensor Alert
+          message: 'Govee nursery battery is low or missing (current: {{ states(''sensor.govee_thermometer_nursery_h5104_battery'')
+            }}%).
+
+            '
+          data:
+            ttl: 0
+            priority: high
+  mode: single
+- id: '1770816990641'
+  alias: 'Nursery: Humidifer on/off 45%/60% with Hatch'
+  description: 'Checks nursery humidity every 10 minutes (and when Hatch turns on).
+    If humidity is 65% or higher, turns the heater plug OFF. If humidity is 45% or
+    lower, turns the heater plug ON. If Hatch is idle, keeps the heater OFF.
+
+    '
+  triggers:
+  - device_id: 54376091c5980b4a3ea7b981389db0df
+    domain: media_player
+    entity_id: b08609d1c4a650ea08bb26c14de1564b
+    type: playing
+    trigger: device
+  - id: periodic
+    minutes: /10
+    trigger: time_pattern
+  conditions: []
+  actions:
+  - choose:
+    - conditions:
+      - condition: device
+        device_id: 54376091c5980b4a3ea7b981389db0df
+        domain: media_player
+        entity_id: b08609d1c4a650ea08bb26c14de1564b
+        type: is_idle
+      sequence:
+      - type: turn_off
+        device_id: 788c5fd6f09f75f04e76cb3a805de6aa
+        entity_id: 03fe58014a9ed31a3e38e2dad9cc99f5
+        domain: switch
+    - conditions:
+      - condition: device
+        device_id: 54376091c5980b4a3ea7b981389db0df
+        domain: media_player
+        entity_id: b08609d1c4a650ea08bb26c14de1564b
+        type: is_playing
+      - condition: numeric_state
+        entity_id: sensor.govee_thermometer_nursery_h5075_humidity
+        above: 60
+      sequence:
+      - target:
+          entity_id:
+          - switch.humidifier_smart_plug
+        action: switch.turn_off
+        data: {}
+    - conditions:
+      - condition: device
+        device_id: 54376091c5980b4a3ea7b981389db0df
+        domain: media_player
+        entity_id: b08609d1c4a650ea08bb26c14de1564b
+        type: is_playing
+      - condition: numeric_state
+        entity_id: sensor.govee_thermometer_nursery_h5075_humidity
+        below: 45
+      sequence:
+      - target:
+          entity_id:
+          - switch.humidifier_smart_plug
+        action: switch.turn_on
+        data: {}
+    default:
+    - type: turn_off
+      device_id: 788c5fd6f09f75f04e76cb3a805de6aa
+      entity_id: 03fe58014a9ed31a3e38e2dad9cc99f5
+      domain: switch
+  mode: single

@@ -1,0 +1,193 @@
+cloud:
+default_config:
+
+homeassistant:
+  external_url: "https://virusdistributioncenter.duckdns.org"
+  internal_url: "http://192.168.0.100:8123"
+  country: "US"
+
+http:
+  ssl_certificate: /ssl/fullchain.pem
+  ssl_key: /ssl/privkey.pem
+
+tts:
+  - platform: google_translate
+
+group:
+  household_anyone_home:
+    name: Anyone Home
+    entities:
+      - person.andrew
+      - person.amy
+  household_everyone_home:
+    name: Everyone Home
+    all: true
+    entities:
+      - person.andrew
+      - person.amy
+  guest_mode_thermostat_automations:
+    name: Guest Mode Thermostat Automations
+    entities:
+      - automation.thermostat_change_eco_off_when_home
+      - automation.thermostat_change_to_eco_when_away
+      - automation.thermostat_when_thermostat_is_over_76_and_andrew_and_amy_are_at_work_turn_thermostat_eco_off_at_1_30pm
+      - automation.thermostat_when_thermostat_is_under_63_and_andrew_and_amy_are_at_work_at_1_30pm_turn_thermostat_eco_off
+
+input_boolean:
+  guest_mode:
+
+template:
+  - sensor:
+      - name: Guest Mode Status
+        unique_id: guest_mode_status
+        state: "{{ 'Active' if is_state('input_boolean.guest_mode','on') else 'Inactive' }}"
+      - name: "Thermostat Heating State"
+        unique_id: thermostat_heating_state
+        state: "{{ is_state_attr('climate.hallway', 'hvac_action', 'heating') }}"
+      - name: "Thermostat Cooling State"
+        unique_id: thermostat_cooling_state
+        state: "{{ is_state_attr('climate.hallway', 'hvac_action', 'cooling') }}"
+      - name: "Andrew Distance To Home (mi)"
+        unique_id: andrew_distance_home_mi
+        unit_of_measurement: "mi"
+        state: >
+          {% set km = distance('person.andrew','zone.home') %}
+          {{ (km | float(0) * 0.621371) | round(2) }}
+      - name: "Amy Distance To Home (mi)"
+        unique_id: amy_distance_home_mi
+        unit_of_measurement: "mi"
+        state: >
+          {% set km = distance('person.amy','zone.home') %}
+          {{ (km | float(0) * 0.621371) | round(2) }}
+      - name: "Outdoor Temperature"
+        unique_id: outdoor_temperature_openmeteo
+        unit_of_measurement: "°F"
+        device_class: temperature
+        state_class: measurement
+        state: >
+          {% set cw = state_attr('sensor.openmeteo_raw','current_weather') %}
+          {{ cw['temperature'] if cw else 'unknown' }}
+      - name: "Outdoor Feels Like"
+        unique_id: outdoor_feels_like_openmeteo
+        unit_of_measurement: "°F"
+        device_class: temperature
+        state_class: measurement
+        state: >
+          {% set cw = state_attr('sensor.openmeteo_raw','current_weather') %}
+          {% set hourly = state_attr('sensor.openmeteo_raw','hourly') %}
+          {% if cw and hourly and (cw['time'] in hourly['time']) %}
+            {% set idx = hourly['time'].index(cw['time']) %}
+            {{ hourly['apparent_temperature'][idx] }}
+          {% else %} unknown {% endif %}
+      - name: "Outdoor Humidity"
+        unique_id: outdoor_humidity_openmeteo
+        unit_of_measurement: "%"
+        device_class: humidity
+        state_class: measurement
+        state: >
+          {% set cw = state_attr('sensor.openmeteo_raw','current_weather') %}
+          {% set hourly = state_attr('sensor.openmeteo_raw','hourly') %}
+          {% if cw and hourly and (cw['time'] in hourly['time']) %}
+            {% set idx = hourly['time'].index(cw['time']) %}
+            {{ (hourly['relative_humidity_2m'][idx]) }}
+          {% else %} unknown {% endif %}
+      - name: Pi-hole Status
+        unique_id: pihole_status
+        state: "{{ 'Disabled' if is_state('switch.pi_hole','off') else 'Enabled' }}"
+
+sensor:
+  - platform: rest
+    name: OpenMeteo Raw
+    resource_template: >-
+      https://api.open-meteo.com/v1/forecast?latitude={{ state_attr('zone.home','latitude') }}&longitude={{ state_attr('zone.home','longitude') }}&current_weather=true&hourly=apparent_temperature,relative_humidity_2m&timezone=auto&temperature_unit=fahrenheit
+    json_attributes:
+      - current_weather
+      - hourly
+    value_template: "{{ value_json.current_weather.temperature }}"
+    unit_of_measurement: "°F"
+    scan_interval: 600
+
+  - platform: derivative
+    source: sensor.andrew_distance_to_home_mi
+    name: Andrew Approach Speed (mph)
+    unit_time: h
+    time_window: "00:05:00"
+    round: 1
+
+  # NEW: Pi-hole status
+  - platform: rest
+    name: Pi-hole Blocking
+    resource: "http://192.168.0.250/api/dns/blocking"
+    value_template: "{{ value_json.blocking }}"  # "enabled" or "disabled"
+    scan_interval: 5
+
+
+binary_sensor:
+  - platform: trend
+    sensors:
+      andrew_towards_home_slow:
+        entity_id: sensor.andrew_distance_to_home_mi
+        invert: true
+        sample_duration: 600
+        min_gradient: 0.0001
+
+zone:
+  - name: Andrew-Work
+    latitude: 39.9498
+    longitude: -75.1475
+    radius: 200
+    icon: mdi:briefcase
+  - name: Amy-Work
+    latitude: 39.83833360474063
+    longitude: -75.43974637985231
+    radius: 1150
+    icon: mdi:briefcase
+  - name: Home
+    latitude: 39.9354267
+    longitude: -75.15329726862069
+    radius: 500
+    icon: mdi:home
+
+mqtt:
+  sensor:
+    - name: Zigbee2mqtt Networkmap
+      state_topic: zigbee2mqtt/bridge/response/networkmap
+      value_template: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
+      json_attributes_topic: zigbee2mqtt/bridge/response/networkmap
+      json_attributes_template: "{{ value_json.data.value | tojson }}"
+
+# pihole commands
+rest_command:
+  pihole_auth:
+    url: "http://192.168.0.250/api/auth"
+    method: POST
+    content_type: application/json
+    payload: '{"password":"{{ password }}"}'
+
+  pihole_blocking_sid:
+    url: "http://192.168.0.250/api/dns/blocking"
+    method: POST
+    content_type: application/json
+    payload: '{"sid":"{{ sid }}","blocking": false, "timer": {{ timer|int }}}'
+
+  pihole_blocking_noauth:
+    url: "http://192.168.0.250/api/dns/blocking"
+    method: POST
+    content_type: application/json
+    payload: '{"blocking": false, "timer": {{ timer|int }}}'
+
+  pihole_enable_noauth:
+    url: "http://192.168.0.250/api/dns/blocking"
+    method: POST
+    content_type: application/json
+    payload: '{"blocking": true}'
+
+
+timer:
+  pihole_disable_window:
+    duration: "00:15:00"
+
+
+automation: !include automations.yaml
+script: !include scripts.yaml
+scene: !include scenes.yaml

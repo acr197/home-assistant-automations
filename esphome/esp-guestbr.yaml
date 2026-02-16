@@ -1,0 +1,37 @@
+esphome:
+  name: esp-guestbr
+  friendly_name: ESP-GuestBR
+
+esp32:
+  board: esp32dev
+  framework:
+    type: arduino
+
+# Enable logging
+logger:
+
+# Enable Home Assistant API
+api:
+  encryption:
+    key: "sUOG0YJU+PT4dYDimySGRdP7blyROOepsMrB3m2iLUc="
+
+ota:
+  platform: esphome
+  password: "d3c58b457cc21a16fa57ae01c1df001e"
+
+wifi:
+  # ssid: !secret wifi_ssid
+  # password: !secret wifi_password
+  ssid: virus_distribution_center
+  password: greatodinsraven
+
+  # Enable fallback hotspot (captive portal) in case wifi connection fails
+  ap:
+    ssid: "Esp-Guestbr Fallback Hotspot"
+    password: "r5evD3xZwuQL"
+  
+bluetooth_proxy:
+  active: true
+
+captive_portal:
+    

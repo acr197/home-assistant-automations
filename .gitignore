@@ -1,0 +1,17 @@
+# secrets and tokens
+secrets.yaml
+*.db
+*.db-shm
+*.db-wal
+home-assistant_v2.db*
+
+# logs and runtime
+home-assistant.log*
+OZW_Log.txt
+*.log
+*.pid
+
+# caches
+.storage/
+__pycache__/
+*.pyc
