@@ -1185,22 +1185,21 @@
             data:
               transition: 105
             action: light.turn_off
-          - repeat:
-              count: 7
-              sequence:
-              - delay:
-                  hours: 0
-                  minutes: 0
-                  seconds: 10
-                  milliseconds: 0
-              - target:
-                  entity_id:
-                  - light.hue_candle_lower_staircase
-                  - light.hue_candle_upper_staircase
-                data:
-                  brightness_pct: 1
-                  color_temp: 450
-                action: light.turn_on
+          - delay:
+              hours: 0
+              minutes: 0
+              seconds: 10
+              milliseconds: 0
+          - target:
+              entity_id:
+              - light.hue_candle_lower_staircase
+              - light.hue_candle_upper_staircase
+            data:
+              brightness_pct: 1
+              color_temp: 450
+            action: light.turn_on
+          - delay:
+              seconds: 60
           - target:
               entity_id:
               - light.hue_candle_lower_staircase
@@ -1212,15 +1211,12 @@
           data:
             transition: 105
           action: light.turn_off
-        - repeat:
-            count: 7
-            sequence:
-            - target:
-                entity_id: light.hue_candle_upper_staircase
-              data:
-                brightness_pct: 1
-                color_temp: 450
-              action: light.turn_on
+        - target:
+            entity_id: light.hue_candle_upper_staircase
+          data:
+            brightness_pct: 1
+            color_temp: 450
+          action: light.turn_on
         - delay:
             seconds: 15
         - target:
@@ -1246,38 +1242,36 @@
             color_temp: 450
             transition: 1
           action: light.turn_on
-        - repeat:
-            count: 7
-            sequence:
-            - delay:
-                seconds: 15
-            - target:
-                entity_id:
-                - light.hue_candle_lower_staircase
-                - light.hue_candle_upper_staircase
-              data:
-                brightness_pct: 1
-                color_temp: 450
-                transition: 0
-              action: light.turn_on
+        - delay:
+            seconds: 11
+        - target:
+            entity_id:
+            - light.hue_candle_lower_staircase
+            - light.hue_candle_upper_staircase
+          data:
+            brightness_pct: 1
+            color_temp: 450
+            transition: 0
+          action: light.turn_on
+        - delay:
+            seconds: 94
         - target:
             entity_id:
             - light.hue_candle_lower_staircase
             - light.hue_candle_upper_staircase
           action: light.turn_off
       default:
-      - repeat:
-          count: 7
-          sequence:
-          - delay:
-              seconds: 15
-          - target:
-              entity_id: light.hue_candle_upper_staircase
-            data:
-              brightness_pct: 1
-              color_temp: 450
-              transition: 0
-            action: light.turn_on
+      - delay:
+          seconds: 11
+      - target:
+          entity_id: light.hue_candle_upper_staircase
+        data:
+          brightness_pct: 1
+          color_temp: 450
+          transition: 0
+        action: light.turn_on
+      - delay:
+          seconds: 94
       - target:
           entity_id: light.hue_candle_upper_staircase
         action: light.turn_off
