@@ -465,7 +465,7 @@
           entity_id: media_player.sonos_roam
       - action: media_player.volume_set
         data:
-          volume_level: 0.14
+          volume_level: 0.1
         target:
           entity_id:
           - media_player.living_room
@@ -1067,13 +1067,11 @@
   mode: restart
 - id: '1762718811619'
   alias: 'Hue Switches: Button 4 Hold - Entire Home Off + Stair Path'
-  description: 'Bottom button hold on any listed Hue switch turns the home off, leaves
+  description: Bottom button hold on any listed Hue switch turns the home off, leaves
     TV Play lights on Singapore at 5%, and runs the stairwell path. Lower stairwell
     turns on immediately at 1% and stays on at least 8 seconds. Upper stairwell stays
     as-is if already on, otherwise turns on after 8 seconds at 1%. If master bedroom
-    lights are on at press time, they fade off and are never turned back on.
-
-    '
+    lights are on at press time, they fade off and are never turned back on
   triggers:
   - domain: hue
     device_id: b15d677491a7497de59365f5dea4c945
@@ -1185,22 +1183,21 @@
             data:
               transition: 105
             action: light.turn_off
-          - repeat:
-              count: 7
-              sequence:
-              - delay:
-                  hours: 0
-                  minutes: 0
-                  seconds: 10
-                  milliseconds: 0
-              - target:
-                  entity_id:
-                  - light.hue_candle_lower_staircase
-                  - light.hue_candle_upper_staircase
-                data:
-                  brightness_pct: 1
-                  color_temp: 450
-                action: light.turn_on
+          - delay:
+              hours: 0
+              minutes: 0
+              seconds: 10
+              milliseconds: 0
+          - target:
+              entity_id:
+              - light.hue_candle_lower_staircase
+              - light.hue_candle_upper_staircase
+            data:
+              brightness_pct: 1
+              color_temp: 450
+            action: light.turn_on
+          - delay:
+              seconds: 60
           - target:
               entity_id:
               - light.hue_candle_lower_staircase
@@ -1212,15 +1209,12 @@
           data:
             transition: 105
           action: light.turn_off
-        - repeat:
-            count: 7
-            sequence:
-            - target:
-                entity_id: light.hue_candle_upper_staircase
-              data:
-                brightness_pct: 1
-                color_temp: 450
-              action: light.turn_on
+        - target:
+            entity_id: light.hue_candle_upper_staircase
+          data:
+            brightness_pct: 1
+            color_temp: 450
+          action: light.turn_on
         - delay:
             seconds: 15
         - target:
@@ -1246,38 +1240,36 @@
             color_temp: 450
             transition: 1
           action: light.turn_on
-        - repeat:
-            count: 7
-            sequence:
-            - delay:
-                seconds: 15
-            - target:
-                entity_id:
-                - light.hue_candle_lower_staircase
-                - light.hue_candle_upper_staircase
-              data:
-                brightness_pct: 1
-                color_temp: 450
-                transition: 0
-              action: light.turn_on
+        - delay:
+            seconds: 11
+        - target:
+            entity_id:
+            - light.hue_candle_lower_staircase
+            - light.hue_candle_upper_staircase
+          data:
+            brightness_pct: 1
+            color_temp: 450
+            transition: 0
+          action: light.turn_on
+        - delay:
+            seconds: 94
         - target:
             entity_id:
             - light.hue_candle_lower_staircase
             - light.hue_candle_upper_staircase
           action: light.turn_off
       default:
-      - repeat:
-          count: 7
-          sequence:
-          - delay:
-              seconds: 15
-          - target:
-              entity_id: light.hue_candle_upper_staircase
-            data:
-              brightness_pct: 1
-              color_temp: 450
-              transition: 0
-            action: light.turn_on
+      - delay:
+          seconds: 11
+      - target:
+          entity_id: light.hue_candle_upper_staircase
+        data:
+          brightness_pct: 1
+          color_temp: 450
+          transition: 0
+        action: light.turn_on
+      - delay:
+          seconds: 94
       - target:
           entity_id: light.hue_candle_upper_staircase
         action: light.turn_off
@@ -1530,4 +1522,13 @@
       device_id: 788c5fd6f09f75f04e76cb3a805de6aa
       entity_id: 03fe58014a9ed31a3e38e2dad9cc99f5
       domain: switch
+  mode: single
+- id: '1771270799101'
+  alias: 'GitHub: Backup Nightly'
+  description: ''
+  triggers:
+  - at: 05:00:00
+    trigger: time
+  actions:
+  - action: shell_command.git_push
   mode: single
