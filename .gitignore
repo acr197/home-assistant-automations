@@ -30,3 +30,7 @@ git_push.log
 .cache/
 .ha_run.lock
 git_push.log
+
+.cache/
+.ha_run.lock
+git_push.log
