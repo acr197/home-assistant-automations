@@ -26,8 +26,6 @@ if [ -d .git/rebase-merge ] || [ -d .git/rebase-apply ] || [ -f .git/MERGE_HEAD 
   exit 1
 fi
 
-git checkout "$BRANCH"
-
 if ! git remote get-url origin >/dev/null 2>&1; then
   echo "ERROR: Missing git remote 'origin'"
   exit 1
@@ -45,8 +43,10 @@ fi
 
 git commit -m "Auto backup: $(date '+%Y-%m-%dT%H:%M:%S%z')"
 
+git pull --rebase origin "$BRANCH"
+
 if ! git push origin "$BRANCH"; then
-  echo "ERROR: push rejected because GitHub changed. Sync manually once, then rerun."
+  echo "ERROR: push failed. Check remote or credentials."
   exit 1
 fi
 
