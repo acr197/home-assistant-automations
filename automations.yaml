@@ -1458,3 +1458,14 @@
   actions:
   - action: shell_command.git_push
   mode: single
+- id: '1742137200000'
+  alias: 'GitHub: Pull Remote Changes'
+  description: Pull config changes from GitHub every 15 minutes and reload if updated.
+  triggers:
+  - trigger: time_pattern
+    minutes: "/15"
+  conditions: []
+  actions:
+  - action: shell_command.git_pull
+  - action: homeassistant.reload_all
+  mode: single
