@@ -95,7 +95,10 @@ template:
         unique_id: pihole_status
         state: "{{ 'Disabled' if is_state('switch.pi_hole','off') else 'Enabled' }}"
 
-      # Energy cost sensors ($0.2311/kWh from PECO bill)
+      # ── Energy cost sensors ──
+      # PECO all-in rate: $144.18 / 624 kWh = $0.2311/kWh
+      # Breakdown: Delivery $0.10276 + Generation $0.10237 + Transmission $0.00787 = $0.21300 variable
+      #            + $11.30 customer charge / ~624 kWh ≈ $0.0181 fixed = ~$0.2311 total
       - name: "Desktop Desk Plug Energy Cost Today"
         unique_id: desktop_desk_plug_energy_cost_today
         unit_of_measurement: "$"
@@ -140,22 +143,22 @@ template:
         unique_id: total_energy_cost_today
         unit_of_measurement: "$"
         state: >
-          {{ (
+          {{ ((
             states('sensor.desktop_desk_plug_today_s_energy') | float(0) +
             states('sensor.nursery_heater_plug_today_s_energy') | float(0) +
             states('sensor.dyson_heater_plug_today_s_energy') | float(0) +
             states('sensor.basement_heater_plug_today_s_energy') | float(0)
-          ) * 0.2311 | round(2) }}
+          ) * 0.2311) | round(2) }}
       - name: "Total Energy Cost Monthly"
         unique_id: total_energy_cost_monthly
         unit_of_measurement: "$"
         state: >
-          {{ (
+          {{ ((
             states('sensor.desktop_desk_plug_this_month_s_energy') | float(0) +
             states('sensor.nursery_heater_plug_this_month_s_energy') | float(0) +
             states('sensor.dyson_heater_plug_this_month_s_energy') | float(0) +
             states('sensor.basement_heater_plug_this_month_s_energy') | float(0)
-          ) * 0.2311 | round(2) }}
+          ) * 0.2311) | round(2) }}
       - name: "Total Power Draw Now"
         unique_id: total_power_draw_now
         unit_of_measurement: "W"
@@ -168,6 +171,97 @@ template:
             states('sensor.dyson_heater_plug_current_power') | float(0) +
             states('sensor.basement_heater_plug_current_power') | float(0)
           ) | round(1) }}
+      - name: "Total Energy Today"
+        unique_id: total_energy_today
+        unit_of_measurement: "kWh"
+        device_class: energy
+        state: >
+          {{ (
+            states('sensor.desktop_desk_plug_today_s_energy') | float(0) +
+            states('sensor.nursery_heater_plug_today_s_energy') | float(0) +
+            states('sensor.dyson_heater_plug_today_s_energy') | float(0) +
+            states('sensor.basement_heater_plug_today_s_energy') | float(0)
+          ) | round(2) }}
+      - name: "Total Energy This Month"
+        unique_id: total_energy_this_month
+        unit_of_measurement: "kWh"
+        device_class: energy
+        state: >
+          {{ (
+            states('sensor.desktop_desk_plug_this_month_s_energy') | float(0) +
+            states('sensor.nursery_heater_plug_this_month_s_energy') | float(0) +
+            states('sensor.dyson_heater_plug_this_month_s_energy') | float(0) +
+            states('sensor.basement_heater_plug_this_month_s_energy') | float(0)
+          ) | round(2) }}
+      - name: "Projected Monthly Energy Cost"
+        unique_id: projected_monthly_energy_cost
+        unit_of_measurement: "$"
+        state: >
+          {% set day_of_month = now().day %}
+          {% set days_in_month = (now().replace(month=now().month % 12 + 1, day=1) - timedelta(days=1)).day if now().month < 12 else 31 %}
+          {% set monthly_kwh = states('sensor.total_energy_this_month') | float(0) %}
+          {% if day_of_month > 0 and monthly_kwh > 0 %}
+            {{ ((monthly_kwh / day_of_month) * days_in_month * 0.2311) | round(2) }}
+          {% else %}
+            0
+          {% endif %}
+      - name: "Daily Average Energy This Month"
+        unique_id: daily_average_energy_this_month
+        unit_of_measurement: "kWh"
+        device_class: energy
+        state: >
+          {% set day_of_month = now().day %}
+          {% set monthly_kwh = states('sensor.total_energy_this_month') | float(0) %}
+          {% if day_of_month > 0 %}
+            {{ (monthly_kwh / day_of_month) | round(2) }}
+          {% else %}
+            0
+          {% endif %}
+      - name: "Daily Average Energy Cost This Month"
+        unique_id: daily_average_energy_cost_this_month
+        unit_of_measurement: "$"
+        state: >
+          {% set day_of_month = now().day %}
+          {% set monthly_kwh = states('sensor.total_energy_this_month') | float(0) %}
+          {% if day_of_month > 0 %}
+            {{ ((monthly_kwh / day_of_month) * 0.2311) | round(2) }}
+          {% else %}
+            0
+          {% endif %}
+      - name: "Desktop Desk Plug Share of Total"
+        unique_id: desktop_desk_plug_share_pct
+        unit_of_measurement: "%"
+        state: >
+          {% set total = states('sensor.total_energy_this_month') | float(0) %}
+          {% set device = states('sensor.desktop_desk_plug_this_month_s_energy') | float(0) %}
+          {{ ((device / total) * 100) | round(1) if total > 0 else 0 }}
+      - name: "Nursery Heater Plug Share of Total"
+        unique_id: nursery_heater_plug_share_pct
+        unit_of_measurement: "%"
+        state: >
+          {% set total = states('sensor.total_energy_this_month') | float(0) %}
+          {% set device = states('sensor.nursery_heater_plug_this_month_s_energy') | float(0) %}
+          {{ ((device / total) * 100) | round(1) if total > 0 else 0 }}
+      - name: "Dyson Heater Plug Share of Total"
+        unique_id: dyson_heater_plug_share_pct
+        unit_of_measurement: "%"
+        state: >
+          {% set total = states('sensor.total_energy_this_month') | float(0) %}
+          {% set device = states('sensor.dyson_heater_plug_this_month_s_energy') | float(0) %}
+          {{ ((device / total) * 100) | round(1) if total > 0 else 0 }}
+      - name: "Basement Heater Plug Share of Total"
+        unique_id: basement_heater_plug_share_pct
+        unit_of_measurement: "%"
+        state: >
+          {% set total = states('sensor.total_energy_this_month') | float(0) %}
+          {% set device = states('sensor.basement_heater_plug_this_month_s_energy') | float(0) %}
+          {{ ((device / total) * 100) | round(1) if total > 0 else 0 }}
+      - name: "Estimated Annual Energy Cost"
+        unique_id: estimated_annual_energy_cost
+        unit_of_measurement: "$"
+        state: >
+          {% set daily_avg = states('sensor.daily_average_energy_this_month') | float(0) %}
+          {{ (daily_avg * 365 * 0.2311) | round(2) }}
 
 sensor:
   - platform: rest
