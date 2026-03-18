@@ -158,6 +158,7 @@ mqtt:
 
 shell_command:
   git_push: "sh /config/git_push.sh"
+  git_pull: "sh /config/git_pull.sh"
   
 # pihole commands
 rest_command:

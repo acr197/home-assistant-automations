@@ -1458,3 +1458,21 @@
   actions:
   - action: shell_command.git_push
   mode: single
+- id: '1771270799102'
+  alias: 'GitHub: Pull & Reload on Webhook'
+  description: >-
+    When GitHub Actions sends a webhook after a push, pull latest config
+    from GitHub and reload Home Assistant.
+  triggers:
+  - trigger: webhook
+    webhook_id: 4a115006f7f0a2bce53cb35881d54f5ca93c337c08da7888ce7d9842b5a1b5eb
+    allowed_methods:
+    - POST
+    local_only: false
+  conditions: []
+  actions:
+  - action: shell_command.git_pull
+  - delay:
+      seconds: 5
+  - action: homeassistant.reload_all
+  mode: single
