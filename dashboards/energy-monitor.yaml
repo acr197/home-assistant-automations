@@ -1,15 +1,18 @@
 title: Energy Monitor
 views:
+  # ═══════════════════════════════════════════════════════════
+  #  VIEW 1: OVERVIEW — at-a-glance energy summary
+  # ═══════════════════════════════════════════════════════════
   - title: Overview
     path: overview
     icon: mdi:lightning-bolt
     cards:
-      # ── Header: Total power & cost summary ──
+      # ── Live power + cost header row ──
       - type: horizontal-stack
         cards:
           - type: entity
             entity: sensor.total_power_draw_now
-            name: Total Power Now
+            name: Live Power
             icon: mdi:flash
           - type: entity
             entity: sensor.total_energy_cost_today
@@ -20,15 +23,37 @@ views:
             name: Cost This Month
             icon: mdi:calendar-month
 
-      # ── Total power draw over time ──
-      - type: history-graph
-        title: Total Power Draw (All Plugs)
-        hours_to_show: 24
-        entities:
-          - entity: sensor.total_power_draw_now
-            name: Total Power
+      # ── Projection & average row ──
+      - type: horizontal-stack
+        cards:
+          - type: entity
+            entity: sensor.projected_monthly_energy_cost
+            name: Projected Bill
+            icon: mdi:chart-line-variant
+          - type: entity
+            entity: sensor.daily_average_energy_cost_this_month
+            name: Daily Avg Cost
+            icon: mdi:chart-bar
+          - type: entity
+            entity: sensor.estimated_annual_energy_cost
+            name: Est. Annual
+            icon: mdi:calendar-clock
 
-      # ── Individual real-time power gauges ──
+      # ── PECO bill context ──
+      - type: markdown
+        content: >
+          ### PECO Rate: **$0.2311/kWh**
+
+          Last bill: **$144.18** for **624 kWh** (29 days, Jan 20 – Feb 18, 2026)
+
+          | Component | Rate |
+          |---|---|
+          | Delivery (distribution) | $0.10276/kWh |
+          | Supply (generation) | $0.10237/kWh |
+          | Transmission | $0.00787/kWh |
+          | Customer charge | $11.30/mo fixed |
+
+      # ── Real-time power gauges ──
       - type: horizontal-stack
         cards:
           - type: gauge
@@ -36,21 +61,23 @@ views:
             name: Desktop
             unit: W
             min: 0
-            max: 1500
+            max: 500
+            needle: true
             severity:
               green: 0
-              yellow: 300
-              red: 800
+              yellow: 150
+              red: 350
           - type: gauge
             entity: sensor.nursery_heater_plug_current_power
             name: Nursery Heater
             unit: W
             min: 0
             max: 1500
+            needle: true
             severity:
               green: 0
-              yellow: 300
-              red: 800
+              yellow: 500
+              red: 1000
       - type: horizontal-stack
         cards:
           - type: gauge
@@ -58,23 +85,46 @@ views:
             name: Dyson Heater
             unit: W
             min: 0
-            max: 1500
+            max: 2000
+            needle: true
             severity:
               green: 0
-              yellow: 300
-              red: 800
+              yellow: 500
+              red: 1200
           - type: gauge
             entity: sensor.basement_heater_plug_current_power
             name: Basement Heater
             unit: W
             min: 0
             max: 1500
+            needle: true
             severity:
               green: 0
-              yellow: 300
-              red: 800
+              yellow: 500
+              red: 1000
 
-      # ── Power draw history per device ──
+      # ── Total power draw history (24h) ──
+      - type: history-graph
+        title: Total Power Draw (24h)
+        hours_to_show: 24
+        entities:
+          - entity: sensor.total_power_draw_now
+            name: Total Watts
+
+  # ═══════════════════════════════════════════════════════════
+  #  VIEW 2: LIVE — real-time power by device
+  # ═══════════════════════════════════════════════════════════
+  - title: Live Power
+    path: live
+    icon: mdi:pulse
+    cards:
+      # ── Total draw ──
+      - type: entity
+        entity: sensor.total_power_draw_now
+        name: Total Live Power Draw
+        icon: mdi:flash-alert
+
+      # ── Per-device power history (24h overlay) ──
       - type: history-graph
         title: Power Draw by Device (24h)
         hours_to_show: 24
@@ -88,56 +138,77 @@ views:
           - entity: sensor.basement_heater_plug_current_power
             name: Basement Heater
 
-      # ── Energy usage statistics (long-term charts) ──
-      - type: statistics-graph
-        title: Energy Usage - Last 30 Days (kWh)
-        period: day
-        days_to_show: 30
-        stat_types:
-          - sum
-        chart_type: bar
+      # ── 48h view for pattern detection ──
+      - type: history-graph
+        title: Power Draw by Device (48h)
+        hours_to_show: 48
         entities:
-          - entity: sensor.desktop_desk_plug_today_s_energy
+          - entity: sensor.desktop_desk_plug_current_power
             name: Desktop
-          - entity: sensor.nursery_heater_plug_today_s_energy
+          - entity: sensor.nursery_heater_plug_current_power
             name: Nursery Heater
-          - entity: sensor.dyson_heater_plug_today_s_energy
+          - entity: sensor.dyson_heater_plug_current_power
             name: Dyson Heater
-          - entity: sensor.basement_heater_plug_today_s_energy
+          - entity: sensor.basement_heater_plug_current_power
             name: Basement Heater
 
-      - type: statistics-graph
-        title: Monthly Energy Usage (kWh)
-        period: month
-        stat_types:
-          - sum
-        chart_type: bar
+      # ── 7-day view for weekly patterns ──
+      - type: history-graph
+        title: Power Draw by Device (7 Days)
+        hours_to_show: 168
         entities:
-          - entity: sensor.desktop_desk_plug_this_month_s_energy
+          - entity: sensor.desktop_desk_plug_current_power
             name: Desktop
-          - entity: sensor.nursery_heater_plug_this_month_s_energy
+          - entity: sensor.nursery_heater_plug_current_power
             name: Nursery Heater
-          - entity: sensor.dyson_heater_plug_this_month_s_energy
+          - entity: sensor.dyson_heater_plug_current_power
             name: Dyson Heater
-          - entity: sensor.basement_heater_plug_this_month_s_energy
+          - entity: sensor.basement_heater_plug_current_power
             name: Basement Heater
 
+  # ═══════════════════════════════════════════════════════════
+  #  VIEW 3: COSTS — detailed cost breakdown
+  # ═══════════════════════════════════════════════════════════
   - title: Costs
     path: costs
     icon: mdi:currency-usd
     cards:
-      # ── Cost summary ──
-      - type: markdown
-        title: PECO Rate Info
-        content: >
-          **Rate:** $0.2311/kWh (all-in from Feb 2026 PECO bill)
+      # ── Summary cards ──
+      - type: horizontal-stack
+        cards:
+          - type: entity
+            entity: sensor.total_energy_cost_today
+            name: Today
+            icon: mdi:cash
+          - type: entity
+            entity: sensor.total_energy_cost_monthly
+            name: This Month
+            icon: mdi:cash-multiple
+          - type: entity
+            entity: sensor.projected_monthly_energy_cost
+            name: Projected Bill
+            icon: mdi:chart-line-variant
 
-
-          **Last bill:** $144.18 for 624 kWh (29 days)
+      # ── Daily average + annual estimate ──
+      - type: horizontal-stack
+        cards:
+          - type: entity
+            entity: sensor.daily_average_energy_cost_this_month
+            name: Daily Avg
+            icon: mdi:chart-bar
+          - type: entity
+            entity: sensor.daily_average_energy_this_month
+            name: Daily Avg kWh
+            icon: mdi:lightning-bolt
+          - type: entity
+            entity: sensor.estimated_annual_energy_cost
+            name: Est. Annual
+            icon: mdi:calendar-clock
 
       # ── Today's costs per device ──
       - type: entities
         title: Today's Energy Costs
+        show_header_toggle: false
         entities:
           - entity: sensor.desktop_desk_plug_energy_cost_today
             name: Desktop Desk
@@ -159,6 +230,7 @@ views:
       # ── Monthly costs per device ──
       - type: entities
         title: This Month's Energy Costs
+        show_header_toggle: false
         entities:
           - entity: sensor.desktop_desk_plug_energy_cost_monthly
             name: Desktop Desk
@@ -177,9 +249,33 @@ views:
             name: Total This Month
             icon: mdi:sigma
 
-      # ── Today's energy usage per device ──
+  # ═══════════════════════════════════════════════════════════
+  #  VIEW 4: USAGE — energy consumption (kWh)
+  # ═══════════════════════════════════════════════════════════
+  - title: Usage
+    path: usage
+    icon: mdi:chart-bar
+    cards:
+      # ── Today's totals ──
+      - type: horizontal-stack
+        cards:
+          - type: entity
+            entity: sensor.total_energy_today
+            name: Total Today
+            icon: mdi:lightning-bolt
+          - type: entity
+            entity: sensor.total_energy_this_month
+            name: Total This Month
+            icon: mdi:lightning-bolt-circle
+          - type: entity
+            entity: sensor.daily_average_energy_this_month
+            name: Daily Avg
+            icon: mdi:chart-line
+
+      # ── Today's kWh per device ──
       - type: entities
         title: Today's Energy Usage (kWh)
+        show_header_toggle: false
         entities:
           - entity: sensor.desktop_desk_plug_today_s_energy
             name: Desktop Desk
@@ -194,7 +290,80 @@ views:
             name: Basement Heater
             icon: mdi:radiator
 
-  - title: Device Details
+      # ── Device share of total (this month) ──
+      - type: entities
+        title: Device Share of Monthly Usage
+        show_header_toggle: false
+        entities:
+          - entity: sensor.desktop_desk_plug_share_of_total
+            name: Desktop Desk
+            icon: mdi:desktop-tower-monitor
+          - entity: sensor.nursery_heater_plug_share_of_total
+            name: Nursery Heater
+            icon: mdi:radiator
+          - entity: sensor.dyson_heater_plug_share_of_total
+            name: Dyson Heater
+            icon: mdi:fan
+          - entity: sensor.basement_heater_plug_share_of_total
+            name: Basement Heater
+            icon: mdi:radiator
+
+      # ── Daily energy bar chart (30 days) ──
+      - type: statistics-graph
+        title: Daily Energy Usage – Last 30 Days
+        period: day
+        days_to_show: 30
+        stat_types:
+          - sum
+        chart_type: bar
+        entities:
+          - entity: sensor.desktop_desk_plug_today_s_energy
+            name: Desktop
+          - entity: sensor.nursery_heater_plug_today_s_energy
+            name: Nursery Heater
+          - entity: sensor.dyson_heater_plug_today_s_energy
+            name: Dyson Heater
+          - entity: sensor.basement_heater_plug_today_s_energy
+            name: Basement Heater
+
+      # ── Weekly energy (line) ──
+      - type: statistics-graph
+        title: Weekly Energy Usage
+        period: week
+        stat_types:
+          - sum
+        chart_type: line
+        entities:
+          - entity: sensor.desktop_desk_plug_today_s_energy
+            name: Desktop
+          - entity: sensor.nursery_heater_plug_today_s_energy
+            name: Nursery Heater
+          - entity: sensor.dyson_heater_plug_today_s_energy
+            name: Dyson Heater
+          - entity: sensor.basement_heater_plug_today_s_energy
+            name: Basement Heater
+
+      # ── Monthly energy bar chart ──
+      - type: statistics-graph
+        title: Monthly Energy Usage (kWh)
+        period: month
+        stat_types:
+          - sum
+        chart_type: bar
+        entities:
+          - entity: sensor.desktop_desk_plug_this_month_s_energy
+            name: Desktop
+          - entity: sensor.nursery_heater_plug_this_month_s_energy
+            name: Nursery Heater
+          - entity: sensor.dyson_heater_plug_this_month_s_energy
+            name: Dyson Heater
+          - entity: sensor.basement_heater_plug_this_month_s_energy
+            name: Basement Heater
+
+  # ═══════════════════════════════════════════════════════════
+  #  VIEW 5: DEVICES — detailed per-device drill-down
+  # ═══════════════════════════════════════════════════════════
+  - title: Devices
     path: devices
     icon: mdi:power-plug
     cards:
@@ -208,12 +377,29 @@ views:
               - type: entity
                 entity: sensor.desktop_desk_plug_current_power
                 name: Power Now
+                icon: mdi:flash
               - type: entity
                 entity: sensor.desktop_desk_plug_today_s_energy
-                name: Today
+                name: Today (kWh)
+                icon: mdi:lightning-bolt
               - type: entity
                 entity: sensor.desktop_desk_plug_energy_cost_today
                 name: Cost Today
+                icon: mdi:cash
+          - type: horizontal-stack
+            cards:
+              - type: entity
+                entity: sensor.desktop_desk_plug_this_month_s_energy
+                name: Month (kWh)
+                icon: mdi:calendar
+              - type: entity
+                entity: sensor.desktop_desk_plug_energy_cost_monthly
+                name: Cost Month
+                icon: mdi:cash-multiple
+              - type: entity
+                entity: sensor.desktop_desk_plug_share_of_total
+                name: Share
+                icon: mdi:percent
           - type: history-graph
             hours_to_show: 48
             entities:
@@ -230,12 +416,29 @@ views:
               - type: entity
                 entity: sensor.nursery_heater_plug_current_power
                 name: Power Now
+                icon: mdi:flash
               - type: entity
                 entity: sensor.nursery_heater_plug_today_s_energy
-                name: Today
+                name: Today (kWh)
+                icon: mdi:lightning-bolt
               - type: entity
                 entity: sensor.nursery_heater_plug_energy_cost_today
                 name: Cost Today
+                icon: mdi:cash
+          - type: horizontal-stack
+            cards:
+              - type: entity
+                entity: sensor.nursery_heater_plug_this_month_s_energy
+                name: Month (kWh)
+                icon: mdi:calendar
+              - type: entity
+                entity: sensor.nursery_heater_plug_energy_cost_monthly
+                name: Cost Month
+                icon: mdi:cash-multiple
+              - type: entity
+                entity: sensor.nursery_heater_plug_share_of_total
+                name: Share
+                icon: mdi:percent
           - type: history-graph
             hours_to_show: 48
             entities:
@@ -252,12 +455,29 @@ views:
               - type: entity
                 entity: sensor.dyson_heater_plug_current_power
                 name: Power Now
+                icon: mdi:flash
               - type: entity
                 entity: sensor.dyson_heater_plug_today_s_energy
-                name: Today
+                name: Today (kWh)
+                icon: mdi:lightning-bolt
               - type: entity
                 entity: sensor.dyson_heater_plug_energy_cost_today
                 name: Cost Today
+                icon: mdi:cash
+          - type: horizontal-stack
+            cards:
+              - type: entity
+                entity: sensor.dyson_heater_plug_this_month_s_energy
+                name: Month (kWh)
+                icon: mdi:calendar
+              - type: entity
+                entity: sensor.dyson_heater_plug_energy_cost_monthly
+                name: Cost Month
+                icon: mdi:cash-multiple
+              - type: entity
+                entity: sensor.dyson_heater_plug_share_of_total
+                name: Share
+                icon: mdi:percent
           - type: history-graph
             hours_to_show: 48
             entities:
@@ -274,12 +494,29 @@ views:
               - type: entity
                 entity: sensor.basement_heater_plug_current_power
                 name: Power Now
+                icon: mdi:flash
               - type: entity
                 entity: sensor.basement_heater_plug_today_s_energy
-                name: Today
+                name: Today (kWh)
+                icon: mdi:lightning-bolt
               - type: entity
                 entity: sensor.basement_heater_plug_energy_cost_today
                 name: Cost Today
+                icon: mdi:cash
+          - type: horizontal-stack
+            cards:
+              - type: entity
+                entity: sensor.basement_heater_plug_this_month_s_energy
+                name: Month (kWh)
+                icon: mdi:calendar
+              - type: entity
+                entity: sensor.basement_heater_plug_energy_cost_monthly
+                name: Cost Month
+                icon: mdi:cash-multiple
+              - type: entity
+                entity: sensor.basement_heater_plug_share_of_total
+                name: Share
+                icon: mdi:percent
           - type: history-graph
             hours_to_show: 48
             entities:
