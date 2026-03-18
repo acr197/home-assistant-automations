@@ -1,0 +1,287 @@
+title: Energy Monitor
+views:
+  - title: Overview
+    path: overview
+    icon: mdi:lightning-bolt
+    cards:
+      # ── Header: Total power & cost summary ──
+      - type: horizontal-stack
+        cards:
+          - type: entity
+            entity: sensor.total_power_draw_now
+            name: Total Power Now
+            icon: mdi:flash
+          - type: entity
+            entity: sensor.total_energy_cost_today
+            name: Cost Today
+            icon: mdi:currency-usd
+          - type: entity
+            entity: sensor.total_energy_cost_monthly
+            name: Cost This Month
+            icon: mdi:calendar-month
+
+      # ── Total power draw over time ──
+      - type: history-graph
+        title: Total Power Draw (All Plugs)
+        hours_to_show: 24
+        entities:
+          - entity: sensor.total_power_draw_now
+            name: Total Power
+
+      # ── Individual real-time power gauges ──
+      - type: horizontal-stack
+        cards:
+          - type: gauge
+            entity: sensor.desktop_desk_plug_current_power
+            name: Desktop
+            unit: W
+            min: 0
+            max: 1500
+            severity:
+              green: 0
+              yellow: 300
+              red: 800
+          - type: gauge
+            entity: sensor.nursery_heater_plug_current_power
+            name: Nursery Heater
+            unit: W
+            min: 0
+            max: 1500
+            severity:
+              green: 0
+              yellow: 300
+              red: 800
+      - type: horizontal-stack
+        cards:
+          - type: gauge
+            entity: sensor.dyson_heater_plug_current_power
+            name: Dyson Heater
+            unit: W
+            min: 0
+            max: 1500
+            severity:
+              green: 0
+              yellow: 300
+              red: 800
+          - type: gauge
+            entity: sensor.basement_heater_plug_current_power
+            name: Basement Heater
+            unit: W
+            min: 0
+            max: 1500
+            severity:
+              green: 0
+              yellow: 300
+              red: 800
+
+      # ── Power draw history per device ──
+      - type: history-graph
+        title: Power Draw by Device (24h)
+        hours_to_show: 24
+        entities:
+          - entity: sensor.desktop_desk_plug_current_power
+            name: Desktop
+          - entity: sensor.nursery_heater_plug_current_power
+            name: Nursery Heater
+          - entity: sensor.dyson_heater_plug_current_power
+            name: Dyson Heater
+          - entity: sensor.basement_heater_plug_current_power
+            name: Basement Heater
+
+      # ── Energy usage statistics (long-term charts) ──
+      - type: statistics-graph
+        title: Energy Usage - Last 30 Days (kWh)
+        period: day
+        days_to_show: 30
+        stat_types:
+          - sum
+        chart_type: bar
+        entities:
+          - entity: sensor.desktop_desk_plug_today_s_energy
+            name: Desktop
+          - entity: sensor.nursery_heater_plug_today_s_energy
+            name: Nursery Heater
+          - entity: sensor.dyson_heater_plug_today_s_energy
+            name: Dyson Heater
+          - entity: sensor.basement_heater_plug_today_s_energy
+            name: Basement Heater
+
+      - type: statistics-graph
+        title: Monthly Energy Usage (kWh)
+        period: month
+        stat_types:
+          - sum
+        chart_type: bar
+        entities:
+          - entity: sensor.desktop_desk_plug_this_month_s_energy
+            name: Desktop
+          - entity: sensor.nursery_heater_plug_this_month_s_energy
+            name: Nursery Heater
+          - entity: sensor.dyson_heater_plug_this_month_s_energy
+            name: Dyson Heater
+          - entity: sensor.basement_heater_plug_this_month_s_energy
+            name: Basement Heater
+
+  - title: Costs
+    path: costs
+    icon: mdi:currency-usd
+    cards:
+      # ── Cost summary ──
+      - type: markdown
+        title: PECO Rate Info
+        content: >
+          **Rate:** $0.2311/kWh (all-in from Feb 2026 PECO bill)
+
+
+          **Last bill:** $144.18 for 624 kWh (29 days)
+
+      # ── Today's costs per device ──
+      - type: entities
+        title: Today's Energy Costs
+        entities:
+          - entity: sensor.desktop_desk_plug_energy_cost_today
+            name: Desktop Desk
+            icon: mdi:desktop-tower-monitor
+          - entity: sensor.nursery_heater_plug_energy_cost_today
+            name: Nursery Heater
+            icon: mdi:radiator
+          - entity: sensor.dyson_heater_plug_energy_cost_today
+            name: Dyson Heater
+            icon: mdi:fan
+          - entity: sensor.basement_heater_plug_energy_cost_today
+            name: Basement Heater
+            icon: mdi:radiator
+          - type: divider
+          - entity: sensor.total_energy_cost_today
+            name: Total Today
+            icon: mdi:sigma
+
+      # ── Monthly costs per device ──
+      - type: entities
+        title: This Month's Energy Costs
+        entities:
+          - entity: sensor.desktop_desk_plug_energy_cost_monthly
+            name: Desktop Desk
+            icon: mdi:desktop-tower-monitor
+          - entity: sensor.nursery_heater_plug_energy_cost_monthly
+            name: Nursery Heater
+            icon: mdi:radiator
+          - entity: sensor.dyson_heater_plug_energy_cost_monthly
+            name: Dyson Heater
+            icon: mdi:fan
+          - entity: sensor.basement_heater_plug_energy_cost_monthly
+            name: Basement Heater
+            icon: mdi:radiator
+          - type: divider
+          - entity: sensor.total_energy_cost_monthly
+            name: Total This Month
+            icon: mdi:sigma
+
+      # ── Today's energy usage per device ──
+      - type: entities
+        title: Today's Energy Usage (kWh)
+        entities:
+          - entity: sensor.desktop_desk_plug_today_s_energy
+            name: Desktop Desk
+            icon: mdi:desktop-tower-monitor
+          - entity: sensor.nursery_heater_plug_today_s_energy
+            name: Nursery Heater
+            icon: mdi:radiator
+          - entity: sensor.dyson_heater_plug_today_s_energy
+            name: Dyson Heater
+            icon: mdi:fan
+          - entity: sensor.basement_heater_plug_today_s_energy
+            name: Basement Heater
+            icon: mdi:radiator
+
+  - title: Device Details
+    path: devices
+    icon: mdi:power-plug
+    cards:
+      # ── Desktop Desk Plug ──
+      - type: vertical-stack
+        cards:
+          - type: markdown
+            content: "## Desktop Desk Plug"
+          - type: horizontal-stack
+            cards:
+              - type: entity
+                entity: sensor.desktop_desk_plug_current_power
+                name: Power Now
+              - type: entity
+                entity: sensor.desktop_desk_plug_today_s_energy
+                name: Today
+              - type: entity
+                entity: sensor.desktop_desk_plug_energy_cost_today
+                name: Cost Today
+          - type: history-graph
+            hours_to_show: 48
+            entities:
+              - entity: sensor.desktop_desk_plug_current_power
+                name: Power (W)
+
+      # ── Nursery Heater Plug ──
+      - type: vertical-stack
+        cards:
+          - type: markdown
+            content: "## Nursery Heater Plug"
+          - type: horizontal-stack
+            cards:
+              - type: entity
+                entity: sensor.nursery_heater_plug_current_power
+                name: Power Now
+              - type: entity
+                entity: sensor.nursery_heater_plug_today_s_energy
+                name: Today
+              - type: entity
+                entity: sensor.nursery_heater_plug_energy_cost_today
+                name: Cost Today
+          - type: history-graph
+            hours_to_show: 48
+            entities:
+              - entity: sensor.nursery_heater_plug_current_power
+                name: Power (W)
+
+      # ── Dyson Heater Plug ──
+      - type: vertical-stack
+        cards:
+          - type: markdown
+            content: "## Dyson Heater Plug"
+          - type: horizontal-stack
+            cards:
+              - type: entity
+                entity: sensor.dyson_heater_plug_current_power
+                name: Power Now
+              - type: entity
+                entity: sensor.dyson_heater_plug_today_s_energy
+                name: Today
+              - type: entity
+                entity: sensor.dyson_heater_plug_energy_cost_today
+                name: Cost Today
+          - type: history-graph
+            hours_to_show: 48
+            entities:
+              - entity: sensor.dyson_heater_plug_current_power
+                name: Power (W)
+
+      # ── Basement Heater Plug ──
+      - type: vertical-stack
+        cards:
+          - type: markdown
+            content: "## Basement Heater Plug"
+          - type: horizontal-stack
+            cards:
+              - type: entity
+                entity: sensor.basement_heater_plug_current_power
+                name: Power Now
+              - type: entity
+                entity: sensor.basement_heater_plug_today_s_energy
+                name: Today
+              - type: entity
+                entity: sensor.basement_heater_plug_energy_cost_today
+                name: Cost Today
+          - type: history-graph
+            hours_to_show: 48
+            entities:
+              - entity: sensor.basement_heater_plug_current_power
+                name: Power (W)

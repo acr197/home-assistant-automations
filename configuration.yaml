@@ -95,6 +95,80 @@ template:
         unique_id: pihole_status
         state: "{{ 'Disabled' if is_state('switch.pi_hole','off') else 'Enabled' }}"
 
+      # Energy cost sensors ($0.2311/kWh from PECO bill)
+      - name: "Desktop Desk Plug Energy Cost Today"
+        unique_id: desktop_desk_plug_energy_cost_today
+        unit_of_measurement: "$"
+        state: >
+          {{ (states('sensor.desktop_desk_plug_today_s_energy') | float(0) * 0.2311) | round(2) }}
+      - name: "Nursery Heater Plug Energy Cost Today"
+        unique_id: nursery_heater_plug_energy_cost_today
+        unit_of_measurement: "$"
+        state: >
+          {{ (states('sensor.nursery_heater_plug_today_s_energy') | float(0) * 0.2311) | round(2) }}
+      - name: "Dyson Heater Plug Energy Cost Today"
+        unique_id: dyson_heater_plug_energy_cost_today
+        unit_of_measurement: "$"
+        state: >
+          {{ (states('sensor.dyson_heater_plug_today_s_energy') | float(0) * 0.2311) | round(2) }}
+      - name: "Basement Heater Plug Energy Cost Today"
+        unique_id: basement_heater_plug_energy_cost_today
+        unit_of_measurement: "$"
+        state: >
+          {{ (states('sensor.basement_heater_plug_today_s_energy') | float(0) * 0.2311) | round(2) }}
+      - name: "Desktop Desk Plug Energy Cost Monthly"
+        unique_id: desktop_desk_plug_energy_cost_monthly
+        unit_of_measurement: "$"
+        state: >
+          {{ (states('sensor.desktop_desk_plug_this_month_s_energy') | float(0) * 0.2311) | round(2) }}
+      - name: "Nursery Heater Plug Energy Cost Monthly"
+        unique_id: nursery_heater_plug_energy_cost_monthly
+        unit_of_measurement: "$"
+        state: >
+          {{ (states('sensor.nursery_heater_plug_this_month_s_energy') | float(0) * 0.2311) | round(2) }}
+      - name: "Dyson Heater Plug Energy Cost Monthly"
+        unique_id: dyson_heater_plug_energy_cost_monthly
+        unit_of_measurement: "$"
+        state: >
+          {{ (states('sensor.dyson_heater_plug_this_month_s_energy') | float(0) * 0.2311) | round(2) }}
+      - name: "Basement Heater Plug Energy Cost Monthly"
+        unique_id: basement_heater_plug_energy_cost_monthly
+        unit_of_measurement: "$"
+        state: >
+          {{ (states('sensor.basement_heater_plug_this_month_s_energy') | float(0) * 0.2311) | round(2) }}
+      - name: "Total Energy Cost Today"
+        unique_id: total_energy_cost_today
+        unit_of_measurement: "$"
+        state: >
+          {{ (
+            states('sensor.desktop_desk_plug_today_s_energy') | float(0) +
+            states('sensor.nursery_heater_plug_today_s_energy') | float(0) +
+            states('sensor.dyson_heater_plug_today_s_energy') | float(0) +
+            states('sensor.basement_heater_plug_today_s_energy') | float(0)
+          ) * 0.2311 | round(2) }}
+      - name: "Total Energy Cost Monthly"
+        unique_id: total_energy_cost_monthly
+        unit_of_measurement: "$"
+        state: >
+          {{ (
+            states('sensor.desktop_desk_plug_this_month_s_energy') | float(0) +
+            states('sensor.nursery_heater_plug_this_month_s_energy') | float(0) +
+            states('sensor.dyson_heater_plug_this_month_s_energy') | float(0) +
+            states('sensor.basement_heater_plug_this_month_s_energy') | float(0)
+          ) * 0.2311 | round(2) }}
+      - name: "Total Power Draw Now"
+        unique_id: total_power_draw_now
+        unit_of_measurement: "W"
+        device_class: power
+        state_class: measurement
+        state: >
+          {{ (
+            states('sensor.desktop_desk_plug_current_power') | float(0) +
+            states('sensor.nursery_heater_plug_current_power') | float(0) +
+            states('sensor.dyson_heater_plug_current_power') | float(0) +
+            states('sensor.basement_heater_plug_current_power') | float(0)
+          ) | round(1) }}
+
 sensor:
   - platform: rest
     name: OpenMeteo Raw
@@ -191,6 +265,16 @@ timer:
   pihole_disable_window:
     duration: "00:15:00"
 
+
+lovelace:
+  mode: storage
+  dashboards:
+    lovelace-energy:
+      mode: yaml
+      title: Energy Monitor
+      filename: dashboards/energy-monitor.yaml
+      icon: mdi:lightning-bolt
+      show_in_sidebar: true
 
 automation: !include automations.yaml
 script: !include scripts.yaml
