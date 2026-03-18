@@ -48,3 +48,15 @@ toggle_thermostat_automations:
     - service: homeassistant.update_entity
       target:
         entity_id: sensor.guest_mode_status
+
+
+git_pull_and_reload:
+  alias: "GitHub: Pull & Reload"
+  description: Manually pull latest config from GitHub and reload Home Assistant.
+  icon: mdi:github
+  mode: single
+  sequence:
+    - action: shell_command.git_pull
+    - delay:
+        seconds: 5
+    - action: homeassistant.reload_all
