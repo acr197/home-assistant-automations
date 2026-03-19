@@ -1,0 +1,18 @@
+appdaemon:
+  latitude: 0.0       # Replace with your latitude
+  longitude: 0.0      # Replace with your longitude
+  elevation: 0        # Replace with your elevation
+  time_zone: America/New_York  # Replace with your time zone
+  plugins:
+    HASS:
+      type: hass
+      ha_url: http://homeassistant.local:8123
+      token: YOUR_LONG_LIVED_TOKEN_HERE  # Create in HA: Profile > Security > Long-Lived Access Tokens
+
+http:
+  url: http://0.0.0.0:5050
+
+logs:
+  main_log:
+    filename: /config/appdaemon/appdaemon.log
+    log_level: INFO
