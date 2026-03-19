@@ -1,23 +1,36 @@
 import appdaemon.plugins.hass.hassapi as hass
-import cups
+
+try:
+    import cups
+    CUPS_AVAILABLE = True
+except ImportError:
+    CUPS_AVAILABLE = False
 
 
 class HelloWorld(hass.Hass):
 
   def initialize(self):
-    self.log("My printing script initialize")
+    self.log("Printer app initializing")
+    if not CUPS_AVAILABLE:
+      self.log("ERROR: pycups is not installed — printing will not work")
+      return
     self.listen_event(self.mode_event, "plz_print_purge")
+    self.log("Printer app ready, listening for plz_print_purge")
 
-  def mode_event(self, event, data, kvargs):
-    self.log("Starting the print")
+  def mode_event(self, event, data, kwargs):
+    self.log("plz_print_purge received, starting print")
     self.print_purge()
-    self.log("Print is done!!")
+    self.log("Print job submitted")
 
   def print_purge(self):
-    cups.setServer("192.168.0.100:631")
-    conn = cups.Connection(host='192.168.0.100', port=631)
+    cups.setServer("192.168.0.100")
+    conn = cups.Connection(host="192.168.0.100", port=631)
 
     printer = conn.getDefault()
-    self.log(f"Printing on {printer}")
+    if not printer:
+      self.log("ERROR: No default printer found at 192.168.0.100:631")
+      return
 
-    job_id = conn.printFile(printer, "/config/www/print/testpage.pdf", 'Print Job', {})
+    self.log(f"Printing on {printer}")
+    job_id = conn.printFile(printer, "/config/www/print/testpage.pdf", "Print Job", {})
+    self.log(f"Print job submitted with ID: {job_id}")

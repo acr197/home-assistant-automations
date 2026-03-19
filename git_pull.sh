@@ -26,16 +26,26 @@ if [ -d .git/rebase-merge ] || [ -d .git/rebase-apply ] || [ -f .git/MERGE_HEAD 
   exit 1
 fi
 
-# Stash any local uncommitted changes so pull doesn't fail
+LOCAL_HEAD=$(git rev-parse HEAD)
+
+# Stash any local uncommitted changes so pull doesn't conflict
 git stash --quiet 2>/dev/null || true
 
 if ! git pull --rebase origin "$BRANCH"; then
-  echo "ERROR: pull failed. Check remote or credentials."
+  echo "ERROR: git pull failed"
   git stash pop --quiet 2>/dev/null || true
   exit 1
 fi
 
-# Re-apply any stashed local changes
+# Restore local changes on top
 git stash pop --quiet 2>/dev/null || true
 
-echo "Pull completed"
+REMOTE_HEAD=$(git rev-parse HEAD)
+
+if [ "$LOCAL_HEAD" = "$REMOTE_HEAD" ]; then
+  echo "Already up to date"
+  exit 0
+fi
+
+echo "Pulled new changes: $LOCAL_HEAD -> $REMOTE_HEAD"
+exit 0
