@@ -51,46 +51,44 @@ template:
         unique_id: andrew_distance_home_mi
         unit_of_measurement: "mi"
         state: >
-          {% set km = distance('person.andrew','zone.home') %}
-          {{ (km | float(0) * 0.621371) | round(2) }}
+          {% set d = distance('person.andrew', state_attr('zone.home','latitude'), state_attr('zone.home','longitude')) %}
+          {{ (d | float(0) * 0.621371) | round(2) }}
       - name: "Amy Distance To Home (mi)"
         unique_id: amy_distance_home_mi
         unit_of_measurement: "mi"
         state: >
-          {% set km = distance('person.amy','zone.home') %}
-          {{ (km | float(0) * 0.621371) | round(2) }}
+          {% set d = distance('person.amy', state_attr('zone.home','latitude'), state_attr('zone.home','longitude')) %}
+          {{ (d | float(0) * 0.621371) | round(2) }}
       - name: "Outdoor Temperature"
         unique_id: outdoor_temperature_openmeteo
         unit_of_measurement: "°F"
         device_class: temperature
         state_class: measurement
+        availability: >
+          {{ state_attr('sensor.openmeteo_raw','current') not in [None, 'unknown', 'unavailable'] }}
         state: >
-          {% set cw = state_attr('sensor.openmeteo_raw','current_weather') %}
-          {{ cw['temperature'] if cw else 'unknown' }}
+          {% set cw = state_attr('sensor.openmeteo_raw','current') %}
+          {{ cw['temperature_2m'] if cw else None }}
       - name: "Outdoor Feels Like"
         unique_id: outdoor_feels_like_openmeteo
         unit_of_measurement: "°F"
         device_class: temperature
         state_class: measurement
+        availability: >
+          {{ state_attr('sensor.openmeteo_raw','current') not in [None, 'unknown', 'unavailable'] }}
         state: >
-          {% set cw = state_attr('sensor.openmeteo_raw','current_weather') %}
-          {% set hourly = state_attr('sensor.openmeteo_raw','hourly') %}
-          {% if cw and hourly and (cw['time'] in hourly['time']) %}
-            {% set idx = hourly['time'].index(cw['time']) %}
-            {{ hourly['apparent_temperature'][idx] }}
-          {% else %} unknown {% endif %}
+          {% set cw = state_attr('sensor.openmeteo_raw','current') %}
+          {{ cw['apparent_temperature'] if cw else None }}
       - name: "Outdoor Humidity"
         unique_id: outdoor_humidity_openmeteo
         unit_of_measurement: "%"
         device_class: humidity
         state_class: measurement
+        availability: >
+          {{ state_attr('sensor.openmeteo_raw','current') not in [None, 'unknown', 'unavailable'] }}
         state: >
-          {% set cw = state_attr('sensor.openmeteo_raw','current_weather') %}
-          {% set hourly = state_attr('sensor.openmeteo_raw','hourly') %}
-          {% if cw and hourly and (cw['time'] in hourly['time']) %}
-            {% set idx = hourly['time'].index(cw['time']) %}
-            {{ (hourly['relative_humidity_2m'][idx]) }}
-          {% else %} unknown {% endif %}
+          {% set cw = state_attr('sensor.openmeteo_raw','current') %}
+          {{ cw['relative_humidity_2m'] if cw else None }}
       - name: Pi-hole Status
         unique_id: pihole_status
         state: "{{ 'Disabled' if is_state('switch.pi_hole','off') else 'Enabled' }}"
@@ -267,11 +265,11 @@ sensor:
   - platform: rest
     name: OpenMeteo Raw
     resource_template: >-
-      https://api.open-meteo.com/v1/forecast?latitude={{ state_attr('zone.home','latitude') }}&longitude={{ state_attr('zone.home','longitude') }}&current_weather=true&hourly=apparent_temperature,relative_humidity_2m&timezone=auto&temperature_unit=fahrenheit
+      https://api.open-meteo.com/v1/forecast?latitude={{ state_attr('zone.home','latitude') }}&longitude={{ state_attr('zone.home','longitude') }}&current=temperature_2m,apparent_temperature,relative_humidity_2m&hourly=apparent_temperature,relative_humidity_2m&timezone=auto&temperature_unit=fahrenheit
     json_attributes:
-      - current_weather
+      - current
       - hourly
-    value_template: "{{ value_json.current_weather.temperature }}"
+    value_template: "{{ value_json.current.temperature_2m if value_json.current is defined else 'unavailable' }}"
     unit_of_measurement: "°F"
     scan_interval: 600
 

@@ -207,7 +207,7 @@
       entity_id: light.hue_candle_lower_staircase
     data:
       brightness_pct: '{{ pct }}'
-      color_temp: 450
+      color_temp_kelvin: 2222
     action: light.turn_on
   mode: single
 - id: '02030301'
@@ -229,7 +229,7 @@
           entity_id: light.stairwell_upper_wall_light
         data:
           brightness_pct: 1
-          color_temp: 450
+          color_temp_kelvin: 2222
           transition: 1
     default:
     - service: light.turn_off
@@ -255,7 +255,7 @@
       entity_id: light.hue_candle_upper_staircase
     data:
       brightness_pct: 1
-      color_temp: 450
+      color_temp_kelvin: 2222
     action: light.turn_on
   - delay: 00:00:30
   - target:
@@ -1099,7 +1099,7 @@
       entity_id: light.hue_candle_lower_staircase
     data:
       brightness_pct: 1
-      color_temp: 450
+      color_temp_kelvin: 2222
       transition: 1
     action: light.turn_on
   - target:
@@ -1167,7 +1167,7 @@
               entity_id: light.hue_candle_lower_staircase
             data:
               brightness_pct: 1
-              color_temp: 450
+              color_temp_kelvin: 2222
             action: light.turn_on
           - target:
               area_id: master_bedroom_lights
@@ -1185,7 +1185,7 @@
               - light.hue_candle_upper_staircase
             data:
               brightness_pct: 1
-              color_temp: 450
+              color_temp_kelvin: 2222
             action: light.turn_on
           - delay:
               seconds: 60
@@ -1204,7 +1204,7 @@
             entity_id: light.hue_candle_upper_staircase
           data:
             brightness_pct: 1
-            color_temp: 450
+            color_temp_kelvin: 2222
           action: light.turn_on
         - delay:
             seconds: 15
@@ -1228,7 +1228,7 @@
             entity_id: light.hue_candle_lower_staircase
           data:
             brightness_pct: 1
-            color_temp: 450
+            color_temp_kelvin: 2222
             transition: 1
           action: light.turn_on
         - delay:
@@ -1239,7 +1239,7 @@
             - light.hue_candle_upper_staircase
           data:
             brightness_pct: 1
-            color_temp: 450
+            color_temp_kelvin: 2222
             transition: 0
           action: light.turn_on
         - delay:
@@ -1256,7 +1256,7 @@
           entity_id: light.hue_candle_upper_staircase
         data:
           brightness_pct: 1
-          color_temp: 450
+          color_temp_kelvin: 2222
           transition: 0
         action: light.turn_on
       - delay:
@@ -1296,7 +1296,7 @@
           - light.hue_candle_lower_staircase
           - light.hue_candle_upper_staircase
         data:
-          color_temp: 450
+          color_temp_kelvin: 2222
           transition: 1
           brightness_pct: 3
     - conditions:
@@ -1316,7 +1316,7 @@
           - light.hue_candle_upper_staircase
         data:
           brightness_pct: 3
-          color_temp: 450
+          color_temp_kelvin: 2222
           transition: 1
     - conditions:
       - condition: state
@@ -1333,7 +1333,7 @@
           entity_id: light.hue_candle_lower_staircase
         data:
           brightness_pct: 1
-          color_temp: 450
+          color_temp_kelvin: 2222
           transition: 1
     default:
     - choose:
@@ -1347,7 +1347,7 @@
             entity_id: light.hue_candle_lower_staircase
           data:
             brightness_pct: 1
-            color_temp: 450
+            color_temp_kelvin: 2222
             transition: 1
   mode: single
 - id: '1764032637877'
