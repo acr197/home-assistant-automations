@@ -246,10 +246,8 @@
   - trigger: state
     entity_id:
     - light.hue_white_lamp_top_br_dresser
-    to:
-    - 'off'
-    from:
-    - 'on'
+    from: 'on'
+    to: 'off'
   actions:
   - target:
       entity_id: light.hue_candle_upper_staircase
@@ -258,6 +256,9 @@
       color_temp_kelvin: 2222
     action: light.turn_on
   - delay: 00:00:30
+  - condition: state
+    entity_id: light.hue_white_lamp_top_br_dresser
+    state: 'off'
   - target:
       entity_id: light.hue_candle_upper_staircase
     action: light.turn_off
@@ -647,41 +648,37 @@
   mode: single
 - id: 08040101
   alias: 'Master Bedroom: Humidifier Overnight Cycle'
-  description: Cycle humidifier on/off during overnight windows when Andrew is home.
+  description: Cycle humidifier on/off overnight only when humidity is 40% or higher
+    and Andrew or Amy are home.
   triggers:
-  - at: '23:00:00'
+  - trigger: time
+    at: '23:00:00'
     id: on_11pm
-    trigger: time
-  - at: '23:30:00'
+  - trigger: time
+    at: '23:30:00'
     id: off_1130pm
-    trigger: time
-  - at: 01:00:00
+  - trigger: time
+    at: 01:00:00
     id: on_1am
-    trigger: time
-  - at: 01:30:00
+  - trigger: time
+    at: 01:30:00
     id: off_130am
-    trigger: time
-  - at: 03:00:00
+  - trigger: time
+    at: 03:00:00
     id: on_3am
-    trigger: time
-  - at: 03:30:00
+  - trigger: time
+    at: 03:30:00
     id: off_330am
-    trigger: time
-  - at: 05:00:00
+  - trigger: time
+    at: 05:00:00
     id: on_5am
-    trigger: time
-  - at: 05:30:00
+  - trigger: time
+    at: 05:30:00
     id: off_530am
-    trigger: time
-  conditions:
-  - condition: or
-    conditions:
-    - condition: zone
-      entity_id: person.andrew
-      zone: zone.home
-    - condition: state
-      entity_id: input_boolean.guest_mode
-      state: 'on'
+  - trigger: numeric_state
+    entity_id: sensor.master_bedroom_humidity
+    below: 40
+    id: humidity_low
   actions:
   - choose:
     - conditions:
@@ -694,10 +691,20 @@
       - condition: numeric_state
         entity_id: sensor.govee_hydrometer_master_bedroom_h5075_humidity
         below: 50
+        entity_id: sensor.master_bedroom_humidity
+        above: 39.9
+      - condition: or
+        conditions:
+        - condition: state
+          entity_id: person.andrew
+          state: home
+        - condition: state
+          entity_id: person.amy
+          state: home
       sequence:
-      - target:
+      - action: switch.turn_on
+        target:
           device_id: 788c5fd6f09f75f04e76cb3a805de6aa
-        action: switch.turn_on
     - conditions:
       - condition: trigger
         id:
@@ -706,9 +713,32 @@
         - off_330am
         - off_530am
       sequence:
-      - target:
+      - action: switch.turn_off
+        target:
           device_id: 788c5fd6f09f75f04e76cb3a805de6aa
-        action: switch.turn_off
+    - conditions:
+      - condition: trigger
+        id:
+        - humidity_low
+      sequence:
+      - action: switch.turn_off
+        target:
+          device_id: 788c5fd6f09f75f04e76cb3a805de6aa
+    - conditions:
+      - condition: trigger
+        id:
+        - andrew_away
+        - amy_away
+      - condition: state
+        entity_id: person.andrew
+        state: not_home
+      - condition: state
+        entity_id: person.amy
+        state: not_home
+      sequence:
+      - action: switch.turn_off
+        target:
+          device_id: 788c5fd6f09f75f04e76cb3a805de6aa
   mode: single
 - alias: 'Guest Mode: Sync Thermostat Automations'
   mode: single
@@ -845,8 +875,8 @@
         type: is_idle
       sequence:
       - type: turn_off
-        device_id: e3414be67e3e5199c322dcab3887e2a4
-        entity_id: 19864e4daa9c6e9d9e462f40e093e53c
+        device_id: 929a2d48c4e5b587eb4bcfea32e2d1f1
+        entity_id: 1a0d5dafedfba7b5ddab267238620d5b
         domain: switch
     - conditions:
       - condition: state
@@ -861,8 +891,8 @@
         type: is_playing
       sequence:
       - type: turn_off
-        device_id: e3414be67e3e5199c322dcab3887e2a4
-        entity_id: 19864e4daa9c6e9d9e462f40e093e53c
+        device_id: 929a2d48c4e5b587eb4bcfea32e2d1f1
+        entity_id: 1a0d5dafedfba7b5ddab267238620d5b
         domain: switch
     - conditions:
       - condition: numeric_state
@@ -875,7 +905,8 @@
         type: is_playing
       sequence:
       - target:
-          entity_id: switch.nursery_heater
+          entity_id:
+          - switch.tapo_p110m_2_nursery_heater
         action: switch.turn_off
         data: {}
     - conditions:
@@ -895,12 +926,14 @@
         type: is_playing
       sequence:
       - target:
-          entity_id: switch.nursery_heater
+          entity_id:
+          - switch.tapo_p110m_2_nursery_heater
         action: switch.turn_on
+        data: {}
     default:
     - type: turn_off
-      device_id: e3414be67e3e5199c322dcab3887e2a4
-      entity_id: 19864e4daa9c6e9d9e462f40e093e53c
+      device_id: 929a2d48c4e5b587eb4bcfea32e2d1f1
+      entity_id: 1a0d5dafedfba7b5ddab267238620d5b
       domain: switch
   mode: single
 - id: '1761791366230'
@@ -1477,7 +1510,7 @@
   description: Pull config changes from GitHub every 15 minutes and reload if updated.
   triggers:
   - trigger: time_pattern
-    minutes: "/15"
+    minutes: /15
   conditions: []
   actions:
   - action: shell_command.git_pull
@@ -1488,8 +1521,7 @@
   mode: single
 - id: '1771270799102'
   alias: 'GitHub: Pull & Reload on Webhook'
-  description: >-
-    When GitHub Actions sends a webhook after a push, pull latest config
+  description: When GitHub Actions sends a webhook after a push, pull latest config
     from GitHub and reload Home Assistant.
   triggers:
   - trigger: webhook
