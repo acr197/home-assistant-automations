@@ -13,8 +13,8 @@ I wanted full control over my home environment without relying on vendor apps or
 | **Platform** | Home Assistant (YAML-configured) |
 | **Hardware** | Philips Hue, Ecobee, Sonos, Govee, Hatch Rest, ESP32, Sony TV, Dyson |
 | **Protocols** | Zigbee (via Zigbee2MQTT), MQTT, Bluetooth (ESP32 proxy), REST APIs |
-| **Network** | Pi-hole (DNS ad-blocking), DuckDNS (dynamic DNS), SSL/TLS |
-| **APIs** | OpenMeteo (weather), Govee API (lighting), Pi-hole API, CUPS (printing) |
+| **Network** | DuckDNS (dynamic DNS), SSL/TLS |
+| **APIs** | OpenMeteo (weather), Govee API (lighting), CUPS (printing) |
 | **Edge Computing** | ESPHome (ESP32 firmware), AppDaemon (Python automations) |
 | **Infrastructure** | Nabu Casa (remote access), HACS (community integrations), Git (auto-backup) |
 
@@ -43,7 +43,7 @@ I wanted full control over my home environment without relying on vendor apps or
 ### System Maintenance
 - **Nightly Git backup** — shell script auto-commits and pushes config changes at 5 AM with rebase strategy
 - **Auto-updates** — all available HA updates applied nightly at 2 AM
-- **Monthly printer purge** — AppDaemon Python script prints a test page via CUPS on the 1st of each month to prevent ink dry-out
+- **Bi-weekly printer purge** — AppDaemon Python script prints a test page via CUPS on Monday and Thursday to prevent ink dry-out
 - **Battery monitoring** — Govee thermometer battery alerts every 6 hours when low
 
 ## Custom Integrations
@@ -54,7 +54,7 @@ I wanted full control over my home environment without relying on vendor apps or
 
 ## Architecture Highlights
 
-- **Template sensors** — custom distance-to-home (km→mi conversion), HVAC state detection, weather extraction from API responses, Pi-hole status
+- **Template sensors** — custom distance-to-home (km→mi conversion), HVAC state detection, weather extraction from API responses
 - **Derivative + trend sensors** — real-time approach speed calculation from GPS distance changes
 - **Dynamic automation discovery** — guest mode script uses repeat loops to programmatically find and toggle thermostat automations
 - **Multi-layer conditionals** — automations branch on time of day, device state, presence, weather, and HVAC mode simultaneously
@@ -65,7 +65,7 @@ I wanted full control over my home environment without relying on vendor apps or
 ```
 configuration.yaml     # Main config: integrations, sensors, groups, REST commands
 automations.yaml       # 29 automations (1,460 lines)
-scripts.yaml           # Pi-hole toggle, guest mode control
+scripts.yaml           # Guest mode control, GitHub pull & reload
 git_push.sh            # Nightly auto-backup to GitHub
 appdaemon/apps/        # Python: monthly printer purge via CUPS
 custom_components/     # Govee, Hatch Rest, HACS integrations

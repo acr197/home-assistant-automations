@@ -1,5 +1,5 @@
 #!/bin/sh
-set -eu
+set -u
 
 exec >> /config/git_push.log 2>&1
 
@@ -41,9 +41,19 @@ if git diff --cached --quiet; then
   exit 0
 fi
 
-git commit -m "Auto backup: $(date '+%Y-%m-%dT%H:%M:%S%z')"
+if ! git commit -m "Auto backup: $(date '+%Y-%m-%dT%H:%M:%S%z')"; then
+  echo "ERROR: commit failed"
+  exit 1
+fi
 
-git pull --rebase origin "$BRANCH"
+if ! git pull --rebase origin "$BRANCH"; then
+  echo "WARNING: pull --rebase failed, aborting rebase and retrying with merge"
+  git rebase --abort 2>/dev/null || true
+  if ! git pull --no-rebase origin "$BRANCH"; then
+    echo "ERROR: pull --no-rebase also failed. Check remote or credentials."
+    exit 1
+  fi
+fi
 
 if ! git push origin "$BRANCH"; then
   echo "ERROR: push failed. Check remote or credentials."
