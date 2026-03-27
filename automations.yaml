@@ -691,6 +691,9 @@
         - on_1am
         - on_3am
         - on_5am
+      - condition: numeric_state
+        entity_id: sensor.govee_hydrometer_master_bedroom_h5075_humidity
+        below: 50
       sequence:
       - target:
           device_id: 788c5fd6f09f75f04e76cb3a805de6aa
@@ -743,14 +746,15 @@
       entity_id: sensor.guest_mode_status
   id: e489e17d0d1743568cdf4fc3215d90de
 - id: '1761095702248'
-  alias: 'Printer: Print Test Page Once A Month'
-  description: Prevent ink drying
+  alias: 'Printer: Print Test Page Twice A Week'
+  description: Prevent ink drying by printing a test page on Monday and Thursday at 1:15
+    PM. Event is handled by AppDaemon (hello.py) which submits the PDF to CUPS.
   triggers:
   - at: '13:15:00'
     trigger: time
   conditions:
   - condition: template
-    value_template: '{{ now().day == 1 }}'
+    value_template: '{{ now().isoweekday() in [1, 4] }}'
   actions:
   - event: plz_print_purge
     event_data: {}

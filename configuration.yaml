@@ -89,10 +89,6 @@ template:
         state: >
           {% set cw = state_attr('sensor.openmeteo_raw','current') %}
           {{ cw['relative_humidity_2m'] if cw else None }}
-      - name: Pi-hole Status
-        unique_id: pihole_status
-        state: "{{ 'Disabled' if is_state('switch.pi_hole','off') else 'Enabled' }}"
-
       # ── Energy cost sensors ──
       # PECO all-in rate: $144.18 / 624 kWh = $0.2311/kWh
       # Breakdown: Delivery $0.10276 + Generation $0.10237 + Transmission $0.00787 = $0.21300 variable
@@ -280,14 +276,6 @@ sensor:
     time_window: "00:05:00"
     round: 1
 
-  # NEW: Pi-hole status
-  - platform: rest
-    name: Pi-hole Blocking
-    resource: "http://192.168.0.250/api/dns/blocking"
-    value_template: "{{ value_json.blocking }}"  # "enabled" or "disabled"
-    scan_interval: 5
-
-
 binary_sensor:
   - platform: trend
     sensors:
@@ -325,37 +313,6 @@ mqtt:
 shell_command:
   git_push: "sh /config/git_push.sh"
   git_pull: "sh /config/git_pull.sh"
-  
-# pihole commands
-rest_command:
-  pihole_auth:
-    url: "http://192.168.0.250/api/auth"
-    method: POST
-    content_type: application/json
-    payload: '{"password":"{{ password }}"}'
-
-  pihole_blocking_sid:
-    url: "http://192.168.0.250/api/dns/blocking"
-    method: POST
-    content_type: application/json
-    payload: '{"sid":"{{ sid }}","blocking": false, "timer": {{ timer|int }}}'
-
-  pihole_blocking_noauth:
-    url: "http://192.168.0.250/api/dns/blocking"
-    method: POST
-    content_type: application/json
-    payload: '{"blocking": false, "timer": {{ timer|int }}}'
-
-  pihole_enable_noauth:
-    url: "http://192.168.0.250/api/dns/blocking"
-    method: POST
-    content_type: application/json
-    payload: '{"blocking": true}'
-
-
-timer:
-  pihole_disable_window:
-    duration: "00:15:00"
 
 
 lovelace:

@@ -1,23 +1,4 @@
 # scripts.yaml
-pihole_toggle_blocking:
-  alias: "Pi-hole: Toggle (15m off or re-enable)"
-  mode: restart
-  sequence:
-    - choose:
-        - conditions: "{{ is_state('sensor.pi_hole_blocking','disabled') }}"
-          sequence:
-            - service: rest_command.pihole_enable_noauth
-            - service: homeassistant.update_entity
-              target: { entity_id: sensor.pi_hole_blocking }
-      default:
-        - service: rest_command.pihole_blocking_noauth
-          data: { timer: 900 }
-        - delay: "00:00:01"
-        - service: homeassistant.update_entity
-          target: { entity_id: sensor.pi_hole_blocking }
-
-
-
 toggle_thermostat_automations:
   alias: "Guest Mode: Toggle Thermostat Automations On/Off"
   mode: single
