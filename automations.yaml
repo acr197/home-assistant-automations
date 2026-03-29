@@ -254,7 +254,11 @@
     data:
       brightness_pct: 1
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
       color_temp_kelvin: 2222
+=======
+      color_temp_kelvin: 2200
+>>>>>>> Stashed changes
 =======
       color_temp_kelvin: 2200
 >>>>>>> Stashed changes
@@ -694,8 +698,11 @@
         - on_5am
       - condition: numeric_state
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
         entity_id: sensor.govee_hydrometer_master_bedroom_h5075_humidity
         below: 50
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
         entity_id: sensor.master_bedroom_humidity
@@ -1144,7 +1151,10 @@
     data:
       brightness_pct: 1
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
       color_temp_kelvin: 2222
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
       transition: 1
@@ -1215,7 +1225,10 @@
             data:
               brightness_pct: 1
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
               color_temp_kelvin: 2222
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
             action: light.turn_on
@@ -1236,7 +1249,10 @@
             data:
               brightness_pct: 1
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
               color_temp_kelvin: 2222
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
             action: light.turn_on
@@ -1258,7 +1274,10 @@
           data:
             brightness_pct: 1
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
             color_temp_kelvin: 2222
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
           action: light.turn_on
@@ -1285,7 +1304,10 @@
           data:
             brightness_pct: 1
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
             color_temp_kelvin: 2222
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
             transition: 1
@@ -1299,7 +1321,10 @@
           data:
             brightness_pct: 1
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
             color_temp_kelvin: 2222
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
             transition: 0
@@ -1319,7 +1344,10 @@
         data:
           brightness_pct: 1
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
           color_temp_kelvin: 2222
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
           transition: 0
