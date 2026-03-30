@@ -1462,6 +1462,16 @@
   actions:
   - action: shell_command.git_push
   mode: single
+- id: '1771270799103'
+  alias: 'GitHub: Sync on Button Press'
+  description: Push Home Assistant config to GitHub when the Sync GitHub button is pressed.
+  triggers:
+  - trigger: state
+    entity_id: input_button.sync_github
+  conditions: []
+  actions:
+  - action: shell_command.git_push
+  mode: single
 - id: '1742137200000'
   alias: 'GitHub: Pull Remote Changes'
   description: Pull config changes from GitHub every 15 minutes and reload if updated.
@@ -1471,6 +1481,9 @@
   conditions: []
   actions:
   - action: shell_command.git_pull
+    response_variable: pull_result
+  - condition: template
+    value_template: "{{ pull_result['returncode'] == 0 and 'changed' in pull_result.get('stdout', '') }}"
   - action: homeassistant.reload_all
   mode: single
 - id: '1771270799102'
@@ -1487,6 +1500,9 @@
   conditions: []
   actions:
   - action: shell_command.git_pull
+    response_variable: pull_result
+  - condition: template
+    value_template: "{{ pull_result['returncode'] == 0 and 'changed' in pull_result.get('stdout', '') }}"
   - delay:
       seconds: 5
   - action: homeassistant.reload_all

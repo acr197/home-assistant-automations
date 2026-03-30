@@ -36,6 +36,11 @@ group:
 input_boolean:
   guest_mode:
 
+input_button:
+  sync_github:
+    name: Sync GitHub
+    icon: mdi:github
+
 template:
   - sensor:
       - name: Guest Mode Status
@@ -50,12 +55,18 @@ template:
       - name: "Andrew Distance To Home (mi)"
         unique_id: andrew_distance_home_mi
         unit_of_measurement: "mi"
+        availability: >
+          {{ states('person.andrew') not in ['unknown', 'unavailable']
+             and state_attr('zone.home', 'latitude') is not none }}
         state: >
           {% set d = distance('person.andrew', state_attr('zone.home','latitude'), state_attr('zone.home','longitude')) %}
           {{ (d | float(0) * 0.621371) | round(2) }}
       - name: "Amy Distance To Home (mi)"
         unique_id: amy_distance_home_mi
         unit_of_measurement: "mi"
+        availability: >
+          {{ states('person.amy') not in ['unknown', 'unavailable']
+             and state_attr('zone.home', 'latitude') is not none }}
         state: >
           {% set d = distance('person.amy', state_attr('zone.home','latitude'), state_attr('zone.home','longitude')) %}
           {{ (d | float(0) * 0.621371) | round(2) }}
@@ -260,8 +271,7 @@ template:
 sensor:
   - platform: rest
     name: OpenMeteo Raw
-    resource_template: >-
-      https://api.open-meteo.com/v1/forecast?latitude={{ state_attr('zone.home','latitude') }}&longitude={{ state_attr('zone.home','longitude') }}&current=temperature_2m,apparent_temperature,relative_humidity_2m&hourly=apparent_temperature,relative_humidity_2m&timezone=auto&temperature_unit=fahrenheit
+    resource: "https://api.open-meteo.com/v1/forecast?latitude=39.9354267&longitude=-75.15329726862069&current=temperature_2m,apparent_temperature,relative_humidity_2m&hourly=apparent_temperature,relative_humidity_2m&timezone=auto&temperature_unit=fahrenheit"
     json_attributes:
       - current
       - hourly
