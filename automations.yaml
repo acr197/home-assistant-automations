@@ -255,7 +255,11 @@
       brightness_pct: 1
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
       color_temp_kelvin: 2222
+=======
+      color_temp_kelvin: 2200
+>>>>>>> Stashed changes
 =======
       color_temp_kelvin: 2200
 >>>>>>> Stashed changes
@@ -699,8 +703,11 @@
       - condition: numeric_state
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
         entity_id: sensor.govee_hydrometer_master_bedroom_h5075_humidity
         below: 50
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 =======
@@ -1152,7 +1159,10 @@
       brightness_pct: 1
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
       color_temp_kelvin: 2222
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 =======
@@ -1226,7 +1236,10 @@
               brightness_pct: 1
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
               color_temp_kelvin: 2222
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 =======
@@ -1250,7 +1263,10 @@
               brightness_pct: 1
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
               color_temp_kelvin: 2222
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 =======
@@ -1275,7 +1291,10 @@
             brightness_pct: 1
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
             color_temp_kelvin: 2222
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 =======
@@ -1305,7 +1324,10 @@
             brightness_pct: 1
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
             color_temp_kelvin: 2222
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 =======
@@ -1322,7 +1344,10 @@
             brightness_pct: 1
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
             color_temp_kelvin: 2222
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 =======
@@ -1345,7 +1370,10 @@
           brightness_pct: 1
 <<<<<<< Updated upstream
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
           color_temp_kelvin: 2222
+=======
+>>>>>>> Stashed changes
 =======
 >>>>>>> Stashed changes
 =======
