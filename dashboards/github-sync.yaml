@@ -13,26 +13,30 @@ views:
               Use the buttons below to manually sync your Home Assistant
               configuration with GitHub.
           - type: button
-            name: Push to GitHub
-            icon: mdi:cloud-upload
+            name: "GitHub: Push Config to GitHub"
+            icon: mdi:source-branch-plus
+            show_name: true
+            show_icon: true
+            icon_height: 60px
             tap_action:
-              action: call-service
-              service: input_button.press
-              data:
+              action: perform-action
+              perform_action: input_button.press
+              target:
                 entity_id: input_button.push_to_github
               confirmation:
                 text: Push current HA config to GitHub?
-            icon_height: 60px
           - type: button
-            name: Pull from GitHub
-            icon: mdi:cloud-download
+            name: "GitHub: Pull Config from GitHub"
+            icon: mdi:source-branch-sync
+            show_name: true
+            show_icon: true
+            icon_height: 60px
             tap_action:
-              action: call-service
-              service: input_button.press
-              data:
+              action: perform-action
+              perform_action: input_button.press
+              target:
                 entity_id: input_button.pull_from_github
               confirmation:
                 text: >-
                   Pull config from GitHub? Home Assistant will restart
                   if any files changed.
-            icon_height: 60px

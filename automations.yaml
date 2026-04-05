@@ -689,9 +689,8 @@
         - on_3am
         - on_5am
       - condition: numeric_state
-        entity_id: sensor.govee_hydrometer_master_bedroom_h5075_humidity
-        below: 50
         entity_id: sensor.master_bedroom_humidity
+        below: 50
         above: 39.9
       - condition: or
         conditions:
@@ -1486,7 +1485,7 @@
             priority: high
   mode: single
 - id: '1771270799103'
-  alias: 'GitHub: Push Config'
+  alias: 'GitHub: Push Config to GitHub'
   description: Push Home Assistant config to GitHub when the Push button is pressed.
   triggers:
   - trigger: state
@@ -1496,7 +1495,7 @@
   - action: shell_command.git_push
   mode: single
 - id: '1771270799104'
-  alias: 'GitHub: Pull Config & Restart'
+  alias: 'GitHub: Pull Config from GitHub'
   description: Pull config from GitHub and restart Home Assistant when the Pull button
     is pressed.
   triggers:
