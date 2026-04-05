@@ -1485,57 +1485,31 @@
             ttl: 0
             priority: high
   mode: single
-- id: '1771270799101'
-  alias: 'GitHub: Backup Nightly'
-  description: Push Home Assistant config changes to GitHub daily at 5:00 AM.
-  triggers:
-  - at: 05:00:00
-    trigger: time
-  conditions: []
-  actions:
-  - action: shell_command.git_push
-  mode: single
 - id: '1771270799103'
-  alias: 'GitHub: Sync on Button Press'
-  description: Push Home Assistant config to GitHub when the Sync GitHub button is pressed.
+  alias: 'GitHub: Push Config'
+  description: Push Home Assistant config to GitHub when the Push button is pressed.
   triggers:
   - trigger: state
-    entity_id: input_button.sync_github
+    entity_id: input_button.push_to_github
   conditions: []
   actions:
   - action: shell_command.git_push
   mode: single
-- id: '1742137200000'
-  alias: 'GitHub: Pull Remote Changes'
-  description: Pull config changes from GitHub every 15 minutes and reload if updated.
+- id: '1771270799104'
+  alias: 'GitHub: Pull Config & Restart'
+  description: Pull config from GitHub and restart Home Assistant when the Pull button
+    is pressed.
   triggers:
-  - trigger: time_pattern
-    minutes: /15
+  - trigger: state
+    entity_id: input_button.pull_from_github
   conditions: []
   actions:
   - action: shell_command.git_pull
     response_variable: pull_result
   - condition: template
-    value_template: "{{ pull_result['returncode'] == 0 and 'changed' in pull_result.get('stdout', '') }}"
-  - action: homeassistant.reload_all
-  mode: single
-- id: '1771270799102'
-  alias: 'GitHub: Pull & Reload on Webhook'
-  description: When GitHub Actions sends a webhook after a push, pull latest config
-    from GitHub and reload Home Assistant.
-  triggers:
-  - trigger: webhook
-    webhook_id: 4a115006f7f0a2bce53cb35881d54f5ca93c337c08da7888ce7d9842b5a1b5eb
-    allowed_methods:
-    - POST
-    local_only: false
-  conditions: []
-  actions:
-  - action: shell_command.git_pull
-    response_variable: pull_result
-  - condition: template
-    value_template: "{{ pull_result['returncode'] == 0 and 'changed' in pull_result.get('stdout', '') }}"
+    value_template: "{{ pull_result['returncode'] == 0 and 'changed' in pull_result.get('stdout',
+      '') }}"
   - delay:
-      seconds: 5
-  - action: homeassistant.reload_all
+      seconds: 3
+  - action: homeassistant.restart
   mode: single
