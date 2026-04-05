@@ -47,15 +47,16 @@ if ! git commit -m "Auto backup: $(date '+%Y-%m-%dT%H:%M:%S%z')"; then
   exit 1
 fi
 
-# Push directly — HA config is the source of truth, no need to pull first.
-# Try normal push first; if it fails (diverged history), force-push with lease.
+# Push directly — HA config is the source of truth.
+# Try normal push first; if it fails (diverged history from merged PRs),
+# force-push with lease since HA's config is authoritative.
 if git push origin "$BRANCH" >> "$LOG" 2>&1; then
   log "Backup push completed"
   echo "pushed"
   exit 0
 fi
 
-log "Normal push failed — force-pushing (HA is source of truth)"
+log "Normal push failed (likely diverged from merged PRs) — force-pushing"
 if git push --force-with-lease origin "$BRANCH" >> "$LOG" 2>&1; then
   log "Force push completed"
   echo "pushed"
