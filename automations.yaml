@@ -253,6 +253,7 @@
       entity_id: light.hue_candle_upper_staircase
     data:
       brightness_pct: 1
+      color_temp_kelvin: 2200
     action: light.turn_on
   - delay: 00:00:30
   - condition: state
@@ -688,8 +689,11 @@
         - on_3am
         - on_5am
       - condition: numeric_state
+<<<<<<< Updated upstream
         entity_id: sensor.govee_hydrometer_master_bedroom_h5075_humidity
         below: 50
+=======
+>>>>>>> Stashed changes
         entity_id: sensor.master_bedroom_humidity
         above: 39.9
       - condition: or
@@ -1135,7 +1139,11 @@
       entity_id: light.hue_candle_lower_staircase
     data:
       brightness_pct: 1
+<<<<<<< Updated upstream
       color_temp_kelvin: 2222
+=======
+      transition: 1
+>>>>>>> Stashed changes
     action: light.turn_on
   - target:
       entity_id: light.living_room
@@ -1202,7 +1210,10 @@
               entity_id: light.hue_candle_lower_staircase
             data:
               brightness_pct: 1
+<<<<<<< Updated upstream
               color_temp_kelvin: 2222
+=======
+>>>>>>> Stashed changes
             action: light.turn_on
           - target:
               area_id: master_bedroom_lights
@@ -1220,7 +1231,10 @@
               - light.hue_candle_upper_staircase
             data:
               brightness_pct: 1
+<<<<<<< Updated upstream
               color_temp_kelvin: 2222
+=======
+>>>>>>> Stashed changes
             action: light.turn_on
           - delay:
               seconds: 60
@@ -1239,7 +1253,10 @@
             entity_id: light.hue_candle_upper_staircase
           data:
             brightness_pct: 1
+<<<<<<< Updated upstream
             color_temp_kelvin: 2222
+=======
+>>>>>>> Stashed changes
           action: light.turn_on
         - delay:
             seconds: 15
@@ -1263,7 +1280,10 @@
             entity_id: light.hue_candle_lower_staircase
           data:
             brightness_pct: 1
+<<<<<<< Updated upstream
             color_temp_kelvin: 2222
+=======
+>>>>>>> Stashed changes
             transition: 1
           action: light.turn_on
         - delay:
@@ -1274,7 +1294,10 @@
             - light.hue_candle_upper_staircase
           data:
             brightness_pct: 1
+<<<<<<< Updated upstream
             color_temp_kelvin: 2222
+=======
+>>>>>>> Stashed changes
             transition: 0
           action: light.turn_on
         - delay:
@@ -1291,7 +1314,10 @@
           entity_id: light.hue_candle_upper_staircase
         data:
           brightness_pct: 1
+<<<<<<< Updated upstream
           color_temp_kelvin: 2222
+=======
+>>>>>>> Stashed changes
           transition: 0
         action: light.turn_on
       - delay:
