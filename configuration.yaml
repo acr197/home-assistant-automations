@@ -38,8 +38,11 @@ input_boolean:
 
 input_button:
   sync_github:
-    name: Sync GitHub
+    name: Push to GitHub
     icon: mdi:github
+  pull_github:
+    name: Pull from GitHub
+    icon: mdi:source-branch-sync
 
 template:
   - sensor:
@@ -76,30 +79,30 @@ template:
         device_class: temperature
         state_class: measurement
         availability: >
-          {{ state_attr('sensor.openmeteo_raw','current') not in [None, 'unknown', 'unavailable'] }}
-        state: >
           {% set cw = state_attr('sensor.openmeteo_raw','current') %}
-          {{ cw['temperature_2m'] if cw else None }}
+          {{ cw is mapping and cw.get('temperature_2m') is not none }}
+        state: >
+          {{ state_attr('sensor.openmeteo_raw','current')['temperature_2m'] }}
       - name: "Outdoor Feels Like"
         unique_id: outdoor_feels_like_openmeteo
         unit_of_measurement: "°F"
         device_class: temperature
         state_class: measurement
         availability: >
-          {{ state_attr('sensor.openmeteo_raw','current') not in [None, 'unknown', 'unavailable'] }}
-        state: >
           {% set cw = state_attr('sensor.openmeteo_raw','current') %}
-          {{ cw['apparent_temperature'] if cw else None }}
+          {{ cw is mapping and cw.get('apparent_temperature') is not none }}
+        state: >
+          {{ state_attr('sensor.openmeteo_raw','current')['apparent_temperature'] }}
       - name: "Outdoor Humidity"
         unique_id: outdoor_humidity_openmeteo
         unit_of_measurement: "%"
         device_class: humidity
         state_class: measurement
         availability: >
-          {{ state_attr('sensor.openmeteo_raw','current') not in [None, 'unknown', 'unavailable'] }}
-        state: >
           {% set cw = state_attr('sensor.openmeteo_raw','current') %}
-          {{ cw['relative_humidity_2m'] if cw else None }}
+          {{ cw is mapping and cw.get('relative_humidity_2m') is not none }}
+        state: >
+          {{ state_attr('sensor.openmeteo_raw','current')['relative_humidity_2m'] }}
       # ── Energy cost sensors ──
       # PECO all-in rate: $144.18 / 624 kWh = $0.2311/kWh
       # Breakdown: Delivery $0.10276 + Generation $0.10237 + Transmission $0.00787 = $0.21300 variable
