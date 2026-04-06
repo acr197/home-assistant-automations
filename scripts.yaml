@@ -31,16 +31,3 @@ toggle_thermostat_automations:
         entity_id: sensor.guest_mode_status
 
 
-git_pull_and_reload:
-  alias: "GitHub: Pull & Reload"
-  description: Manually pull latest config from GitHub and reload Home Assistant.
-  icon: mdi:github
-  mode: single
-  sequence:
-    - action: shell_command.git_pull
-      response_variable: pull_result
-    - condition: template
-      value_template: "{{ pull_result['returncode'] == 0 and 'changed' in pull_result.get('stdout', '') }}"
-    - delay:
-        seconds: 5
-    - action: homeassistant.reload_all

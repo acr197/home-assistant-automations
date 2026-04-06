@@ -37,9 +37,12 @@ input_boolean:
   guest_mode:
 
 input_button:
-  sync_github:
-    name: Sync GitHub
-    icon: mdi:github
+  push_to_github:
+    name: Push to GitHub
+    icon: mdi:cloud-upload
+  pull_from_github:
+    name: Pull from GitHub
+    icon: mdi:cloud-download
 
 template:
   - sensor:
@@ -333,6 +336,12 @@ lovelace:
       title: Energy Monitor
       filename: dashboards/energy-monitor.yaml
       icon: mdi:lightning-bolt
+      show_in_sidebar: true
+    lovelace-github:
+      mode: yaml
+      title: GitHub Sync
+      filename: dashboards/github-sync.yaml
+      icon: mdi:github
       show_in_sidebar: true
 
 automation: !include automations.yaml

@@ -23,35 +23,38 @@ if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1; then
   exit 1
 fi
 
+# Clean up any stuck rebase/merge state
 if [ -d .git/rebase-merge ] || [ -d .git/rebase-apply ] || [ -f .git/MERGE_HEAD ]; then
-  log "ERROR: git repo is busy with a rebase or merge"
-  echo "error"
-  exit 1
+  log "WARNING: cleaning up stuck rebase/merge state"
+  git rebase --abort 2>/dev/null || true
+  git merge --abort 2>/dev/null || true
+fi
+
+# Remove stale index.lock
+if [ -f .git/index.lock ]; then
+  log "WARNING: removing stale index.lock"
+  rm -f .git/index.lock
 fi
 
 LOCAL_HEAD=$(git rev-parse HEAD)
 
-# Stash any local uncommitted changes so pull doesn't conflict
-git stash --quiet 2>/dev/null || true
-
-if ! git pull --rebase origin "$BRANCH" >> "$LOG" 2>&1; then
-  log "ERROR: git pull failed"
-  git rebase --abort 2>/dev/null || true
-  git stash pop --quiet 2>/dev/null || true
+# Fetch latest from remote
+if ! git fetch origin "$BRANCH" >> "$LOG" 2>&1; then
+  log "ERROR: git fetch failed"
   echo "error"
   exit 1
 fi
 
-# Restore local changes on top
-git stash pop --quiet 2>/dev/null || true
-
-REMOTE_HEAD=$(git rev-parse HEAD)
+REMOTE_HEAD=$(git rev-parse "origin/$BRANCH")
 
 if [ "$LOCAL_HEAD" = "$REMOTE_HEAD" ]; then
   log "Already up to date"
   echo "unchanged"
   exit 0
 fi
+
+# Hard reset to remote — guarantees no merge conflict markers
+git reset --hard "origin/$BRANCH" >> "$LOG" 2>&1
 
 log "Pulled new changes: $LOCAL_HEAD -> $REMOTE_HEAD"
 echo "changed"
