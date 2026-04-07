@@ -23,27 +23,23 @@ views:
 
               # ── Top Left: PECO Rate + logo ──
               # Logo: save peco-logo.png to /config/www/peco-logo.png
+              # Using | (literal block) so newlines are preserved — required for markdown tables
               - type: markdown
-                content: >
-                  <div style="text-align:center; margin-bottom:6px;">
-                    <img src="/local/peco-logo.png" style="height:60px; opacity:0.9;"
+                content: |
+                  <div style="text-align:center; margin-bottom:4px;">
+                    <img src="/local/peco-logo.png" style="height:64px;"
                       onerror="this.style.display='none'" />
                   </div>
 
-                  ### PECO Rate: **${{ states('sensor.peco_variable_rate') }}/kWh**
+                  #### PECO Rate: ${{ states('sensor.peco_variable_rate') }}/kWh
 
                   Last bill: **${{ states('input_number.peco_last_bill_amount') }}** for **{{ states('input_number.peco_last_bill_kwh') | int }} kWh** ({{ states('input_number.peco_last_bill_days') | int }} days)
 
                   | Component | Rate |
-
-                  |---|---|
-
+                  |:---|---:|
                   | Delivery | ${{ states('input_number.peco_delivery_rate') }}/kWh |
-
                   | Supply | ${{ states('input_number.peco_supply_rate') }}/kWh |
-
                   | Transmission | ${{ states('input_number.peco_transmission_rate') }}/kWh |
-
                   | Customer charge | ${{ states('input_number.peco_customer_charge') }}/mo fixed |
 
               # ── Top Middle: Energy Distribution ──
@@ -149,18 +145,17 @@ views:
                   - entity: sensor.total_power_draw_now
                     name: Total Watts
 
-              # ── Bottom Right: Individual device usage bar graph ──
-              # Pulls from Settings → Dashboards → Energy config
-              - type: energy-devices-graph
-                title: Individual Devices Total Usage
-
-          # ── Footer note ──
-          - type: markdown
-            content: >
-              <small style="color: var(--secondary-text-color);">
-              To add or remove devices from the bar graph above, go to
-              **Settings → Dashboards → Energy → Individual devices**.
-              </small>
+              # ── Bottom Right: Individual device usage + footer note ──
+              # Both in a vertical-stack so the note aligns under the graph
+              - type: vertical-stack
+                cards:
+                  - type: energy-devices-graph
+                    title: Individual Devices Total Usage
+                  - type: markdown
+                    content: |
+                      <small style="color: var(--secondary-text-color);">
+                      To add or remove devices, go to **Settings → Dashboards → Energy → Individual devices**.
+                      </small>
 
   # ═══════════════════════════════════════════════════════════
   #  VIEW 2: LIVE — real-time power by device
