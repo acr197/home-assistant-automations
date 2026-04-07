@@ -422,15 +422,19 @@ input_boolean:
   show_device_desktop:
     name: "Show: Desktop"
     icon: mdi:desktop-tower-monitor
+    initial: true
   show_device_nursery:
     name: "Show: Nursery Heater"
     icon: mdi:radiator
+    initial: true
   show_device_dyson:
     name: "Show: Dyson Heater"
     icon: mdi:fan
+    initial: true
   show_device_basement:
     name: "Show: Basement Heater"
     icon: mdi:radiator
+    initial: true
 
 shell_command:
   git_push: "sh /config/git_push.sh"
