@@ -8,12 +8,47 @@ views:
     icon: mdi:lightning-bolt
     type: panel
     cards:
-      # Panel view only allows ONE top-level card, so everything
-      # lives inside this single vertical-stack. Inside, each
-      # horizontal-stack becomes a full-width row that evenly
-      # divides its children into columns.
+      # Panel view: one top-level vertical-stack, full width.
+      # horizontal-stacks inside become proper 3-column rows.
       - type: vertical-stack
         cards:
+
+          # ══════════════════════════════════════════════════════
+          #  SECTION HEADER — energy monitor
+          # ══════════════════════════════════════════════════════
+          - type: custom:button-card
+            show_name: true
+            show_state: false
+            show_icon: true
+            icon: mdi:lightning-bolt-circle
+            name: energy monitor
+            tap_action:
+              action: none
+            hold_action:
+              action: none
+            styles:
+              card:
+                - background: transparent
+                - box-shadow: none
+                - border-radius: "0"
+                - padding: "6px 8px 4px"
+                - border-bottom: "1px solid #00b4ab"
+                - margin-bottom: "4px"
+              grid:
+                - grid-template-areas: '"i n"'
+                - grid-template-columns: "min-content 1fr"
+                - grid-template-rows: min-content
+              icon:
+                - color: "#00b4ab"
+                - width: "15px"
+                - margin-right: "6px"
+              name:
+                - text-transform: lowercase
+                - letter-spacing: "3px"
+                - font-size: "11px"
+                - color: "var(--secondary-text-color)"
+                - text-align: left
+                - justify-self: start
 
           # ══════════════════════════════════════════════════════
           #  TOP ROW: PECO Rate | Energy Distribution | Costs
@@ -21,8 +56,15 @@ views:
           - type: horizontal-stack
             cards:
 
-              # ── Top Left: PECO Rate — CSS gradient banner + styled HTML table ──
+              # ── Top Left: PECO Rate — gradient banner + styled table ──
               - type: markdown
+                card_mod:
+                  style: |
+                    ha-card {
+                      background: rgba(255,255,255,0.04);
+                      border-radius: 16px;
+                      box-shadow: none;
+                    }
                 content: |
                   <div style="background:linear-gradient(135deg,#00b4ab,#6b2fa0);border-radius:8px;padding:7px 0 5px;text-align:center;margin-bottom:10px;">
                     <span style="color:white;font-size:22px;font-weight:700;letter-spacing:5px;font-family:sans-serif;">peco</span>
@@ -60,7 +102,6 @@ views:
                   </table>
 
               # ── Top Middle: Energy Distribution ──
-              # Pulls from Settings → Dashboards → Energy config
               - type: energy-distribution
                 title: Energy Distribution
 
@@ -73,36 +114,121 @@ views:
                         entity: sensor.total_power_draw_now
                         name: Live Power
                         icon: mdi:flash
+                        card_mod:
+                          style: |
+                            ha-card {
+                              background: rgba(255,255,255,0.04);
+                              border-radius: 16px;
+                              box-shadow: none;
+                            }
                       - type: entity
                         entity: sensor.total_energy_cost_today
                         name: Cost Today
                         icon: mdi:currency-usd
+                        card_mod:
+                          style: |
+                            ha-card {
+                              background: rgba(255,255,255,0.04);
+                              border-radius: 16px;
+                              box-shadow: none;
+                            }
                       - type: entity
                         entity: sensor.total_energy_cost_monthly
                         name: Cost This Month
                         icon: mdi:calendar-month
+                        card_mod:
+                          style: |
+                            ha-card {
+                              background: rgba(255,255,255,0.04);
+                              border-radius: 16px;
+                              box-shadow: none;
+                            }
                   - type: horizontal-stack
                     cards:
                       - type: entity
                         entity: sensor.projected_monthly_energy_cost
                         name: Projected Bill
                         icon: mdi:chart-line-variant
+                        card_mod:
+                          style: |
+                            ha-card {
+                              background: rgba(255,255,255,0.04);
+                              border-radius: 16px;
+                              box-shadow: none;
+                            }
                       - type: entity
                         entity: sensor.daily_average_energy_cost_this_month
                         name: Daily Avg Cost
                         icon: mdi:chart-bar
+                        card_mod:
+                          style: |
+                            ha-card {
+                              background: rgba(255,255,255,0.04);
+                              border-radius: 16px;
+                              box-shadow: none;
+                            }
                       - type: entity
                         entity: sensor.estimated_annual_energy_cost
                         name: Est. Annual
                         icon: mdi:calendar-clock
+                        card_mod:
+                          style: |
+                            ha-card {
+                              background: rgba(255,255,255,0.04);
+                              border-radius: 16px;
+                              box-shadow: none;
+                            }
 
           # ══════════════════════════════════════════════════════
-          #  BOTTOM ROW: Gauges | Total Power Draw | Devices
+          #  SECTION HEADER — power (live wattage)
+          # ══════════════════════════════════════════════════════
+          - type: custom:button-card
+            entity: sensor.total_power_draw_now
+            show_name: true
+            show_state: true
+            show_icon: true
+            icon: mdi:flash
+            name: power
+            tap_action:
+              action: none
+            hold_action:
+              action: none
+            styles:
+              card:
+                - background: transparent
+                - box-shadow: none
+                - border-radius: "0"
+                - padding: "10px 8px 4px"
+                - border-bottom: "1px solid #e74c3c"
+                - margin-bottom: "4px"
+              grid:
+                - grid-template-areas: '"i n s"'
+                - grid-template-columns: "min-content 1fr min-content"
+                - grid-template-rows: min-content
+              icon:
+                - color: "#e74c3c"
+                - width: "15px"
+                - margin-right: "6px"
+              name:
+                - text-transform: lowercase
+                - letter-spacing: "3px"
+                - font-size: "11px"
+                - color: "var(--secondary-text-color)"
+                - text-align: left
+                - justify-self: start
+              state:
+                - font-size: "13px"
+                - font-weight: "600"
+                - color: "var(--primary-text-color)"
+                - justify-self: end
+
+          # ══════════════════════════════════════════════════════
+          #  BOTTOM ROW: Gauges | Power Graph | Device Charts
           # ══════════════════════════════════════════════════════
           - type: horizontal-stack
             cards:
 
-              # ── Bottom Left: 4 real-time power gauges ──
+              # ── Bottom Left: 4 real-time power gauges (card-mod styled) ──
               - type: vertical-stack
                 cards:
                   - type: horizontal-stack
@@ -118,6 +244,13 @@ views:
                           green: 0
                           yellow: 150
                           red: 350
+                        card_mod:
+                          style: |
+                            ha-card {
+                              background: rgba(255,255,255,0.04);
+                              border-radius: 16px;
+                              box-shadow: none;
+                            }
                       - type: gauge
                         entity: sensor.tapo_p110m_2_nursery_heater_current_consumption
                         name: Nursery Heater
@@ -129,6 +262,13 @@ views:
                           green: 0
                           yellow: 500
                           red: 1000
+                        card_mod:
+                          style: |
+                            ha-card {
+                              background: rgba(255,255,255,0.04);
+                              border-radius: 16px;
+                              box-shadow: none;
+                            }
                   - type: horizontal-stack
                     cards:
                       - type: gauge
@@ -142,6 +282,13 @@ views:
                           green: 0
                           yellow: 500
                           red: 1200
+                        card_mod:
+                          style: |
+                            ha-card {
+                              background: rgba(255,255,255,0.04);
+                              border-radius: 16px;
+                              box-shadow: none;
+                            }
                       - type: gauge
                         entity: sensor.tapo_p110m_4_basement_heater_current_consumption
                         name: Basement Heater
@@ -153,21 +300,115 @@ views:
                           green: 0
                           yellow: 500
                           red: 1000
+                        card_mod:
+                          style: |
+                            ha-card {
+                              background: rgba(255,255,255,0.04);
+                              border-radius: 16px;
+                              box-shadow: none;
+                            }
 
-              # ── Bottom Middle: Total power draw history (24h) ──
-              - type: history-graph
-                title: Total Power Draw (24h)
+              # ── Bottom Middle: Compact mini-graph (24h power) ──
+              - type: custom:mini-graph-card
+                entity: sensor.total_power_draw_now
+                name: Total Power Draw
                 hours_to_show: 24
-                entities:
-                  - entity: sensor.total_power_draw_now
-                    name: Total Watts
+                points_per_hour: 4
+                line_width: 2
+                line_color: "#00b4ab"
+                fill: true
+                smooth: true
+                animate: true
+                font_size: 75
+                show:
+                  points: false
+                  legend: false
+                  fill: true
+                  extrema: true
+                  labels: false
+                  name: true
+                  icon: false
+                  state: true
+                card_mod:
+                  style: |
+                    ha-card {
+                      background: rgba(255,255,255,0.04);
+                      border-radius: 16px;
+                      box-shadow: none;
+                      height: 100%;
+                    }
 
-              # ── Bottom Right: Individual device usage + footer note ──
-              # Both in a vertical-stack so the note aligns under the graph
+              # ── Bottom Right: Stacked daily kWh chart + native usage + note ──
               - type: vertical-stack
                 cards:
+                  # Stacked bar — daily energy per device (apexcharts)
+                  - type: custom:apexcharts-card
+                    chart_type: bar
+                    stacked: true
+                    header:
+                      show: true
+                      title: Daily Energy by Device (kWh)
+                      show_states: false
+                      colorize_states: false
+                    apex_config:
+                      chart:
+                        height: 220
+                        background: transparent
+                      plotOptions:
+                        bar:
+                          borderRadius: 4
+                      grid:
+                        borderColor: "rgba(255,255,255,0.08)"
+                      xaxis:
+                        labels:
+                          style:
+                            colors: "rgba(255,255,255,0.5)"
+                            fontSize: "10px"
+                      yaxis:
+                        labels:
+                          style:
+                            colors: "rgba(255,255,255,0.5)"
+                      legend:
+                        labels:
+                          colors: "rgba(255,255,255,0.7)"
+                      tooltip:
+                        theme: dark
+                    card_mod:
+                      style: |
+                        ha-card {
+                          background: rgba(255,255,255,0.04);
+                          border-radius: 16px;
+                          box-shadow: none;
+                        }
+                    series:
+                      - entity: sensor.tapo_p110m_1_today_s_consumption
+                        name: Desktop
+                        color: "#f39c12"
+                        statistics:
+                          type: max
+                          period: day
+                      - entity: sensor.tapo_p110m_2_nursery_heater_today_s_consumption
+                        name: Nursery Heater
+                        color: "#3498db"
+                        statistics:
+                          type: max
+                          period: day
+                      - entity: sensor.tapo_p110m_3_today_s_consumption
+                        name: Dyson Heater
+                        color: "#2ecc71"
+                        statistics:
+                          type: max
+                          period: day
+                      - entity: sensor.tapo_p110m_4_basement_heater_today_s_consumption
+                        name: Basement Heater
+                        color: "#e74c3c"
+                        statistics:
+                          type: max
+                          period: day
+                  # Native usage bar (from Energy config)
                   - type: energy-devices-graph
                     title: Individual Devices Total Usage
+                  # Footer note
                   - type: markdown
                     content: |
                       <small style="color: var(--secondary-text-color);">
