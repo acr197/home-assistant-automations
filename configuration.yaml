@@ -408,6 +408,15 @@ input_number:
     mode: box
     icon: mdi:calendar-range
     initial: 29
+  billing_cycle_start_day:
+    name: Billing Cycle Start Day
+    unit_of_measurement: "day"
+    min: 1
+    max: 28
+    step: 1
+    mode: box
+    icon: mdi:calendar-start
+    initial: 1
 
 shell_command:
   git_push: "sh /config/git_push.sh"

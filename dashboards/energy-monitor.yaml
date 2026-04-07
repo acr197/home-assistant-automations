@@ -323,7 +323,6 @@ views:
                 show:
                   points: false
                   legend: false
-                  fill: true
                   extrema: true
                   labels: false
                   name: true
@@ -341,60 +340,25 @@ views:
               # ── Bottom Right: Stacked daily kWh chart + native usage + note ──
               - type: vertical-stack
                 cards:
-                  # Stacked bar — daily energy per device (apexcharts)
-                  - type: custom:apexcharts-card
+                  # Daily energy per device — last 14 days
+                  # (apexcharts-card would give a stacked view; install it from
+                  #  HACS → Frontend → "apexcharts-card" and tell Claude to restore)
+                  - type: statistics-graph
+                    title: Daily Energy by Device (kWh)
+                    period: day
+                    days_to_show: 14
+                    stat_types:
+                      - sum
                     chart_type: bar
-                    stacked: true
-                    header:
-                      show: true
-                      title: Daily Energy by Device (kWh)
-                      show_states: false
-                      colorize_states: false
-                    apex_config:
-                      chart:
-                        height: 220
-                      plotOptions:
-                        bar:
-                          borderRadius: 4
-                      grid:
-                        borderColor: "rgba(255,255,255,0.08)"
-                      legend:
-                        labels:
-                          colors: "#aaa"
-                      tooltip:
-                        theme: dark
-                    card_mod:
-                      style: |
-                        ha-card {
-                          background: rgba(255,255,255,0.08);
-                          border-radius: 16px;
-                          box-shadow: none;
-                        }
-                    series:
+                    entities:
                       - entity: sensor.tapo_p110m_1_today_s_consumption
                         name: Desktop
-                        color: "#f39c12"
-                        statistics:
-                          type: max
-                          period: day
                       - entity: sensor.tapo_p110m_2_nursery_heater_today_s_consumption
                         name: Nursery Heater
-                        color: "#3498db"
-                        statistics:
-                          type: max
-                          period: day
                       - entity: sensor.tapo_p110m_3_today_s_consumption
                         name: Dyson Heater
-                        color: "#2ecc71"
-                        statistics:
-                          type: max
-                          period: day
                       - entity: sensor.tapo_p110m_4_basement_heater_today_s_consumption
                         name: Basement Heater
-                        color: "#e74c3c"
-                        statistics:
-                          type: max
-                          period: day
                   # Native usage bar (from Energy config)
                   - type: energy-devices-graph
                     title: Individual Devices Total Usage
@@ -439,8 +403,9 @@ views:
           #  SECTION HEADER — cost (purple)
           # ══════════════════════════════════════════════════════
           - type: custom:button-card
+            entity: sensor.total_energy_cost_monthly
             show_name: true
-            show_state: false
+            show_state: true
             show_icon: true
             icon: mdi:currency-usd
             name: cost
@@ -457,8 +422,8 @@ views:
                 - border-bottom: "1px solid #9b59b6"
                 - margin-bottom: "4px"
               grid:
-                - grid-template-areas: '"i n"'
-                - grid-template-columns: "min-content 1fr"
+                - grid-template-areas: '"i n s"'
+                - grid-template-columns: "min-content 1fr min-content"
                 - grid-template-rows: min-content
               icon:
                 - color: "#9b59b6"
@@ -471,6 +436,11 @@ views:
                 - color: "var(--secondary-text-color)"
                 - text-align: left
                 - justify-self: start
+              state:
+                - font-size: "13px"
+                - font-weight: "600"
+                - color: "var(--primary-text-color)"
+                - justify-self: end
 
           # ══════════════════════════════════════════════════════
           #  COST ROW: Est. daily cost | 30-day trend | Monthly breakdown
@@ -488,15 +458,20 @@ views:
                       box-shadow: none;
                     }
                 content: |
+                  {%- set cs = states('input_number.billing_cycle_start_day')|int(1) -%}
+                  {%- set today = now().day -%}
+                  {%- set cycle_days = [(today - cs + 1), 1]|max if today >= cs else [(today + 30 - cs + 1), 1]|max -%}
+                  {%- set rate = states('sensor.peco_variable_rate')|float -%}
+                  {%- set suffix = 'st' if cs in [1,21] else ('nd' if cs in [2,22] else ('rd' if cs in [3,23] else 'th')) -%}
                   #### Estimated Daily Cost per Device
 
-                  Based on **{{ now().day }} days** this month · Rate: **${{ states('sensor.peco_variable_rate') }}/kWh**
+                  Billing cycle starts **{{ cs }}{{ suffix }}** each month · **{{ cycle_days }} day{{ 's' if cycle_days != 1 }}** elapsed · Rate: **${{ rate }}/kWh**
 
                   <table style="width:100%;border-collapse:collapse;margin-top:8px;font-size:0.88em;">
                     <thead>
                       <tr style="background:linear-gradient(90deg,#9b59b6,#6b2fa0);">
                         <th style="color:white;padding:6px 8px;text-align:left;font-weight:600;">Device</th>
-                        <th style="color:white;padding:6px 8px;text-align:right;font-weight:600;">kWh/mo</th>
+                        <th style="color:white;padding:6px 8px;text-align:right;font-weight:600;">kWh/cycle</th>
                         <th style="color:white;padding:6px 8px;text-align:right;font-weight:600;">kWh/day</th>
                         <th style="color:white;padding:6px 8px;text-align:right;font-weight:600;">$/day est.</th>
                       </tr>
@@ -505,31 +480,31 @@ views:
                       <tr>
                         <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);">Desktop</td>
                         <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;">{{ states('sensor.tapo_p110m_1_this_month_s_consumption')|float|round(2) }} kWh</td>
-                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;">{{ (states('sensor.tapo_p110m_1_this_month_s_consumption')|float / now().day)|round(3) }}</td>
-                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;color:#f39c12;">${{ ((states('sensor.tapo_p110m_1_this_month_s_consumption')|float / now().day) * states('sensor.peco_variable_rate')|float)|round(3) }}</td>
+                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;">{{ (states('sensor.tapo_p110m_1_this_month_s_consumption')|float / cycle_days)|round(3) }}</td>
+                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;color:#f39c12;">${{ ((states('sensor.tapo_p110m_1_this_month_s_consumption')|float / cycle_days) * rate)|round(3) }}</td>
                       </tr>
                       <tr>
                         <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);">Nursery Heater</td>
                         <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;">{{ states('sensor.tapo_p110m_2_nursery_heater_this_month_s_consumption')|float|round(2) }} kWh</td>
-                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;">{{ (states('sensor.tapo_p110m_2_nursery_heater_this_month_s_consumption')|float / now().day)|round(3) }}</td>
-                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;color:#3498db;">${{ ((states('sensor.tapo_p110m_2_nursery_heater_this_month_s_consumption')|float / now().day) * states('sensor.peco_variable_rate')|float)|round(3) }}</td>
+                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;">{{ (states('sensor.tapo_p110m_2_nursery_heater_this_month_s_consumption')|float / cycle_days)|round(3) }}</td>
+                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;color:#3498db;">${{ ((states('sensor.tapo_p110m_2_nursery_heater_this_month_s_consumption')|float / cycle_days) * rate)|round(3) }}</td>
                       </tr>
                       <tr>
                         <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);">Dyson Heater</td>
                         <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;">{{ states('sensor.tapo_p110m_3_this_month_s_consumption')|float|round(2) }} kWh</td>
-                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;">{{ (states('sensor.tapo_p110m_3_this_month_s_consumption')|float / now().day)|round(3) }}</td>
-                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;color:#2ecc71;">${{ ((states('sensor.tapo_p110m_3_this_month_s_consumption')|float / now().day) * states('sensor.peco_variable_rate')|float)|round(3) }}</td>
+                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;">{{ (states('sensor.tapo_p110m_3_this_month_s_consumption')|float / cycle_days)|round(3) }}</td>
+                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;color:#2ecc71;">${{ ((states('sensor.tapo_p110m_3_this_month_s_consumption')|float / cycle_days) * rate)|round(3) }}</td>
                       </tr>
                       <tr>
                         <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);">Basement Heater</td>
                         <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;">{{ states('sensor.tapo_p110m_4_basement_heater_this_month_s_consumption')|float|round(2) }} kWh</td>
-                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;">{{ (states('sensor.tapo_p110m_4_basement_heater_this_month_s_consumption')|float / now().day)|round(3) }}</td>
-                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;color:#e74c3c;">${{ ((states('sensor.tapo_p110m_4_basement_heater_this_month_s_consumption')|float / now().day) * states('sensor.peco_variable_rate')|float)|round(3) }}</td>
+                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;">{{ (states('sensor.tapo_p110m_4_basement_heater_this_month_s_consumption')|float / cycle_days)|round(3) }}</td>
+                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;color:#e74c3c;">${{ ((states('sensor.tapo_p110m_4_basement_heater_this_month_s_consumption')|float / cycle_days) * rate)|round(3) }}</td>
                       </tr>
                       <tr style="font-weight:600;">
                         <td style="padding:5px 8px;">Total</td>
                         <td style="padding:5px 8px;text-align:right;">{{ states('sensor.total_energy_this_month')|float|round(2) }} kWh</td>
-                        <td style="padding:5px 8px;text-align:right;">{{ states('sensor.daily_average_energy_this_month')|float|round(3) }}</td>
+                        <td style="padding:5px 8px;text-align:right;">{{ (states('sensor.total_energy_this_month')|float / cycle_days)|round(3) }}</td>
                         <td style="padding:5px 8px;text-align:right;color:var(--primary-color);">${{ states('sensor.daily_average_energy_cost_this_month') }}</td>
                       </tr>
                     </tbody>
@@ -557,7 +532,7 @@ views:
               - type: vertical-stack
                 cards:
                   - type: entities
-                    title: This Month's Energy Costs
+                    title: This Billing Cycle's Energy Costs
                     show_header_toggle: false
                     entities:
                       - entity: sensor.desktop_desk_plug_energy_cost_monthly
@@ -601,8 +576,9 @@ views:
           #  SECTION HEADER — usage (green)
           # ══════════════════════════════════════════════════════
           - type: custom:button-card
+            entity: sensor.total_energy_this_month
             show_name: true
-            show_state: false
+            show_state: true
             show_icon: true
             icon: mdi:chart-bar
             name: usage
@@ -619,8 +595,8 @@ views:
                 - border-bottom: "1px solid #27ae60"
                 - margin-bottom: "4px"
               grid:
-                - grid-template-areas: '"i n"'
-                - grid-template-columns: "min-content 1fr"
+                - grid-template-areas: '"i n s"'
+                - grid-template-columns: "min-content 1fr min-content"
                 - grid-template-rows: min-content
               icon:
                 - color: "#27ae60"
@@ -633,6 +609,11 @@ views:
                 - color: "var(--secondary-text-color)"
                 - text-align: left
                 - justify-self: start
+              state:
+                - font-size: "13px"
+                - font-weight: "600"
+                - color: "var(--primary-text-color)"
+                - justify-self: end
 
           # ══════════════════════════════════════════════════════
           #  USAGE ROW: kWh stats | Daily bar 30d | Monthly bar
