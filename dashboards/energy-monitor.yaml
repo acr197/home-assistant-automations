@@ -346,6 +346,8 @@ views:
                     name: Dyson Heater
                   - entity: sensor.tapo_p110m_4_basement_heater_today_s_consumption
                     name: Basement Heater
+                  - entity: sensor.tumble_dryer_energy_daily
+                    name: Tumble Dryer
 
               # ── Bottom Right: Individual device usage + note ──
               - type: vertical-stack
@@ -491,6 +493,12 @@ views:
                         <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;">{{ (states('sensor.tapo_p110m_4_basement_heater_this_month_s_consumption')|float / cycle_days)|round(3) }}</td>
                         <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;color:#e74c3c;">${{ ((states('sensor.tapo_p110m_4_basement_heater_this_month_s_consumption')|float / cycle_days) * rate)|round(3) }}</td>
                       </tr>
+                      <tr>
+                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);"><strong>Tumble Dryer</strong></td>
+                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;">{{ states('sensor.tumble_dryer_energy_monthly')|float|round(2) }} kWh</td>
+                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;">{{ (states('sensor.tumble_dryer_energy_monthly')|float / cycle_days)|round(3) }}</td>
+                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;color:#9b59b6;">${{ ((states('sensor.tumble_dryer_energy_monthly')|float / cycle_days) * rate)|round(3) }}</td>
+                      </tr>
                       <tr style="font-weight:600;">
                         <td style="padding:5px 8px;">Total</td>
                         <td style="padding:5px 8px;text-align:right;">{{ states('sensor.total_energy_this_month')|float|round(2) }} kWh</td>
@@ -517,6 +525,8 @@ views:
                     name: Dyson Heater
                   - entity: sensor.tapo_p110m_4_basement_heater_today_s_consumption
                     name: Basement Heater
+                  - entity: sensor.tumble_dryer_energy_daily
+                    name: Tumble Dryer
 
               # ── Cost Right: This month's cost breakdown by device ──
               - type: vertical-stack
@@ -537,6 +547,9 @@ views:
                       - entity: sensor.basement_heater_plug_energy_cost_monthly
                         name: Basement Heater
                         icon: mdi:radiator
+                      - entity: sensor.tumble_dryer_energy_cost_monthly
+                        name: Tumble Dryer
+                        icon: mdi:tumble-dryer
                       - type: divider
                       - entity: sensor.total_energy_cost_monthly
                         name: Total This Month
@@ -557,6 +570,9 @@ views:
                       - entity: sensor.basement_heater_plug_energy_cost_today
                         name: Basement Heater
                         icon: mdi:radiator
+                      - entity: sensor.tumble_dryer_energy_cost_today
+                        name: Tumble Dryer
+                        icon: mdi:tumble-dryer
                       - type: divider
                       - entity: sensor.total_energy_cost_today
                         name: Total Today
@@ -856,17 +872,17 @@ views:
       # ══════════════════════════════════════════════════════
       #  DEVICE REGISTRY — toggle show/hide in Overview
       # ══════════════════════════════════════════════════════
-      # Each toggle turns a device's gauge card on/off in the Overview.
-      # The wattage shown here is live.
-      #
-      # TO HIDE a device from Overview: flip its toggle to off.
+      # AUTO-SYNC NOTE:
+      #   • The "Individual Devices Total Usage" bar chart (Overview → power
+      #     section, right column) ALREADY auto-syncs with HA Energy settings.
+      #     Add a device there → it appears in that chart automatically.
+      #   • The gauge cards, cost table, and statistics graphs need manual
+      #     YAML updates because they use different sensor types (live watts
+      #     vs. monthly kWh). Just tell Claude "Add [device name]" and it
+      #     wires everything in one commit.
+      # TO HIDE a device gauge from Overview: flip its toggle to off.
       # TO ADD a new device: tell Claude Code "Add [device name] with
       #   entity prefix sensor.tapo_p110mX_* to the dashboard."
-      #   (Claude adds sensors to configuration.yaml + cards everywhere.)
-      #
-      # NOTE: A true "Add" dropdown like HA's native Energy tab is not
-      # possible in Lovelace YAML — new devices always need YAML + sensor
-      # changes that Claude can make for you in one message.
       - type: entities
         title: Device Registry — Active Smart Plugs
         show_header_toggle: false
@@ -898,6 +914,11 @@ views:
             secondary_info: last-changed
           - entity: input_boolean.show_device_basement
             name: "  Show in Overview"
+          - type: divider
+          - entity: sensor.tumble_dryer_energy_monthly
+            name: "5 · Miele Tumble Dryer"
+            icon: mdi:tumble-dryer
+            secondary_info: last-changed
 
       # ══════════════════════════════════════════════════════
       #  PECO BILL — manual entry + future AI upload
