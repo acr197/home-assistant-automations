@@ -160,6 +160,18 @@ template:
         state: >
           {% set rate = states('sensor.peco_variable_rate') | float(0) %}
           {{ (states('sensor.tapo_p110m_4_basement_heater_this_month_s_consumption') | float(0) * rate) | round(2) }}
+      - name: "Tumble Dryer Energy Cost Today"
+        unique_id: tumble_dryer_energy_cost_today
+        unit_of_measurement: "$"
+        state: >
+          {% set rate = states('sensor.peco_variable_rate') | float(0) %}
+          {{ (states('sensor.tumble_dryer_energy_daily') | float(0) * rate) | round(2) }}
+      - name: "Tumble Dryer Energy Cost Monthly"
+        unique_id: tumble_dryer_energy_cost_monthly
+        unit_of_measurement: "$"
+        state: >
+          {% set rate = states('sensor.peco_variable_rate') | float(0) %}
+          {{ (states('sensor.tumble_dryer_energy_monthly') | float(0) * rate) | round(2) }}
       - name: "Total Energy Cost Today"
         unique_id: total_energy_cost_today
         unit_of_measurement: "$"
@@ -169,7 +181,8 @@ template:
             states('sensor.tapo_p110m_1_today_s_consumption') | float(0) +
             states('sensor.tapo_p110m_2_nursery_heater_today_s_consumption') | float(0) +
             states('sensor.tapo_p110m_3_today_s_consumption') | float(0) +
-            states('sensor.tapo_p110m_4_basement_heater_today_s_consumption') | float(0)
+            states('sensor.tapo_p110m_4_basement_heater_today_s_consumption') | float(0) +
+            states('sensor.tumble_dryer_energy_daily') | float(0)
           ) * rate) | round(2) }}
       - name: "Total Energy Cost Monthly"
         unique_id: total_energy_cost_monthly
@@ -181,7 +194,8 @@ template:
             states('sensor.tapo_p110m_1_this_month_s_consumption') | float(0) +
             states('sensor.tapo_p110m_2_nursery_heater_this_month_s_consumption') | float(0) +
             states('sensor.tapo_p110m_3_this_month_s_consumption') | float(0) +
-            states('sensor.tapo_p110m_4_basement_heater_this_month_s_consumption') | float(0)
+            states('sensor.tapo_p110m_4_basement_heater_this_month_s_consumption') | float(0) +
+            states('sensor.tumble_dryer_energy_monthly') | float(0)
           ) * rate + cust) | round(2) }}
       - name: "Total Power Draw Now"
         unique_id: total_power_draw_now
@@ -204,7 +218,8 @@ template:
             states('sensor.tapo_p110m_1_today_s_consumption') | float(0) +
             states('sensor.tapo_p110m_2_nursery_heater_today_s_consumption') | float(0) +
             states('sensor.tapo_p110m_3_today_s_consumption') | float(0) +
-            states('sensor.tapo_p110m_4_basement_heater_today_s_consumption') | float(0)
+            states('sensor.tapo_p110m_4_basement_heater_today_s_consumption') | float(0) +
+            states('sensor.tumble_dryer_energy_daily') | float(0)
           ) | round(2) }}
       - name: "Total Energy This Month"
         unique_id: total_energy_this_month
@@ -215,7 +230,8 @@ template:
             states('sensor.tapo_p110m_1_this_month_s_consumption') | float(0) +
             states('sensor.tapo_p110m_2_nursery_heater_this_month_s_consumption') | float(0) +
             states('sensor.tapo_p110m_3_this_month_s_consumption') | float(0) +
-            states('sensor.tapo_p110m_4_basement_heater_this_month_s_consumption') | float(0)
+            states('sensor.tapo_p110m_4_basement_heater_this_month_s_consumption') | float(0) +
+            states('sensor.tumble_dryer_energy_monthly') | float(0)
           ) | round(2) }}
       - name: "Projected Monthly Energy Cost"
         unique_id: projected_monthly_energy_cost
@@ -435,6 +451,19 @@ input_boolean:
     name: "Show: Basement Heater"
     icon: mdi:radiator
     initial: true
+
+# ── Utility meters: create daily/monthly resets from cumulative Miele sensor ──
+# sensor.tumble_dryer_energy_consumption is a total_increasing lifetime counter.
+# These meters slice it into day/month windows matching the Tapo plug pattern.
+utility_meter:
+  tumble_dryer_energy_daily:
+    source: sensor.tumble_dryer_energy_consumption
+    cycle: daily
+    name: "Tumble Dryer Today's Consumption"
+  tumble_dryer_energy_monthly:
+    source: sensor.tumble_dryer_energy_consumption
+    cycle: monthly
+    name: "Tumble Dryer This Month's Consumption"
 
 shell_command:
   git_push: "sh /config/git_push.sh"
