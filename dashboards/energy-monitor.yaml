@@ -21,26 +21,43 @@ views:
           - type: horizontal-stack
             cards:
 
-              # ── Top Left: PECO Rate + logo ──
-              # Logo: save peco-logo.png to /config/www/peco-logo.png
-              # Using | (literal block) so newlines are preserved — required for markdown tables
+              # ── Top Left: PECO Rate — CSS gradient banner + styled HTML table ──
               - type: markdown
                 content: |
-                  <div style="text-align:center; margin-bottom:4px;">
-                    <img src="/local/peco-logo.png" style="height:64px;"
-                      onerror="this.style.display='none'" />
+                  <div style="background:linear-gradient(135deg,#00b4ab,#6b2fa0);border-radius:8px;padding:7px 0 5px;text-align:center;margin-bottom:10px;">
+                    <span style="color:white;font-size:22px;font-weight:700;letter-spacing:5px;font-family:sans-serif;">peco</span>
                   </div>
 
-                  #### PECO Rate: ${{ states('sensor.peco_variable_rate') }}/kWh
+                  **PECO Rate: ${{ states('sensor.peco_variable_rate') }}/kWh**
 
                   Last bill: **${{ states('input_number.peco_last_bill_amount') }}** for **{{ states('input_number.peco_last_bill_kwh') | int }} kWh** ({{ states('input_number.peco_last_bill_days') | int }} days)
 
-                  | Component | Rate |
-                  |:---|---:|
-                  | Delivery | ${{ states('input_number.peco_delivery_rate') }}/kWh |
-                  | Supply | ${{ states('input_number.peco_supply_rate') }}/kWh |
-                  | Transmission | ${{ states('input_number.peco_transmission_rate') }}/kWh |
-                  | Customer charge | ${{ states('input_number.peco_customer_charge') }}/mo fixed |
+                  <table style="width:100%;border-collapse:collapse;margin-top:8px;font-size:0.88em;">
+                    <thead>
+                      <tr style="background:linear-gradient(90deg,#00b4ab,#6b2fa0);">
+                        <th style="color:white;padding:6px 8px;text-align:left;font-weight:600;">Component</th>
+                        <th style="color:white;padding:6px 8px;text-align:right;font-weight:600;">Rate</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);">Delivery</td>
+                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;color:var(--primary-color);">${{ states('input_number.peco_delivery_rate') }}/kWh</td>
+                      </tr>
+                      <tr>
+                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);">Supply</td>
+                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;color:var(--primary-color);">${{ states('input_number.peco_supply_rate') }}/kWh</td>
+                      </tr>
+                      <tr>
+                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);">Transmission</td>
+                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;color:var(--primary-color);">${{ states('input_number.peco_transmission_rate') }}/kWh</td>
+                      </tr>
+                      <tr>
+                        <td style="padding:5px 8px;">Customer charge</td>
+                        <td style="padding:5px 8px;text-align:right;color:var(--primary-color);">${{ states('input_number.peco_customer_charge') }}/mo fixed</td>
+                      </tr>
+                    </tbody>
+                  </table>
 
               # ── Top Middle: Energy Distribution ──
               # Pulls from Settings → Dashboards → Energy config
