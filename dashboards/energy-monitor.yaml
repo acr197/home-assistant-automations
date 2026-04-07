@@ -7,123 +7,152 @@ views:
     path: overview
     icon: mdi:lightning-bolt
     cards:
-      # ── Live power + cost header row ──
+
+      # ══════════════════════════════════════════════════════
+      #  TOP ROW: PECO Rate | Energy Distribution | Costs
+      # ══════════════════════════════════════════════════════
       - type: horizontal-stack
         cards:
-          - type: entity
-            entity: sensor.total_power_draw_now
-            name: Live Power
-            icon: mdi:flash
-          - type: entity
-            entity: sensor.total_energy_cost_today
-            name: Cost Today
-            icon: mdi:currency-usd
-          - type: entity
-            entity: sensor.total_energy_cost_monthly
-            name: Cost This Month
-            icon: mdi:calendar-month
 
-      # ── Projection & average row ──
+          # ── Top Left: PECO Rate + logo ──
+          # Logo: save peco-logo.png to /config/www/ to display
+          - type: markdown
+            content: >
+              <div style="text-align:center; margin-bottom:6px;">
+                <img src="/local/peco-logo.png" style="height:60px; opacity:0.9;" />
+              </div>
+
+              ### PECO Rate: **${{ states('sensor.peco_variable_rate') }}/kWh**
+
+              Last bill: **${{ states('input_number.peco_last_bill_amount') }}** for **{{ states('input_number.peco_last_bill_kwh') | int }} kWh** ({{ states('input_number.peco_last_bill_days') | int }} days)
+
+              | Component | Rate |
+
+              |---|---|
+
+              | Delivery | ${{ states('input_number.peco_delivery_rate') }}/kWh |
+
+              | Supply | ${{ states('input_number.peco_supply_rate') }}/kWh |
+
+              | Transmission | ${{ states('input_number.peco_transmission_rate') }}/kWh |
+
+              | Customer charge | ${{ states('input_number.peco_customer_charge') }}/mo fixed |
+
+          # ── Top Middle: Energy Distribution ──
+          # Pulls from Settings → Dashboards → Energy config
+          - type: energy-distribution
+            title: Energy Distribution
+
+          # ── Top Right: 6-block cost summary ──
+          - type: vertical-stack
+            cards:
+              - type: horizontal-stack
+                cards:
+                  - type: entity
+                    entity: sensor.total_power_draw_now
+                    name: Live Power
+                    icon: mdi:flash
+                  - type: entity
+                    entity: sensor.total_energy_cost_today
+                    name: Cost Today
+                    icon: mdi:currency-usd
+                  - type: entity
+                    entity: sensor.total_energy_cost_monthly
+                    name: Cost This Month
+                    icon: mdi:calendar-month
+              - type: horizontal-stack
+                cards:
+                  - type: entity
+                    entity: sensor.projected_monthly_energy_cost
+                    name: Projected Bill
+                    icon: mdi:chart-line-variant
+                  - type: entity
+                    entity: sensor.daily_average_energy_cost_this_month
+                    name: Daily Avg Cost
+                    icon: mdi:chart-bar
+                  - type: entity
+                    entity: sensor.estimated_annual_energy_cost
+                    name: Est. Annual
+                    icon: mdi:calendar-clock
+
+      # ══════════════════════════════════════════════════════
+      #  BOTTOM ROW: Gauges | Total Power Draw | Devices
+      # ══════════════════════════════════════════════════════
       - type: horizontal-stack
         cards:
-          - type: entity
-            entity: sensor.projected_monthly_energy_cost
-            name: Projected Bill
-            icon: mdi:chart-line-variant
-          - type: entity
-            entity: sensor.daily_average_energy_cost_this_month
-            name: Daily Avg Cost
-            icon: mdi:chart-bar
-          - type: entity
-            entity: sensor.estimated_annual_energy_cost
-            name: Est. Annual
-            icon: mdi:calendar-clock
 
-      # ── PECO bill context (dynamic from input_numbers) ──
+          # ── Bottom Left: 4 real-time power gauges ──
+          - type: vertical-stack
+            cards:
+              - type: horizontal-stack
+                cards:
+                  - type: gauge
+                    entity: sensor.tapo_p110m_1_current_consumption
+                    name: Desktop
+                    unit: W
+                    min: 0
+                    max: 500
+                    needle: true
+                    severity:
+                      green: 0
+                      yellow: 150
+                      red: 350
+                  - type: gauge
+                    entity: sensor.tapo_p110m_2_nursery_heater_current_consumption
+                    name: Nursery Heater
+                    unit: W
+                    min: 0
+                    max: 1500
+                    needle: true
+                    severity:
+                      green: 0
+                      yellow: 500
+                      red: 1000
+              - type: horizontal-stack
+                cards:
+                  - type: gauge
+                    entity: sensor.tapo_p110m_3_current_consumption
+                    name: Dyson Heater
+                    unit: W
+                    min: 0
+                    max: 2000
+                    needle: true
+                    severity:
+                      green: 0
+                      yellow: 500
+                      red: 1200
+                  - type: gauge
+                    entity: sensor.tapo_p110m_4_basement_heater_current_consumption
+                    name: Basement Heater
+                    unit: W
+                    min: 0
+                    max: 1500
+                    needle: true
+                    severity:
+                      green: 0
+                      yellow: 500
+                      red: 1000
+
+          # ── Bottom Middle: Total power draw history (24h) ──
+          - type: history-graph
+            title: Total Power Draw (24h)
+            hours_to_show: 24
+            entities:
+              - entity: sensor.total_power_draw_now
+                name: Total Watts
+
+          # ── Bottom Right: Individual device usage bar graph ──
+          # Pulls from Settings → Dashboards → Energy config
+          - type: energy-devices-graph
+            title: Individual Devices Total Usage
+
+      # ── Footer note ──
       - type: markdown
         content: >
-          ### PECO Rate: **${{ states('sensor.peco_variable_rate') }}/kWh**
-
-          Last bill: **${{ states('input_number.peco_last_bill_amount') }}** for **{{ states('input_number.peco_last_bill_kwh') | int }} kWh** ({{ states('input_number.peco_last_bill_days') | int }} days)
-
-          | Component | Rate |
-
-          |---|---|
-
-          | Delivery (distribution) | ${{ states('input_number.peco_delivery_rate') }}/kWh |
-
-          | Supply (generation) | ${{ states('input_number.peco_supply_rate') }}/kWh |
-
-          | Transmission | ${{ states('input_number.peco_transmission_rate') }}/kWh |
-
-          | Customer charge | ${{ states('input_number.peco_customer_charge') }}/mo fixed |
-
-      # ── Real-time power gauges ──
-      - type: horizontal-stack
-        cards:
-          - type: gauge
-            entity: sensor.tapo_p110m_1_current_consumption
-            name: Desktop
-            unit: W
-            min: 0
-            max: 500
-            needle: true
-            severity:
-              green: 0
-              yellow: 150
-              red: 350
-          - type: gauge
-            entity: sensor.tapo_p110m_2_nursery_heater_current_consumption
-            name: Nursery Heater
-            unit: W
-            min: 0
-            max: 1500
-            needle: true
-            severity:
-              green: 0
-              yellow: 500
-              red: 1000
-      - type: horizontal-stack
-        cards:
-          - type: gauge
-            entity: sensor.tapo_p110m_3_current_consumption
-            name: Dyson Heater
-            unit: W
-            min: 0
-            max: 2000
-            needle: true
-            severity:
-              green: 0
-              yellow: 500
-              red: 1200
-          - type: gauge
-            entity: sensor.tapo_p110m_4_basement_heater_current_consumption
-            name: Basement Heater
-            unit: W
-            min: 0
-            max: 1500
-            needle: true
-            severity:
-              green: 0
-              yellow: 500
-              red: 1000
-
-      # ── Total power draw history (24h) ──
-      - type: history-graph
-        title: Total Power Draw (24h)
-        hours_to_show: 24
-        entities:
-          - entity: sensor.total_power_draw_now
-            name: Total Watts
-
-      # ── Native Energy dashboard cards ──
-      # NOTE: These pull from Settings → Dashboards → Energy config.
-      # To show all devices in the bar graph, add each Tapo plug under
-      # "Individual devices" in the Energy configuration.
-      - type: energy-distribution
-        title: Energy Distribution
-      - type: energy-devices-graph
-        title: Individual Devices Total Usage
+          <small style="color: var(--secondary-text-color);">
+          To add or remove devices from the bar graph above, go to
+          **Settings → Dashboards → Energy → Individual devices**.
+          </small>
 
   # ═══════════════════════════════════════════════════════════
   #  VIEW 2: LIVE — real-time power by device
