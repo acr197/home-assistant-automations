@@ -65,9 +65,10 @@ views:
                 card_mod:
                   style: |
                     ha-card {
-                      background: rgba(255,255,255,0.08);
+                      background: rgba(12, 22, 38, 0.78);
                       border-radius: 16px;
                       box-shadow: none;
+                      height: 100%;
                     }
                 content: |
                   <div style="background:linear-gradient(135deg,#00b4ab,#6b2fa0);border-radius:8px;padding:7px 0 5px;text-align:center;margin-bottom:10px;">
@@ -121,7 +122,7 @@ views:
                         card_mod:
                           style: |
                             ha-card {
-                              background: rgba(255,255,255,0.08);
+                              background: rgba(12, 22, 38, 0.78);
                               border-radius: 16px;
                               box-shadow: none;
                             }
@@ -132,7 +133,7 @@ views:
                         card_mod:
                           style: |
                             ha-card {
-                              background: rgba(255,255,255,0.08);
+                              background: rgba(12, 22, 38, 0.78);
                               border-radius: 16px;
                               box-shadow: none;
                             }
@@ -143,7 +144,7 @@ views:
                         card_mod:
                           style: |
                             ha-card {
-                              background: rgba(255,255,255,0.08);
+                              background: rgba(12, 22, 38, 0.78);
                               border-radius: 16px;
                               box-shadow: none;
                             }
@@ -156,7 +157,7 @@ views:
                         card_mod:
                           style: |
                             ha-card {
-                              background: rgba(255,255,255,0.08);
+                              background: rgba(12, 22, 38, 0.78);
                               border-radius: 16px;
                               box-shadow: none;
                             }
@@ -167,7 +168,7 @@ views:
                         card_mod:
                           style: |
                             ha-card {
-                              background: rgba(255,255,255,0.08);
+                              background: rgba(12, 22, 38, 0.78);
                               border-radius: 16px;
                               box-shadow: none;
                             }
@@ -178,7 +179,7 @@ views:
                         card_mod:
                           style: |
                             ha-card {
-                              background: rgba(255,255,255,0.08);
+                              background: rgba(12, 22, 38, 0.78);
                               border-radius: 16px;
                               box-shadow: none;
                             }
@@ -256,7 +257,7 @@ views:
                           card_mod:
                             style: |
                               ha-card {
-                                background: rgba(255,255,255,0.08);
+                                background: rgba(12, 22, 38, 0.78);
                                 border-radius: 16px;
                                 box-shadow: none;
                               }
@@ -279,7 +280,7 @@ views:
                           card_mod:
                             style: |
                               ha-card {
-                                background: rgba(255,255,255,0.08);
+                                background: rgba(12, 22, 38, 0.78);
                                 border-radius: 16px;
                                 box-shadow: none;
                               }
@@ -304,7 +305,7 @@ views:
                           card_mod:
                             style: |
                               ha-card {
-                                background: rgba(255,255,255,0.08);
+                                background: rgba(12, 22, 38, 0.78);
                                 border-radius: 16px;
                                 box-shadow: none;
                               }
@@ -327,7 +328,7 @@ views:
                           card_mod:
                             style: |
                               ha-card {
-                                background: rgba(255,255,255,0.08);
+                                background: rgba(12, 22, 38, 0.78);
                                 border-radius: 16px;
                                 box-shadow: none;
                               }
@@ -448,7 +449,7 @@ views:
                 card_mod:
                   style: |
                     ha-card {
-                      background: rgba(255,255,255,0.08);
+                      background: rgba(12, 22, 38, 0.78);
                       border-radius: 16px;
                       box-shadow: none;
                     }
@@ -456,8 +457,9 @@ views:
                   {%- set cs = states('input_number.billing_cycle_start_day')|int(1) -%}
                   {%- set today = now().day -%}
                   {%- set cycle_days = [(today - cs + 1), 1]|max if today >= cs else [(today + 30 - cs + 1), 1]|max -%}
-                  {%- set rate = states('sensor.peco_variable_rate')|float -%}
+                  {%- set rate = states('sensor.peco_variable_rate')|float(0) -%}
                   {%- set suffix = 'st' if cs in [1,21] else ('nd' if cs in [2,22] else ('rd' if cs in [3,23] else 'th')) -%}
+                  {%- set dryer_kwh = states('sensor.tumble_dryer_energy_monthly')|float(0) -%}
                   #### Estimated Daily Cost per Device
 
                   Billing cycle starts **{{ cs }}{{ suffix }}** each month · **{{ cycle_days }} day{{ 's' if cycle_days != 1 }}** elapsed · Rate: **${{ rate }}/kWh**
@@ -498,9 +500,9 @@ views:
                       </tr>
                       <tr>
                         <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);"><strong>Tumble Dryer</strong></td>
-                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;">{{ states('sensor.tumble_dryer_energy_monthly')|float|round(2) }} kWh</td>
-                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;">{{ (states('sensor.tumble_dryer_energy_monthly')|float / cycle_days)|round(3) }}</td>
-                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;color:#9b59b6;">${{ ((states('sensor.tumble_dryer_energy_monthly')|float / cycle_days) * rate)|round(3) }}</td>
+                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;">{{ dryer_kwh|round(2) }} kWh</td>
+                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;">{{ (dryer_kwh / cycle_days)|round(3) }}</td>
+                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;color:#9b59b6;">${{ ((dryer_kwh / cycle_days) * rate)|round(3) }}</td>
                       </tr>
                       <tr style="font-weight:600;">
                         <td style="padding:5px 8px;">Total</td>
@@ -640,7 +642,7 @@ views:
                     card_mod:
                       style: |
                         ha-card {
-                          background: rgba(255,255,255,0.08);
+                          background: rgba(12, 22, 38, 0.78);
                           border-radius: 16px;
                           box-shadow: none;
                         }
@@ -651,7 +653,7 @@ views:
                     card_mod:
                       style: |
                         ha-card {
-                          background: rgba(255,255,255,0.08);
+                          background: rgba(12, 22, 38, 0.78);
                           border-radius: 16px;
                           box-shadow: none;
                         }
@@ -662,7 +664,7 @@ views:
                     card_mod:
                       style: |
                         ha-card {
-                          background: rgba(255,255,255,0.08);
+                          background: rgba(12, 22, 38, 0.78);
                           border-radius: 16px;
                           box-shadow: none;
                         }
@@ -918,7 +920,7 @@ views:
           - entity: input_boolean.show_device_basement
             name: "  Show in Overview"
           - type: divider
-          - entity: sensor.tumble_dryer_energy_monthly
+          - entity: sensor.tumble_dryer_energy_consumption
             name: "5 · Miele Tumble Dryer"
             icon: mdi:tumble-dryer
             secondary_info: last-changed
@@ -948,28 +950,28 @@ views:
         card_mod:
           style: |
             ha-card {
-              background: rgba(255,255,255,0.08);
+              background: rgba(12, 22, 38, 0.78);
               border-radius: 16px;
               box-shadow: none;
             }
         content: |
-          #### PECO Bill Auto-Import *(coming soon)*
+          #### PECO Bill Auto-Import
 
-          **When you receive a new bill**, enter the values above manually from the PDF.
+          **You have a ChatGPT API key — here's the fastest path to AI bill parsing:**
 
-          **Future AI parsing** — to auto-fill from a PDF drop, this needs a backend flow:
-          1. Install **Studio Code Server** → upload the PDF to `/config/bills/`
-          2. A **Node-RED or n8n flow** reads the file and calls an AI API (Claude/OpenAI)
-          3. The AI extracts rate components and posts them to HA input_number helpers
+          **Step 1 — Upload your bill PDF**
+          Open [Studio Code Server](http://homeassistant.local:8443) → navigate to `/config/bills/` → drag and drop your PECO PDF there.
 
-          When you're ready to build that, tell Claude Code: *"Set up an n8n flow to parse PECO PDFs and update the input_number helpers."*
+          **Step 2 — Ask Claude Code to wire it up**
+          Tell Claude Code: *"I've put a PECO bill PDF in `/config/bills/`. Use my OpenAI API key to parse it and update the input_number helpers for rates, bill amount, kWh, and days."*
+          Claude will write a script that calls GPT-4o vision on the PDF page image and posts the extracted values back to HA via the REST API.
 
-          **For now**, enter values from your bill:
+          **For now**, enter values manually from your bill:
           - **Delivery Rate** → "Distribution Charges" per-kWh line
           - **Supply Rate** → "Generation Charges" per-kWh line
           - **Transmission Rate** → "Transmission Charges" per-kWh line
           - **Customer Charge** → fixed monthly fee
-          - **Billing Period** → number of days on the bill
+          - **Billing Period** → number of days printed on the bill
 
       # ══════════════════════════════════════════════════════
       #  PECO RATE COMPONENTS
