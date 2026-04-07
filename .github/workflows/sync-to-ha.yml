@@ -10,7 +10,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Trigger Home Assistant webhook
+        continue-on-error: true
         run: |
-          curl -s -o /dev/null -w "%{http_code}" \
+          http_code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 15 \
             -X POST \
-            "${{ secrets.HA_WEBHOOK_URL }}"
+            "${{ secrets.HA_WEBHOOK_URL }}")
+          echo "Webhook response: $http_code"
+          if [ "$http_code" = "000" ]; then
+            echo "Warning: HA unreachable from GitHub runners (home network not publicly accessible). Pull manually via the GitHub Sync dashboard."
+          fi
