@@ -418,6 +418,20 @@ input_number:
     icon: mdi:calendar-start
     initial: 1
 
+input_boolean:
+  show_device_desktop:
+    name: "Show: Desktop"
+    icon: mdi:desktop-tower-monitor
+  show_device_nursery:
+    name: "Show: Nursery Heater"
+    icon: mdi:radiator
+  show_device_dyson:
+    name: "Show: Dyson Heater"
+    icon: mdi:fan
+  show_device_basement:
+    name: "Show: Basement Heater"
+    icon: mdi:radiator
+
 shell_command:
   git_push: "sh /config/git_push.sh"
   git_pull: "sh /config/git_pull.sh"
