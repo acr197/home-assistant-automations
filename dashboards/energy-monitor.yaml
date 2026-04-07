@@ -7,10 +7,10 @@ views:
     path: overview
     icon: mdi:lightning-bolt
     type: panel
-    # Background image — upload your chosen Unsplash photo to /config/www/energy-bg.jpg
-    # It will appear automatically once the file is there (no HA restart needed).
-    # To swap the image later, just replace the file with the same filename.
-    background: "center / cover no-repeat url('/local/energy-bg.jpg')"
+    # Background: the teal gradient is the fallback — it shows immediately.
+    # Once you upload the power-towers photo to /config/www/energy-bg.jpg
+    # the image overlays the gradient. Hard-refresh (Ctrl+Shift+R) after upload.
+    background: "url('/local/energy-bg.jpg') center/cover no-repeat, linear-gradient(160deg, #071a28 0%, #030d10 60%, #0a1a10 100%)"
     cards:
       # Panel view: one top-level vertical-stack, full width.
       # horizontal-stacks inside become proper 3-column rows.
@@ -332,64 +332,34 @@ views:
                                 box-shadow: none;
                               }
 
-              # ── Bottom Middle: Compact mini-graph (24h power) ──
-              - type: custom:mini-graph-card
-                entity: sensor.total_power_draw_now
-                name: Total Power Draw
-                hours_to_show: 24
-                points_per_hour: 4
-                line_width: 2
-                line_color: "#00b4ab"
-                fill: true
-                animate: true
-                font_size: 75
-                show:
-                  points: false
-                  legend: false
-                  extrema: true
-                  labels: false
-                  name: true
-                  icon: false
-                  state: true
-                card_mod:
-                  style: |
-                    ha-card {
-                      background: rgba(255,255,255,0.08);
-                      border-radius: 16px;
-                      box-shadow: none;
-                      height: 100%;
-                    }
+              # ── Bottom Middle: Daily energy by device (14 days) ──
+              - type: statistics-graph
+                title: Daily Energy by Device (kWh)
+                period: day
+                days_to_show: 14
+                stat_types:
+                  - sum
+                chart_type: bar
+                entities:
+                  - entity: sensor.tapo_p110m_1_today_s_consumption
+                    name: Desktop
+                  - entity: sensor.tapo_p110m_2_nursery_heater_today_s_consumption
+                    name: Nursery Heater
+                  - entity: sensor.tapo_p110m_3_today_s_consumption
+                    name: Dyson Heater
+                  - entity: sensor.tapo_p110m_4_basement_heater_today_s_consumption
+                    name: Basement Heater
 
-              # ── Bottom Right: Stacked daily kWh chart + native usage + note ──
+              # ── Bottom Right: Individual device usage + note ──
               - type: vertical-stack
                 cards:
-                  # Daily energy per device — last 14 days
-                  # (apexcharts-card would give a stacked view; install it from
-                  #  HACS → Frontend → "apexcharts-card" and tell Claude to restore)
-                  - type: statistics-graph
-                    title: Daily Energy by Device (kWh)
-                    period: day
-                    days_to_show: 14
-                    stat_types:
-                      - sum
-                    chart_type: bar
-                    entities:
-                      - entity: sensor.tapo_p110m_1_today_s_consumption
-                        name: Desktop
-                      - entity: sensor.tapo_p110m_2_nursery_heater_today_s_consumption
-                        name: Nursery Heater
-                      - entity: sensor.tapo_p110m_3_today_s_consumption
-                        name: Dyson Heater
-                      - entity: sensor.tapo_p110m_4_basement_heater_today_s_consumption
-                        name: Basement Heater
-                  # Native usage bar (from Energy config)
                   - type: energy-devices-graph
                     title: Individual Devices Total Usage
-                  # Footer note
                   - type: markdown
                     content: |
                       <small style="color: var(--secondary-text-color);">
-                      To add or remove devices, go to **Settings → Dashboards → Energy → Individual devices**.
+                      To add or remove devices, go to
+                      <a href="/config/energy" style="color:var(--primary-color);">Settings → Energy → Individual <strong>Devices</strong></a>.
                       </small>
 
           # ══════════════════════════════════════════════════════
@@ -501,25 +471,25 @@ views:
                     </thead>
                     <tbody>
                       <tr>
-                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);">Desktop</td>
+                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);"><strong>Desktop</strong></td>
                         <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;">{{ states('sensor.tapo_p110m_1_this_month_s_consumption')|float|round(2) }} kWh</td>
                         <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;">{{ (states('sensor.tapo_p110m_1_this_month_s_consumption')|float / cycle_days)|round(3) }}</td>
                         <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;color:#f39c12;">${{ ((states('sensor.tapo_p110m_1_this_month_s_consumption')|float / cycle_days) * rate)|round(3) }}</td>
                       </tr>
                       <tr>
-                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);">Nursery Heater</td>
+                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);"><strong>Nursery Heater</strong></td>
                         <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;">{{ states('sensor.tapo_p110m_2_nursery_heater_this_month_s_consumption')|float|round(2) }} kWh</td>
                         <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;">{{ (states('sensor.tapo_p110m_2_nursery_heater_this_month_s_consumption')|float / cycle_days)|round(3) }}</td>
                         <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;color:#3498db;">${{ ((states('sensor.tapo_p110m_2_nursery_heater_this_month_s_consumption')|float / cycle_days) * rate)|round(3) }}</td>
                       </tr>
                       <tr>
-                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);">Dyson Heater</td>
+                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);"><strong>Dyson Heater</strong></td>
                         <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;">{{ states('sensor.tapo_p110m_3_this_month_s_consumption')|float|round(2) }} kWh</td>
                         <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;">{{ (states('sensor.tapo_p110m_3_this_month_s_consumption')|float / cycle_days)|round(3) }}</td>
                         <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;color:#2ecc71;">${{ ((states('sensor.tapo_p110m_3_this_month_s_consumption')|float / cycle_days) * rate)|round(3) }}</td>
                       </tr>
                       <tr>
-                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);">Basement Heater</td>
+                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);"><strong>Basement Heater</strong></td>
                         <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;">{{ states('sensor.tapo_p110m_4_basement_heater_this_month_s_consumption')|float|round(2) }} kWh</td>
                         <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;">{{ (states('sensor.tapo_p110m_4_basement_heater_this_month_s_consumption')|float / cycle_days)|round(3) }}</td>
                         <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;color:#e74c3c;">${{ ((states('sensor.tapo_p110m_4_basement_heater_this_month_s_consumption')|float / cycle_days) * rate)|round(3) }}</td>
