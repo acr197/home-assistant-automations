@@ -317,7 +317,6 @@ views:
                 line_width: 2
                 line_color: "#00b4ab"
                 fill: true
-                smooth: true
                 animate: true
                 font_size: 75
                 show:
@@ -353,24 +352,14 @@ views:
                     apex_config:
                       chart:
                         height: 220
-                        background: transparent
                       plotOptions:
                         bar:
                           borderRadius: 4
                       grid:
                         borderColor: "rgba(255,255,255,0.08)"
-                      xaxis:
-                        labels:
-                          style:
-                            colors: "rgba(255,255,255,0.5)"
-                            fontSize: "10px"
-                      yaxis:
-                        labels:
-                          style:
-                            colors: "rgba(255,255,255,0.5)"
                       legend:
                         labels:
-                          colors: "rgba(255,255,255,0.7)"
+                          colors: "#aaa"
                       tooltip:
                         theme: dark
                     card_mod:
@@ -414,6 +403,313 @@ views:
                       <small style="color: var(--secondary-text-color);">
                       To add or remove devices, go to **Settings → Dashboards → Energy → Individual devices**.
                       </small>
+
+          # ══════════════════════════════════════════════════════
+          #  POWER ROW 2: Per-device history (24h + 7 days)
+          # ══════════════════════════════════════════════════════
+          - type: horizontal-stack
+            cards:
+              - type: history-graph
+                title: Power Draw by Device (24h)
+                hours_to_show: 24
+                entities:
+                  - entity: sensor.tapo_p110m_1_current_consumption
+                    name: Desktop
+                  - entity: sensor.tapo_p110m_2_nursery_heater_current_consumption
+                    name: Nursery Heater
+                  - entity: sensor.tapo_p110m_3_current_consumption
+                    name: Dyson Heater
+                  - entity: sensor.tapo_p110m_4_basement_heater_current_consumption
+                    name: Basement Heater
+              - type: history-graph
+                title: Power Draw by Device (7 Days)
+                hours_to_show: 168
+                entities:
+                  - entity: sensor.tapo_p110m_1_current_consumption
+                    name: Desktop
+                  - entity: sensor.tapo_p110m_2_nursery_heater_current_consumption
+                    name: Nursery Heater
+                  - entity: sensor.tapo_p110m_3_current_consumption
+                    name: Dyson Heater
+                  - entity: sensor.tapo_p110m_4_basement_heater_current_consumption
+                    name: Basement Heater
+
+          # ══════════════════════════════════════════════════════
+          #  SECTION HEADER — cost (purple)
+          # ══════════════════════════════════════════════════════
+          - type: custom:button-card
+            show_name: true
+            show_state: false
+            show_icon: true
+            icon: mdi:currency-usd
+            name: cost
+            tap_action:
+              action: none
+            hold_action:
+              action: none
+            styles:
+              card:
+                - background: transparent
+                - box-shadow: none
+                - border-radius: "0"
+                - padding: "10px 8px 4px"
+                - border-bottom: "1px solid #9b59b6"
+                - margin-bottom: "4px"
+              grid:
+                - grid-template-areas: '"i n"'
+                - grid-template-columns: "min-content 1fr"
+                - grid-template-rows: min-content
+              icon:
+                - color: "#9b59b6"
+                - width: "15px"
+                - margin-right: "6px"
+              name:
+                - text-transform: lowercase
+                - letter-spacing: "3px"
+                - font-size: "11px"
+                - color: "var(--secondary-text-color)"
+                - text-align: left
+                - justify-self: start
+
+          # ══════════════════════════════════════════════════════
+          #  COST ROW: Est. daily cost | 30-day trend | Monthly breakdown
+          # ══════════════════════════════════════════════════════
+          - type: horizontal-stack
+            cards:
+
+              # ── Cost Left: Estimated daily cost per device (template math) ──
+              - type: markdown
+                card_mod:
+                  style: |
+                    ha-card {
+                      background: rgba(255,255,255,0.04);
+                      border-radius: 16px;
+                      box-shadow: none;
+                    }
+                content: |
+                  #### Estimated Daily Cost per Device
+
+                  Based on **{{ now().day }} days** this month · Rate: **${{ states('sensor.peco_variable_rate') }}/kWh**
+
+                  <table style="width:100%;border-collapse:collapse;margin-top:8px;font-size:0.88em;">
+                    <thead>
+                      <tr style="background:linear-gradient(90deg,#9b59b6,#6b2fa0);">
+                        <th style="color:white;padding:6px 8px;text-align:left;font-weight:600;">Device</th>
+                        <th style="color:white;padding:6px 8px;text-align:right;font-weight:600;">kWh/mo</th>
+                        <th style="color:white;padding:6px 8px;text-align:right;font-weight:600;">kWh/day</th>
+                        <th style="color:white;padding:6px 8px;text-align:right;font-weight:600;">$/day est.</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);">Desktop</td>
+                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;">{{ states('sensor.tapo_p110m_1_this_month_s_consumption')|float|round(2) }} kWh</td>
+                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;">{{ (states('sensor.tapo_p110m_1_this_month_s_consumption')|float / now().day)|round(3) }}</td>
+                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;color:#f39c12;">${{ ((states('sensor.tapo_p110m_1_this_month_s_consumption')|float / now().day) * states('sensor.peco_variable_rate')|float)|round(3) }}</td>
+                      </tr>
+                      <tr>
+                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);">Nursery Heater</td>
+                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;">{{ states('sensor.tapo_p110m_2_nursery_heater_this_month_s_consumption')|float|round(2) }} kWh</td>
+                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;">{{ (states('sensor.tapo_p110m_2_nursery_heater_this_month_s_consumption')|float / now().day)|round(3) }}</td>
+                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;color:#3498db;">${{ ((states('sensor.tapo_p110m_2_nursery_heater_this_month_s_consumption')|float / now().day) * states('sensor.peco_variable_rate')|float)|round(3) }}</td>
+                      </tr>
+                      <tr>
+                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);">Dyson Heater</td>
+                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;">{{ states('sensor.tapo_p110m_3_this_month_s_consumption')|float|round(2) }} kWh</td>
+                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;">{{ (states('sensor.tapo_p110m_3_this_month_s_consumption')|float / now().day)|round(3) }}</td>
+                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;color:#2ecc71;">${{ ((states('sensor.tapo_p110m_3_this_month_s_consumption')|float / now().day) * states('sensor.peco_variable_rate')|float)|round(3) }}</td>
+                      </tr>
+                      <tr>
+                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);">Basement Heater</td>
+                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;">{{ states('sensor.tapo_p110m_4_basement_heater_this_month_s_consumption')|float|round(2) }} kWh</td>
+                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;">{{ (states('sensor.tapo_p110m_4_basement_heater_this_month_s_consumption')|float / now().day)|round(3) }}</td>
+                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;color:#e74c3c;">${{ ((states('sensor.tapo_p110m_4_basement_heater_this_month_s_consumption')|float / now().day) * states('sensor.peco_variable_rate')|float)|round(3) }}</td>
+                      </tr>
+                      <tr style="font-weight:600;">
+                        <td style="padding:5px 8px;">Total</td>
+                        <td style="padding:5px 8px;text-align:right;">{{ states('sensor.total_energy_this_month')|float|round(2) }} kWh</td>
+                        <td style="padding:5px 8px;text-align:right;">{{ states('sensor.daily_average_energy_this_month')|float|round(3) }}</td>
+                        <td style="padding:5px 8px;text-align:right;color:var(--primary-color);">${{ states('sensor.daily_average_energy_cost_this_month') }}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+
+              # ── Cost Middle: 30-day per-device energy trend (cumulative line) ──
+              - type: statistics-graph
+                title: 30-Day Energy Trend by Device
+                period: day
+                days_to_show: 30
+                stat_types:
+                  - sum
+                chart_type: line
+                entities:
+                  - entity: sensor.tapo_p110m_1_today_s_consumption
+                    name: Desktop
+                  - entity: sensor.tapo_p110m_2_nursery_heater_today_s_consumption
+                    name: Nursery Heater
+                  - entity: sensor.tapo_p110m_3_today_s_consumption
+                    name: Dyson Heater
+                  - entity: sensor.tapo_p110m_4_basement_heater_today_s_consumption
+                    name: Basement Heater
+
+              # ── Cost Right: This month's cost breakdown by device ──
+              - type: vertical-stack
+                cards:
+                  - type: entities
+                    title: This Month's Energy Costs
+                    show_header_toggle: false
+                    entities:
+                      - entity: sensor.desktop_desk_plug_energy_cost_monthly
+                        name: Desktop Desk
+                        icon: mdi:desktop-tower-monitor
+                      - entity: sensor.nursery_heater_plug_energy_cost_monthly
+                        name: Nursery Heater
+                        icon: mdi:radiator
+                      - entity: sensor.dyson_heater_plug_energy_cost_monthly
+                        name: Dyson Heater
+                        icon: mdi:fan
+                      - entity: sensor.basement_heater_plug_energy_cost_monthly
+                        name: Basement Heater
+                        icon: mdi:radiator
+                      - type: divider
+                      - entity: sensor.total_energy_cost_monthly
+                        name: Total This Month
+                        icon: mdi:sigma
+                  - type: entities
+                    title: Today's Energy Costs
+                    show_header_toggle: false
+                    entities:
+                      - entity: sensor.desktop_desk_plug_energy_cost_today
+                        name: Desktop Desk
+                        icon: mdi:desktop-tower-monitor
+                      - entity: sensor.nursery_heater_plug_energy_cost_today
+                        name: Nursery Heater
+                        icon: mdi:radiator
+                      - entity: sensor.dyson_heater_plug_energy_cost_today
+                        name: Dyson Heater
+                        icon: mdi:fan
+                      - entity: sensor.basement_heater_plug_energy_cost_today
+                        name: Basement Heater
+                        icon: mdi:radiator
+                      - type: divider
+                      - entity: sensor.total_energy_cost_today
+                        name: Total Today
+                        icon: mdi:sigma
+
+          # ══════════════════════════════════════════════════════
+          #  SECTION HEADER — usage (green)
+          # ══════════════════════════════════════════════════════
+          - type: custom:button-card
+            show_name: true
+            show_state: false
+            show_icon: true
+            icon: mdi:chart-bar
+            name: usage
+            tap_action:
+              action: none
+            hold_action:
+              action: none
+            styles:
+              card:
+                - background: transparent
+                - box-shadow: none
+                - border-radius: "0"
+                - padding: "10px 8px 4px"
+                - border-bottom: "1px solid #27ae60"
+                - margin-bottom: "4px"
+              grid:
+                - grid-template-areas: '"i n"'
+                - grid-template-columns: "min-content 1fr"
+                - grid-template-rows: min-content
+              icon:
+                - color: "#27ae60"
+                - width: "15px"
+                - margin-right: "6px"
+              name:
+                - text-transform: lowercase
+                - letter-spacing: "3px"
+                - font-size: "11px"
+                - color: "var(--secondary-text-color)"
+                - text-align: left
+                - justify-self: start
+
+          # ══════════════════════════════════════════════════════
+          #  USAGE ROW: kWh stats | Daily bar 30d | Monthly bar
+          # ══════════════════════════════════════════════════════
+          - type: horizontal-stack
+            cards:
+
+              # ── Usage Left: kWh summary stats ──
+              - type: vertical-stack
+                cards:
+                  - type: entity
+                    entity: sensor.total_energy_today
+                    name: Total Today
+                    icon: mdi:lightning-bolt
+                    card_mod:
+                      style: |
+                        ha-card {
+                          background: rgba(255,255,255,0.04);
+                          border-radius: 16px;
+                          box-shadow: none;
+                        }
+                  - type: entity
+                    entity: sensor.total_energy_this_month
+                    name: Total This Month
+                    icon: mdi:lightning-bolt-circle
+                    card_mod:
+                      style: |
+                        ha-card {
+                          background: rgba(255,255,255,0.04);
+                          border-radius: 16px;
+                          box-shadow: none;
+                        }
+                  - type: entity
+                    entity: sensor.daily_average_energy_this_month
+                    name: Daily Avg kWh
+                    icon: mdi:chart-line
+                    card_mod:
+                      style: |
+                        ha-card {
+                          background: rgba(255,255,255,0.04);
+                          border-radius: 16px;
+                          box-shadow: none;
+                        }
+
+              # ── Usage Middle: Daily energy bar chart (last 30 days) ──
+              - type: statistics-graph
+                title: Daily Energy Usage – Last 30 Days
+                period: day
+                days_to_show: 30
+                stat_types:
+                  - sum
+                chart_type: bar
+                entities:
+                  - entity: sensor.tapo_p110m_1_today_s_consumption
+                    name: Desktop
+                  - entity: sensor.tapo_p110m_2_nursery_heater_today_s_consumption
+                    name: Nursery Heater
+                  - entity: sensor.tapo_p110m_3_today_s_consumption
+                    name: Dyson Heater
+                  - entity: sensor.tapo_p110m_4_basement_heater_today_s_consumption
+                    name: Basement Heater
+
+              # ── Usage Right: Monthly energy bar chart ──
+              - type: statistics-graph
+                title: Monthly Energy Usage (kWh)
+                period: month
+                stat_types:
+                  - sum
+                chart_type: bar
+                entities:
+                  - entity: sensor.tapo_p110m_1_this_month_s_consumption
+                    name: Desktop
+                  - entity: sensor.tapo_p110m_2_nursery_heater_this_month_s_consumption
+                    name: Nursery Heater
+                  - entity: sensor.tapo_p110m_3_this_month_s_consumption
+                    name: Dyson Heater
+                  - entity: sensor.tapo_p110m_4_basement_heater_this_month_s_consumption
+                    name: Basement Heater
 
   # ═══════════════════════════════════════════════════════════
   #  VIEW 2: LIVE — real-time power by device
@@ -834,6 +1130,46 @@ views:
     path: settings
     icon: mdi:cog
     cards:
+
+      # ── Device Registry ──
+      # This is your master device list. To add a new device:
+      #   1. Add its template sensors to configuration.yaml (consumption, cost, share sensors)
+      #   2. Add it to the entities list below
+      #   3. Then ask Claude Code to add it to all the per-device cards in the Overview
+      - type: entities
+        title: Device Registry — Active Smart Plugs
+        show_header_toggle: false
+        entities:
+          - entity: sensor.tapo_p110m_1_current_consumption
+            name: "1 · Desktop Desk Plug"
+            icon: mdi:desktop-tower-monitor
+          - entity: sensor.tapo_p110m_2_nursery_heater_current_consumption
+            name: "2 · Nursery Heater Plug"
+            icon: mdi:radiator
+          - entity: sensor.tapo_p110m_3_current_consumption
+            name: "3 · Dyson Heater Plug"
+            icon: mdi:fan
+          - entity: sensor.tapo_p110m_4_basement_heater_current_consumption
+            name: "4 · Basement Heater Plug"
+            icon: mdi:radiator
+
+      - type: markdown
+        content: |
+          #### Adding or removing a device
+
+          **To add a new Tapo plug:**
+          1. Plug it in and add it to the Tapo app
+          2. In `configuration.yaml`, copy an existing device's sensor block (e.g., `tapo_p110m_1_*`) and update entity IDs and names
+          3. Add it to the **Device Registry** list above
+          4. Ask Claude Code: *"Add [device name] with sensors [sensor IDs] to all device cards"*
+
+          **Sensor naming pattern:**
+          - Power now: `sensor.tapo_p110mX_current_consumption`
+          - Today kWh: `sensor.tapo_p110mX_today_s_consumption`
+          - Month kWh: `sensor.tapo_p110mX_this_month_s_consumption`
+
+          The dashboard will auto-generate cost/share sensors once you add the template blocks.
+
       - type: entities
         title: PECO Rate Components
         show_header_toggle: false
