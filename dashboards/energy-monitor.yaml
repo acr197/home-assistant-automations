@@ -234,80 +234,100 @@ views:
                 cards:
                   - type: horizontal-stack
                     cards:
-                      - type: gauge
-                        entity: sensor.tapo_p110m_1_current_consumption
-                        name: Desktop
-                        unit: W
-                        min: 0
-                        max: 500
-                        needle: true
-                        severity:
-                          green: 0
-                          yellow: 150
-                          red: 350
-                        card_mod:
-                          style: |
-                            ha-card {
-                              background: rgba(255,255,255,0.08);
-                              border-radius: 16px;
-                              box-shadow: none;
-                            }
-                      - type: gauge
-                        entity: sensor.tapo_p110m_2_nursery_heater_current_consumption
-                        name: Nursery Heater
-                        unit: W
-                        min: 0
-                        max: 1500
-                        needle: true
-                        severity:
-                          green: 0
-                          yellow: 500
-                          red: 1000
-                        card_mod:
-                          style: |
-                            ha-card {
-                              background: rgba(255,255,255,0.08);
-                              border-radius: 16px;
-                              box-shadow: none;
-                            }
+                      - type: conditional
+                        conditions:
+                          - entity: input_boolean.show_device_desktop
+                            state: "on"
+                        card:
+                          type: gauge
+                          entity: sensor.tapo_p110m_1_current_consumption
+                          name: Desktop
+                          unit: W
+                          min: 0
+                          max: 500
+                          needle: true
+                          severity:
+                            green: 0
+                            yellow: 150
+                            red: 350
+                          card_mod:
+                            style: |
+                              ha-card {
+                                background: rgba(255,255,255,0.08);
+                                border-radius: 16px;
+                                box-shadow: none;
+                              }
+                      - type: conditional
+                        conditions:
+                          - entity: input_boolean.show_device_nursery
+                            state: "on"
+                        card:
+                          type: gauge
+                          entity: sensor.tapo_p110m_2_nursery_heater_current_consumption
+                          name: Nursery Heater
+                          unit: W
+                          min: 0
+                          max: 1500
+                          needle: true
+                          severity:
+                            green: 0
+                            yellow: 500
+                            red: 1000
+                          card_mod:
+                            style: |
+                              ha-card {
+                                background: rgba(255,255,255,0.08);
+                                border-radius: 16px;
+                                box-shadow: none;
+                              }
                   - type: horizontal-stack
                     cards:
-                      - type: gauge
-                        entity: sensor.tapo_p110m_3_current_consumption
-                        name: Dyson Heater
-                        unit: W
-                        min: 0
-                        max: 2000
-                        needle: true
-                        severity:
-                          green: 0
-                          yellow: 500
-                          red: 1200
-                        card_mod:
-                          style: |
-                            ha-card {
-                              background: rgba(255,255,255,0.08);
-                              border-radius: 16px;
-                              box-shadow: none;
-                            }
-                      - type: gauge
-                        entity: sensor.tapo_p110m_4_basement_heater_current_consumption
-                        name: Basement Heater
-                        unit: W
-                        min: 0
-                        max: 1500
-                        needle: true
-                        severity:
-                          green: 0
-                          yellow: 500
-                          red: 1000
-                        card_mod:
-                          style: |
-                            ha-card {
-                              background: rgba(255,255,255,0.08);
-                              border-radius: 16px;
-                              box-shadow: none;
-                            }
+                      - type: conditional
+                        conditions:
+                          - entity: input_boolean.show_device_dyson
+                            state: "on"
+                        card:
+                          type: gauge
+                          entity: sensor.tapo_p110m_3_current_consumption
+                          name: Dyson Heater
+                          unit: W
+                          min: 0
+                          max: 2000
+                          needle: true
+                          severity:
+                            green: 0
+                            yellow: 500
+                            red: 1200
+                          card_mod:
+                            style: |
+                              ha-card {
+                                background: rgba(255,255,255,0.08);
+                                border-radius: 16px;
+                                box-shadow: none;
+                              }
+                      - type: conditional
+                        conditions:
+                          - entity: input_boolean.show_device_basement
+                            state: "on"
+                        card:
+                          type: gauge
+                          entity: sensor.tapo_p110m_4_basement_heater_current_consumption
+                          name: Basement Heater
+                          unit: W
+                          min: 0
+                          max: 1500
+                          needle: true
+                          severity:
+                            green: 0
+                            yellow: 500
+                            red: 1000
+                          card_mod:
+                            style: |
+                              ha-card {
+                                background: rgba(255,255,255,0.08);
+                                border-radius: 16px;
+                                box-shadow: none;
+                              }
 
               # ── Bottom Middle: Compact mini-graph (24h power) ──
               - type: custom:mini-graph-card
@@ -692,256 +712,6 @@ views:
                     name: Dyson Heater
                   - entity: sensor.tapo_p110m_4_basement_heater_this_month_s_consumption
                     name: Basement Heater
-
-  # ═══════════════════════════════════════════════════════════
-  #  VIEW 2: LIVE — real-time power by device
-  # ═══════════════════════════════════════════════════════════
-  - title: Live Power
-    path: live
-    icon: mdi:pulse
-    cards:
-      # ── Total draw ──
-      - type: entity
-        entity: sensor.total_power_draw_now
-        name: Total Live Power Draw
-        icon: mdi:flash-alert
-
-      # ── Per-device power history (24h overlay) ──
-      - type: history-graph
-        title: Power Draw by Device (24h)
-        hours_to_show: 24
-        entities:
-          - entity: sensor.tapo_p110m_1_current_consumption
-            name: Desktop
-          - entity: sensor.tapo_p110m_2_nursery_heater_current_consumption
-            name: Nursery Heater
-          - entity: sensor.tapo_p110m_3_current_consumption
-            name: Dyson Heater
-          - entity: sensor.tapo_p110m_4_basement_heater_current_consumption
-            name: Basement Heater
-
-      # ── 48h view for pattern detection ──
-      - type: history-graph
-        title: Power Draw by Device (48h)
-        hours_to_show: 48
-        entities:
-          - entity: sensor.tapo_p110m_1_current_consumption
-            name: Desktop
-          - entity: sensor.tapo_p110m_2_nursery_heater_current_consumption
-            name: Nursery Heater
-          - entity: sensor.tapo_p110m_3_current_consumption
-            name: Dyson Heater
-          - entity: sensor.tapo_p110m_4_basement_heater_current_consumption
-            name: Basement Heater
-
-      # ── 7-day view for weekly patterns ──
-      - type: history-graph
-        title: Power Draw by Device (7 Days)
-        hours_to_show: 168
-        entities:
-          - entity: sensor.tapo_p110m_1_current_consumption
-            name: Desktop
-          - entity: sensor.tapo_p110m_2_nursery_heater_current_consumption
-            name: Nursery Heater
-          - entity: sensor.tapo_p110m_3_current_consumption
-            name: Dyson Heater
-          - entity: sensor.tapo_p110m_4_basement_heater_current_consumption
-            name: Basement Heater
-
-  # ═══════════════════════════════════════════════════════════
-  #  VIEW 3: COSTS — detailed cost breakdown
-  # ═══════════════════════════════════════════════════════════
-  - title: Costs
-    path: costs
-    icon: mdi:currency-usd
-    cards:
-      # ── Summary cards ──
-      - type: horizontal-stack
-        cards:
-          - type: entity
-            entity: sensor.total_energy_cost_today
-            name: Today
-            icon: mdi:cash
-          - type: entity
-            entity: sensor.total_energy_cost_monthly
-            name: This Month
-            icon: mdi:cash-multiple
-          - type: entity
-            entity: sensor.projected_monthly_energy_cost
-            name: Projected Bill
-            icon: mdi:chart-line-variant
-
-      # ── Daily average + annual estimate ──
-      - type: horizontal-stack
-        cards:
-          - type: entity
-            entity: sensor.daily_average_energy_cost_this_month
-            name: Daily Avg
-            icon: mdi:chart-bar
-          - type: entity
-            entity: sensor.daily_average_energy_this_month
-            name: Daily Avg kWh
-            icon: mdi:lightning-bolt
-          - type: entity
-            entity: sensor.estimated_annual_energy_cost
-            name: Est. Annual
-            icon: mdi:calendar-clock
-
-      # ── Today's costs per device ──
-      - type: entities
-        title: Today's Energy Costs
-        show_header_toggle: false
-        entities:
-          - entity: sensor.desktop_desk_plug_energy_cost_today
-            name: Desktop Desk
-            icon: mdi:desktop-tower-monitor
-          - entity: sensor.nursery_heater_plug_energy_cost_today
-            name: Nursery Heater
-            icon: mdi:radiator
-          - entity: sensor.dyson_heater_plug_energy_cost_today
-            name: Dyson Heater
-            icon: mdi:fan
-          - entity: sensor.basement_heater_plug_energy_cost_today
-            name: Basement Heater
-            icon: mdi:radiator
-          - type: divider
-          - entity: sensor.total_energy_cost_today
-            name: Total Today
-            icon: mdi:sigma
-
-      # ── Monthly costs per device ──
-      - type: entities
-        title: This Month's Energy Costs
-        show_header_toggle: false
-        entities:
-          - entity: sensor.desktop_desk_plug_energy_cost_monthly
-            name: Desktop Desk
-            icon: mdi:desktop-tower-monitor
-          - entity: sensor.nursery_heater_plug_energy_cost_monthly
-            name: Nursery Heater
-            icon: mdi:radiator
-          - entity: sensor.dyson_heater_plug_energy_cost_monthly
-            name: Dyson Heater
-            icon: mdi:fan
-          - entity: sensor.basement_heater_plug_energy_cost_monthly
-            name: Basement Heater
-            icon: mdi:radiator
-          - type: divider
-          - entity: sensor.total_energy_cost_monthly
-            name: Total This Month
-            icon: mdi:sigma
-
-  # ═══════════════════════════════════════════════════════════
-  #  VIEW 4: USAGE — energy consumption (kWh)
-  # ═══════════════════════════════════════════════════════════
-  - title: Usage
-    path: usage
-    icon: mdi:chart-bar
-    cards:
-      # ── Today's totals ──
-      - type: horizontal-stack
-        cards:
-          - type: entity
-            entity: sensor.total_energy_today
-            name: Total Today
-            icon: mdi:lightning-bolt
-          - type: entity
-            entity: sensor.total_energy_this_month
-            name: Total This Month
-            icon: mdi:lightning-bolt-circle
-          - type: entity
-            entity: sensor.daily_average_energy_this_month
-            name: Daily Avg
-            icon: mdi:chart-line
-
-      # ── Today's kWh per device ──
-      - type: entities
-        title: Today's Energy Usage (kWh)
-        show_header_toggle: false
-        entities:
-          - entity: sensor.tapo_p110m_1_today_s_consumption
-            name: Desktop Desk
-            icon: mdi:desktop-tower-monitor
-          - entity: sensor.tapo_p110m_2_nursery_heater_today_s_consumption
-            name: Nursery Heater
-            icon: mdi:radiator
-          - entity: sensor.tapo_p110m_3_today_s_consumption
-            name: Dyson Heater
-            icon: mdi:fan
-          - entity: sensor.tapo_p110m_4_basement_heater_today_s_consumption
-            name: Basement Heater
-            icon: mdi:radiator
-
-      # ── Device share of total (this month) ──
-      - type: entities
-        title: Device Share of Monthly Usage
-        show_header_toggle: false
-        entities:
-          - entity: sensor.desktop_desk_plug_share_of_total
-            name: Desktop Desk
-            icon: mdi:desktop-tower-monitor
-          - entity: sensor.nursery_heater_plug_share_of_total
-            name: Nursery Heater
-            icon: mdi:radiator
-          - entity: sensor.dyson_heater_plug_share_of_total
-            name: Dyson Heater
-            icon: mdi:fan
-          - entity: sensor.basement_heater_plug_share_of_total
-            name: Basement Heater
-            icon: mdi:radiator
-
-      # ── Daily energy bar chart (30 days) ──
-      - type: statistics-graph
-        title: Daily Energy Usage – Last 30 Days
-        period: day
-        days_to_show: 30
-        stat_types:
-          - sum
-        chart_type: bar
-        entities:
-          - entity: sensor.tapo_p110m_1_today_s_consumption
-            name: Desktop
-          - entity: sensor.tapo_p110m_2_nursery_heater_today_s_consumption
-            name: Nursery Heater
-          - entity: sensor.tapo_p110m_3_today_s_consumption
-            name: Dyson Heater
-          - entity: sensor.tapo_p110m_4_basement_heater_today_s_consumption
-            name: Basement Heater
-
-      # ── Weekly energy (line) ──
-      - type: statistics-graph
-        title: Weekly Energy Usage
-        period: week
-        stat_types:
-          - sum
-        chart_type: line
-        entities:
-          - entity: sensor.tapo_p110m_1_today_s_consumption
-            name: Desktop
-          - entity: sensor.tapo_p110m_2_nursery_heater_today_s_consumption
-            name: Nursery Heater
-          - entity: sensor.tapo_p110m_3_today_s_consumption
-            name: Dyson Heater
-          - entity: sensor.tapo_p110m_4_basement_heater_today_s_consumption
-            name: Basement Heater
-
-      # ── Monthly energy bar chart ──
-      - type: statistics-graph
-        title: Monthly Energy Usage (kWh)
-        period: month
-        stat_types:
-          - sum
-        chart_type: bar
-        entities:
-          - entity: sensor.tapo_p110m_1_this_month_s_consumption
-            name: Desktop
-          - entity: sensor.tapo_p110m_2_nursery_heater_this_month_s_consumption
-            name: Nursery Heater
-          - entity: sensor.tapo_p110m_3_this_month_s_consumption
-            name: Dyson Heater
-          - entity: sensor.tapo_p110m_4_basement_heater_this_month_s_consumption
-            name: Basement Heater
-
   # ═══════════════════════════════════════════════════════════
   #  VIEW 5: DEVICES — detailed per-device drill-down
   # ═══════════════════════════════════════════════════════════
@@ -1106,18 +876,27 @@ views:
                 name: Power (W)
 
   # ═══════════════════════════════════════════════════════════
-  #  VIEW 6: SETTINGS — update PECO bill rates
+  #  VIEW 3: SETTINGS — device toggles, billing, PECO rates
   # ═══════════════════════════════════════════════════════════
   - title: Settings
     path: settings
     icon: mdi:cog
     cards:
 
-      # ── Device Registry ──
-      # This is your master device list. To add a new device:
-      #   1. Add its template sensors to configuration.yaml (consumption, cost, share sensors)
-      #   2. Add it to the entities list below
-      #   3. Then ask Claude Code to add it to all the per-device cards in the Overview
+      # ══════════════════════════════════════════════════════
+      #  DEVICE REGISTRY — toggle show/hide in Overview
+      # ══════════════════════════════════════════════════════
+      # Each toggle turns a device's gauge card on/off in the Overview.
+      # The wattage shown here is live.
+      #
+      # TO HIDE a device from Overview: flip its toggle to off.
+      # TO ADD a new device: tell Claude Code "Add [device name] with
+      #   entity prefix sensor.tapo_p110mX_* to the dashboard."
+      #   (Claude adds sensors to configuration.yaml + cards everywhere.)
+      #
+      # NOTE: A true "Add" dropdown like HA's native Energy tab is not
+      # possible in Lovelace YAML — new devices always need YAML + sensor
+      # changes that Claude can make for you in one message.
       - type: entities
         title: Device Registry — Active Smart Plugs
         show_header_toggle: false
@@ -1125,33 +904,82 @@ views:
           - entity: sensor.tapo_p110m_1_current_consumption
             name: "1 · Desktop Desk Plug"
             icon: mdi:desktop-tower-monitor
+            secondary_info: last-changed
+          - entity: input_boolean.show_device_desktop
+            name: "  Show in Overview"
+          - type: divider
           - entity: sensor.tapo_p110m_2_nursery_heater_current_consumption
             name: "2 · Nursery Heater Plug"
             icon: mdi:radiator
+            secondary_info: last-changed
+          - entity: input_boolean.show_device_nursery
+            name: "  Show in Overview"
+          - type: divider
           - entity: sensor.tapo_p110m_3_current_consumption
             name: "3 · Dyson Heater Plug"
             icon: mdi:fan
+            secondary_info: last-changed
+          - entity: input_boolean.show_device_dyson
+            name: "  Show in Overview"
+          - type: divider
           - entity: sensor.tapo_p110m_4_basement_heater_current_consumption
             name: "4 · Basement Heater Plug"
             icon: mdi:radiator
+            secondary_info: last-changed
+          - entity: input_boolean.show_device_basement
+            name: "  Show in Overview"
+
+      # ══════════════════════════════════════════════════════
+      #  PECO BILL — manual entry + future AI upload
+      # ══════════════════════════════════════════════════════
+      - type: entities
+        title: Last Bill Info
+        show_header_toggle: false
+        entities:
+          - entity: input_number.peco_last_bill_amount
+            name: Bill Amount ($)
+            icon: mdi:receipt-text
+          - entity: input_number.peco_last_bill_kwh
+            name: Bill Usage (kWh)
+            icon: mdi:counter
+          - entity: input_number.peco_last_bill_days
+            name: Billing Period (days)
+            icon: mdi:calendar-range
+          - type: divider
+          - entity: input_number.billing_cycle_start_day
+            name: Billing Cycle Start Day
+            icon: mdi:calendar-start
 
       - type: markdown
+        card_mod:
+          style: |
+            ha-card {
+              background: rgba(255,255,255,0.08);
+              border-radius: 16px;
+              box-shadow: none;
+            }
         content: |
-          #### Adding or removing a device
+          #### PECO Bill Auto-Import *(coming soon)*
 
-          **To add a new Tapo plug:**
-          1. Plug it in and add it to the Tapo app
-          2. In `configuration.yaml`, copy an existing device's sensor block (e.g., `tapo_p110m_1_*`) and update entity IDs and names
-          3. Add it to the **Device Registry** list above
-          4. Ask Claude Code: *"Add [device name] with sensors [sensor IDs] to all device cards"*
+          **When you receive a new bill**, enter the values above manually from the PDF.
 
-          **Sensor naming pattern:**
-          - Power now: `sensor.tapo_p110mX_current_consumption`
-          - Today kWh: `sensor.tapo_p110mX_today_s_consumption`
-          - Month kWh: `sensor.tapo_p110mX_this_month_s_consumption`
+          **Future AI parsing** — to auto-fill from a PDF drop, this needs a backend flow:
+          1. Install **Studio Code Server** → upload the PDF to `/config/bills/`
+          2. A **Node-RED or n8n flow** reads the file and calls an AI API (Claude/OpenAI)
+          3. The AI extracts rate components and posts them to HA input_number helpers
 
-          The dashboard will auto-generate cost/share sensors once you add the template blocks.
+          When you're ready to build that, tell Claude Code: *"Set up an n8n flow to parse PECO PDFs and update the input_number helpers."*
 
+          **For now**, enter values from your bill:
+          - **Delivery Rate** → "Distribution Charges" per-kWh line
+          - **Supply Rate** → "Generation Charges" per-kWh line
+          - **Transmission Rate** → "Transmission Charges" per-kWh line
+          - **Customer Charge** → fixed monthly fee
+          - **Billing Period** → number of days on the bill
+
+      # ══════════════════════════════════════════════════════
+      #  PECO RATE COMPONENTS
+      # ══════════════════════════════════════════════════════
       - type: entities
         title: PECO Rate Components
         show_header_toggle: false
@@ -1168,32 +996,3 @@ views:
           - type: divider
           - entity: sensor.peco_variable_rate
             name: Combined Variable Rate
-
-      - type: entities
-        title: Last Bill Info
-        show_header_toggle: false
-        entities:
-          - entity: input_number.peco_last_bill_amount
-            name: Bill Amount ($)
-          - entity: input_number.peco_last_bill_kwh
-            name: Bill Usage (kWh)
-          - entity: input_number.peco_last_bill_days
-            name: Billing Period (days)
-
-      - type: markdown
-        content: >
-          ### How to Update Rates
-
-          When you receive a new PECO bill, update the rates above:
-
-          1. **Delivery Rate** — from "Distribution Charges" line (per kWh rate)
-
-          2. **Supply Rate** — from "Generation Charges" line (per kWh rate)
-
-          3. **Transmission Rate** — from "Transmission Charges" line (per kWh rate)
-
-          4. **Customer Charge** — fixed monthly charge from bill
-
-          5. **Bill Amount/kWh/Days** — totals from your bill for reference
-
-          All energy cost sensors will update automatically.
