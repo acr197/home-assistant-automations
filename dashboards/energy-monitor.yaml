@@ -65,7 +65,7 @@ views:
                 card_mod:
                   style: |
                     ha-card {
-                      background: rgba(12, 22, 38, 0.78);
+                      background: var(--ha-card-background, var(--card-background-color));
                       border-radius: 16px;
                       box-shadow: none;
                       height: 100%;
@@ -119,7 +119,7 @@ views:
                         card_mod:
                           style: |
                             ha-card {
-                              background: rgba(12, 22, 38, 0.78);
+                              background: var(--ha-card-background, var(--card-background-color));
                               border-radius: 16px;
                               box-shadow: none;
                             }
@@ -130,7 +130,7 @@ views:
                         card_mod:
                           style: |
                             ha-card {
-                              background: rgba(12, 22, 38, 0.78);
+                              background: var(--ha-card-background, var(--card-background-color));
                               border-radius: 16px;
                               box-shadow: none;
                             }
@@ -141,7 +141,7 @@ views:
                         card_mod:
                           style: |
                             ha-card {
-                              background: rgba(12, 22, 38, 0.78);
+                              background: var(--ha-card-background, var(--card-background-color));
                               border-radius: 16px;
                               box-shadow: none;
                             }
@@ -154,7 +154,7 @@ views:
                         card_mod:
                           style: |
                             ha-card {
-                              background: rgba(12, 22, 38, 0.78);
+                              background: var(--ha-card-background, var(--card-background-color));
                               border-radius: 16px;
                               box-shadow: none;
                             }
@@ -165,7 +165,7 @@ views:
                         card_mod:
                           style: |
                             ha-card {
-                              background: rgba(12, 22, 38, 0.78);
+                              background: var(--ha-card-background, var(--card-background-color));
                               border-radius: 16px;
                               box-shadow: none;
                             }
@@ -176,7 +176,7 @@ views:
                         card_mod:
                           style: |
                             ha-card {
-                              background: rgba(12, 22, 38, 0.78);
+                              background: var(--ha-card-background, var(--card-background-color));
                               border-radius: 16px;
                               box-shadow: none;
                             }
@@ -254,7 +254,7 @@ views:
                           card_mod:
                             style: |
                               ha-card {
-                                background: rgba(12, 22, 38, 0.78);
+                                background: var(--ha-card-background, var(--card-background-color));
                                 border-radius: 16px;
                                 box-shadow: none;
                               }
@@ -277,7 +277,7 @@ views:
                           card_mod:
                             style: |
                               ha-card {
-                                background: rgba(12, 22, 38, 0.78);
+                                background: var(--ha-card-background, var(--card-background-color));
                                 border-radius: 16px;
                                 box-shadow: none;
                               }
@@ -302,7 +302,7 @@ views:
                           card_mod:
                             style: |
                               ha-card {
-                                background: rgba(12, 22, 38, 0.78);
+                                background: var(--ha-card-background, var(--card-background-color));
                                 border-radius: 16px;
                                 box-shadow: none;
                               }
@@ -325,7 +325,7 @@ views:
                           card_mod:
                             style: |
                               ha-card {
-                                background: rgba(12, 22, 38, 0.78);
+                                background: var(--ha-card-background, var(--card-background-color));
                                 border-radius: 16px;
                                 box-shadow: none;
                               }
@@ -436,7 +436,7 @@ views:
                 - justify-self: end
 
           # ══════════════════════════════════════════════════════
-          #  COST ROW: Est. daily cost | 30-day trend | Monthly breakdown
+          #  COST ROW 1: Est. daily cost | 30-day cost trend
           # ══════════════════════════════════════════════════════
           - type: horizontal-stack
             cards:
@@ -446,7 +446,7 @@ views:
                 card_mod:
                   style: |
                     ha-card {
-                      background: rgba(12, 22, 38, 0.78);
+                      background: var(--ha-card-background, var(--card-background-color));
                       border-radius: 16px;
                       box-shadow: none;
                     }
@@ -473,27 +473,27 @@ views:
                     <tbody>
                       <tr>
                         <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);"><strong>Desktop</strong></td>
-                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;">{{ states('sensor.tapo_p110m_1_this_month_s_consumption')|float|round(2) }} kWh</td>
-                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;">{{ (states('sensor.tapo_p110m_1_this_month_s_consumption')|float / cycle_days)|round(3) }}</td>
-                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;color:#f39c12;">${{ ((states('sensor.tapo_p110m_1_this_month_s_consumption')|float / cycle_days) * rate)|round(3) }}</td>
+                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;">{{ states('sensor.tapo_p110m_1_this_month_s_consumption')|float(0)|round(2) }} kWh</td>
+                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;">{{ (states('sensor.tapo_p110m_1_this_month_s_consumption')|float(0) / cycle_days)|round(3) }}</td>
+                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;color:#f39c12;">${{ ((states('sensor.tapo_p110m_1_this_month_s_consumption')|float(0) / cycle_days) * rate)|round(3) }}</td>
                       </tr>
                       <tr>
                         <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);"><strong>Nursery Heater</strong></td>
-                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;">{{ states('sensor.tapo_p110m_2_nursery_heater_this_month_s_consumption')|float|round(2) }} kWh</td>
-                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;">{{ (states('sensor.tapo_p110m_2_nursery_heater_this_month_s_consumption')|float / cycle_days)|round(3) }}</td>
-                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;color:#3498db;">${{ ((states('sensor.tapo_p110m_2_nursery_heater_this_month_s_consumption')|float / cycle_days) * rate)|round(3) }}</td>
+                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;">{{ states('sensor.tapo_p110m_2_nursery_heater_this_month_s_consumption')|float(0)|round(2) }} kWh</td>
+                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;">{{ (states('sensor.tapo_p110m_2_nursery_heater_this_month_s_consumption')|float(0) / cycle_days)|round(3) }}</td>
+                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;color:#3498db;">${{ ((states('sensor.tapo_p110m_2_nursery_heater_this_month_s_consumption')|float(0) / cycle_days) * rate)|round(3) }}</td>
                       </tr>
                       <tr>
                         <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);"><strong>Dyson Heater</strong></td>
-                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;">{{ states('sensor.tapo_p110m_3_this_month_s_consumption')|float|round(2) }} kWh</td>
-                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;">{{ (states('sensor.tapo_p110m_3_this_month_s_consumption')|float / cycle_days)|round(3) }}</td>
-                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;color:#2ecc71;">${{ ((states('sensor.tapo_p110m_3_this_month_s_consumption')|float / cycle_days) * rate)|round(3) }}</td>
+                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;">{{ states('sensor.tapo_p110m_3_this_month_s_consumption')|float(0)|round(2) }} kWh</td>
+                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;">{{ (states('sensor.tapo_p110m_3_this_month_s_consumption')|float(0) / cycle_days)|round(3) }}</td>
+                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;color:#2ecc71;">${{ ((states('sensor.tapo_p110m_3_this_month_s_consumption')|float(0) / cycle_days) * rate)|round(3) }}</td>
                       </tr>
                       <tr>
                         <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);"><strong>Basement Heater</strong></td>
-                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;">{{ states('sensor.tapo_p110m_4_basement_heater_this_month_s_consumption')|float|round(2) }} kWh</td>
-                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;">{{ (states('sensor.tapo_p110m_4_basement_heater_this_month_s_consumption')|float / cycle_days)|round(3) }}</td>
-                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;color:#e74c3c;">${{ ((states('sensor.tapo_p110m_4_basement_heater_this_month_s_consumption')|float / cycle_days) * rate)|round(3) }}</td>
+                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;">{{ states('sensor.tapo_p110m_4_basement_heater_this_month_s_consumption')|float(0)|round(2) }} kWh</td>
+                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;">{{ (states('sensor.tapo_p110m_4_basement_heater_this_month_s_consumption')|float(0) / cycle_days)|round(3) }}</td>
+                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;color:#e74c3c;">${{ ((states('sensor.tapo_p110m_4_basement_heater_this_month_s_consumption')|float(0) / cycle_days) * rate)|round(3) }}</td>
                       </tr>
                       <tr>
                         <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);"><strong>Tumble Dryer</strong></td>
@@ -503,82 +503,89 @@ views:
                       </tr>
                       <tr style="font-weight:600;">
                         <td style="padding:5px 8px;">Total</td>
-                        <td style="padding:5px 8px;text-align:right;">{{ states('sensor.total_energy_this_month')|float|round(2) }} kWh</td>
-                        <td style="padding:5px 8px;text-align:right;">{{ (states('sensor.total_energy_this_month')|float / cycle_days)|round(3) }}</td>
+                        <td style="padding:5px 8px;text-align:right;">{{ states('sensor.total_energy_this_month')|float(0)|round(2) }} kWh</td>
+                        <td style="padding:5px 8px;text-align:right;">{{ (states('sensor.total_energy_this_month')|float(0) / cycle_days)|round(3) }}</td>
                         <td style="padding:5px 8px;text-align:right;color:var(--primary-color);">${{ states('sensor.daily_average_energy_cost_this_month') }}</td>
                       </tr>
                     </tbody>
                   </table>
 
-              # ── Cost Middle: 30-day per-device energy trend (cumulative line) ──
+              # ── Cost Right: 30-day per-device cost trend ($/day line) ──
+              # stat_types: max gives each day's peak = end-of-day cost total
               - type: statistics-graph
-                title: 30-Day Energy Trend by Device
+                title: 30-Day Cost Trend by Device ($)
                 period: day
                 days_to_show: 30
                 stat_types:
-                  - sum
+                  - max
                 chart_type: line
                 entities:
-                  - entity: sensor.tapo_p110m_1_today_s_consumption
+                  - entity: sensor.desktop_desk_plug_energy_cost_today
                     name: Desktop
-                  - entity: sensor.tapo_p110m_2_nursery_heater_today_s_consumption
+                  - entity: sensor.nursery_heater_plug_energy_cost_today
                     name: Nursery Heater
-                  - entity: sensor.tapo_p110m_3_today_s_consumption
+                  - entity: sensor.dyson_heater_plug_energy_cost_today
                     name: Dyson Heater
-                  - entity: sensor.tapo_p110m_4_basement_heater_today_s_consumption
+                  - entity: sensor.basement_heater_plug_energy_cost_today
                     name: Basement Heater
-                  - entity: sensor.tumble_dryer_energy_daily
+                  - entity: sensor.tumble_dryer_energy_cost_today
                     name: Tumble Dryer
 
-              # ── Cost Right: This month's cost breakdown by device ──
-              - type: vertical-stack
-                cards:
-                  - type: entities
-                    title: This Billing Cycle's Energy Costs
-                    show_header_toggle: false
-                    entities:
-                      - entity: sensor.desktop_desk_plug_energy_cost_monthly
-                        name: Desktop Desk
-                        icon: mdi:desktop-tower-monitor
-                      - entity: sensor.nursery_heater_plug_energy_cost_monthly
-                        name: Nursery Heater
-                        icon: mdi:radiator
-                      - entity: sensor.dyson_heater_plug_energy_cost_monthly
-                        name: Dyson Heater
-                        icon: mdi:fan
-                      - entity: sensor.basement_heater_plug_energy_cost_monthly
-                        name: Basement Heater
-                        icon: mdi:radiator
-                      - entity: sensor.tumble_dryer_energy_cost_monthly
-                        name: Tumble Dryer
-                        icon: mdi:tumble-dryer
-                      - type: divider
-                      - entity: sensor.total_energy_cost_monthly
-                        name: Total This Month
-                        icon: mdi:sigma
-                  - type: entities
-                    title: Today's Energy Costs
-                    show_header_toggle: false
-                    entities:
-                      - entity: sensor.desktop_desk_plug_energy_cost_today
-                        name: Desktop Desk
-                        icon: mdi:desktop-tower-monitor
-                      - entity: sensor.nursery_heater_plug_energy_cost_today
-                        name: Nursery Heater
-                        icon: mdi:radiator
-                      - entity: sensor.dyson_heater_plug_energy_cost_today
-                        name: Dyson Heater
-                        icon: mdi:fan
-                      - entity: sensor.basement_heater_plug_energy_cost_today
-                        name: Basement Heater
-                        icon: mdi:radiator
-                      - entity: sensor.tumble_dryer_energy_cost_today
-                        name: Tumble Dryer
-                        icon: mdi:tumble-dryer
-                      - type: divider
-                      - entity: sensor.total_energy_cost_today
-                        name: Total Today
-                        icon: mdi:sigma
+          # ══════════════════════════════════════════════════════
+          #  COST ROW 2: This billing cycle | Today's costs
+          # ══════════════════════════════════════════════════════
+          - type: horizontal-stack
+            cards:
+
+              # ── Cost Left: This billing cycle breakdown ──
+              - type: entities
+                title: This Billing Cycle's Energy Costs
+                show_header_toggle: false
+                entities:
+                  - entity: sensor.desktop_desk_plug_energy_cost_monthly
+                    name: Desktop Desk
+                    icon: mdi:desktop-tower-monitor
+                  - entity: sensor.nursery_heater_plug_energy_cost_monthly
+                    name: Nursery Heater
+                    icon: mdi:radiator
+                  - entity: sensor.dyson_heater_plug_energy_cost_monthly
+                    name: Dyson Heater
+                    icon: mdi:fan
+                  - entity: sensor.basement_heater_plug_energy_cost_monthly
+                    name: Basement Heater
+                    icon: mdi:radiator
+                  - entity: sensor.tumble_dryer_energy_cost_monthly
+                    name: Tumble Dryer
+                    icon: mdi:tumble-dryer
+                  - type: divider
+                  - entity: sensor.total_energy_cost_monthly
+                    name: Total This Month
+                    icon: mdi:sigma
+
+              # ── Cost Right: Today's breakdown ──
+              - type: entities
+                title: Today's Energy Costs
+                show_header_toggle: false
+                entities:
+                  - entity: sensor.desktop_desk_plug_energy_cost_today
+                    name: Desktop Desk
+                    icon: mdi:desktop-tower-monitor
+                  - entity: sensor.nursery_heater_plug_energy_cost_today
+                    name: Nursery Heater
+                    icon: mdi:radiator
+                  - entity: sensor.dyson_heater_plug_energy_cost_today
+                    name: Dyson Heater
+                    icon: mdi:fan
+                  - entity: sensor.basement_heater_plug_energy_cost_today
+                    name: Basement Heater
+                    icon: mdi:radiator
+                  - entity: sensor.tumble_dryer_energy_cost_today
+                    name: Tumble Dryer
+                    icon: mdi:tumble-dryer
+                  - type: divider
+                  - entity: sensor.total_energy_cost_today
+                    name: Total Today
+                    icon: mdi:sigma
 
           # ══════════════════════════════════════════════════════
           #  SECTION HEADER — usage (green)
@@ -639,7 +646,7 @@ views:
                     card_mod:
                       style: |
                         ha-card {
-                          background: rgba(12, 22, 38, 0.78);
+                          background: var(--ha-card-background, var(--card-background-color));
                           border-radius: 16px;
                           box-shadow: none;
                         }
@@ -650,7 +657,7 @@ views:
                     card_mod:
                       style: |
                         ha-card {
-                          background: rgba(12, 22, 38, 0.78);
+                          background: var(--ha-card-background, var(--card-background-color));
                           border-radius: 16px;
                           box-shadow: none;
                         }
@@ -661,7 +668,7 @@ views:
                     card_mod:
                       style: |
                         ha-card {
-                          background: rgba(12, 22, 38, 0.78);
+                          background: var(--ha-card-background, var(--card-background-color));
                           border-radius: 16px;
                           box-shadow: none;
                         }
@@ -947,7 +954,7 @@ views:
         card_mod:
           style: |
             ha-card {
-              background: rgba(12, 22, 38, 0.78);
+              background: var(--ha-card-background, var(--card-background-color));
               border-radius: 16px;
               box-shadow: none;
             }
