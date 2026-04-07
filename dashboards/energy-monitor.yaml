@@ -116,6 +116,15 @@ views:
           - entity: sensor.total_power_draw_now
             name: Total Watts
 
+      # ── Native Energy dashboard cards ──
+      # NOTE: These pull from Settings → Dashboards → Energy config.
+      # To show all devices in the bar graph, add each Tapo plug under
+      # "Individual devices" in the Energy configuration.
+      - type: energy-distribution
+        title: Energy Distribution
+      - type: energy-devices-graph
+        title: Individual Devices Total Usage
+
   # ═══════════════════════════════════════════════════════════
   #  VIEW 2: LIVE — real-time power by device
   # ═══════════════════════════════════════════════════════════
