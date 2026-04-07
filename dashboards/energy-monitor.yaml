@@ -24,9 +24,6 @@ views:
               # ── Top Left: PECO Rate — CSS gradient banner + styled HTML table ──
               - type: markdown
                 content: |
-                  <div style="background:linear-gradient(135deg,#00b4ab,#6b2fa0);border-radius:8px;padding:7px 0 5px;text-align:center;margin-bottom:10px;">
-                    <span style="color:white;font-size:22px;font-weight:700;letter-spacing:5px;font-family:sans-serif;">peco</span>
-                  </div>
 
                   **PECO Rate: ${{ states('sensor.peco_variable_rate') }}/kWh**
 
