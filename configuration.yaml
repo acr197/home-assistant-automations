@@ -177,6 +177,19 @@ template:
         state: >
           {% set rate = states('sensor.peco_variable_rate') | float(0) %}
           {{ (states('sensor.tumble_dryer_energy_monthly') | float(0) * rate) | round(2) }}
+      - name: "Guest Bedroom Desk Plug Energy Cost Today"
+        unique_id: guest_bedroom_desk_plug_energy_cost_today
+        unit_of_measurement: "$"
+        state_class: measurement
+        state: >
+          {% set rate = states('sensor.peco_variable_rate') | float(0) %}
+          {{ (states('sensor.guest_bedroom_desk_plug_today_s_consumption') | float(0) * rate) | round(2) }}
+      - name: "Guest Bedroom Desk Plug Energy Cost Monthly"
+        unique_id: guest_bedroom_desk_plug_energy_cost_monthly
+        unit_of_measurement: "$"
+        state: >
+          {% set rate = states('sensor.peco_variable_rate') | float(0) %}
+          {{ (states('sensor.guest_bedroom_desk_plug_this_month_s_consumption') | float(0) * rate) | round(2) }}
       - name: "Total Energy Cost Today"
         unique_id: total_energy_cost_today
         unit_of_measurement: "$"
@@ -187,7 +200,8 @@ template:
             states('sensor.tapo_p110m_2_nursery_heater_today_s_consumption') | float(0) +
             states('sensor.tapo_p110m_3_today_s_consumption') | float(0) +
             states('sensor.tapo_p110m_4_basement_heater_today_s_consumption') | float(0) +
-            states('sensor.tumble_dryer_energy_daily') | float(0)
+            states('sensor.tumble_dryer_energy_daily') | float(0) +
+            states('sensor.guest_bedroom_desk_plug_today_s_consumption') | float(0)
           ) * rate) | round(2) }}
       - name: "Total Energy Cost Monthly"
         unique_id: total_energy_cost_monthly
@@ -200,7 +214,8 @@ template:
             states('sensor.tapo_p110m_2_nursery_heater_this_month_s_consumption') | float(0) +
             states('sensor.tapo_p110m_3_this_month_s_consumption') | float(0) +
             states('sensor.tapo_p110m_4_basement_heater_this_month_s_consumption') | float(0) +
-            states('sensor.tumble_dryer_energy_monthly') | float(0)
+            states('sensor.tumble_dryer_energy_monthly') | float(0) +
+            states('sensor.guest_bedroom_desk_plug_this_month_s_consumption') | float(0)
           ) * rate + cust) | round(2) }}
       - name: "Total Power Draw Now"
         unique_id: total_power_draw_now
@@ -212,7 +227,8 @@ template:
             states('sensor.tapo_p110m_1_current_consumption') | float(0) +
             states('sensor.tapo_p110m_2_nursery_heater_current_consumption') | float(0) +
             states('sensor.tapo_p110m_3_current_consumption') | float(0) +
-            states('sensor.tapo_p110m_4_basement_heater_current_consumption') | float(0)
+            states('sensor.tapo_p110m_4_basement_heater_current_consumption') | float(0) +
+            states('sensor.guest_bedroom_desk_plug_current_consumption') | float(0)
           ) | round(1) }}
       - name: "Total Energy Today"
         unique_id: total_energy_today
@@ -224,7 +240,8 @@ template:
             states('sensor.tapo_p110m_2_nursery_heater_today_s_consumption') | float(0) +
             states('sensor.tapo_p110m_3_today_s_consumption') | float(0) +
             states('sensor.tapo_p110m_4_basement_heater_today_s_consumption') | float(0) +
-            states('sensor.tumble_dryer_energy_daily') | float(0)
+            states('sensor.tumble_dryer_energy_daily') | float(0) +
+            states('sensor.guest_bedroom_desk_plug_today_s_consumption') | float(0)
           ) | round(2) }}
       - name: "Total Energy This Month"
         unique_id: total_energy_this_month
@@ -236,7 +253,8 @@ template:
             states('sensor.tapo_p110m_2_nursery_heater_this_month_s_consumption') | float(0) +
             states('sensor.tapo_p110m_3_this_month_s_consumption') | float(0) +
             states('sensor.tapo_p110m_4_basement_heater_this_month_s_consumption') | float(0) +
-            states('sensor.tumble_dryer_energy_monthly') | float(0)
+            states('sensor.tumble_dryer_energy_monthly') | float(0) +
+            states('sensor.guest_bedroom_desk_plug_this_month_s_consumption') | float(0)
           ) | round(2) }}
       - name: "Projected Monthly Energy Cost"
         unique_id: projected_monthly_energy_cost
@@ -303,6 +321,13 @@ template:
         state: >
           {% set total = states('sensor.total_energy_this_month') | float(0) %}
           {% set device = states('sensor.tapo_p110m_4_basement_heater_this_month_s_consumption') | float(0) %}
+          {{ ((device / total) * 100) | round(1) if total > 0 else 0 }}
+      - name: "Guest Bedroom Desk Plug Share of Total"
+        unique_id: guest_bedroom_desk_plug_share_pct
+        unit_of_measurement: "%"
+        state: >
+          {% set total = states('sensor.total_energy_this_month') | float(0) %}
+          {% set device = states('sensor.guest_bedroom_desk_plug_this_month_s_consumption') | float(0) %}
           {{ ((device / total) * 100) | round(1) if total > 0 else 0 }}
       - name: "Estimated Annual Energy Cost"
         unique_id: estimated_annual_energy_cost
@@ -455,6 +480,10 @@ input_boolean:
   show_device_basement:
     name: "Show: Basement Heater"
     icon: mdi:radiator
+    initial: true
+  show_device_guest_bedroom:
+    name: "Show: Guest Bedroom Desk"
+    icon: mdi:desk
     initial: true
 
 # ── Utility meters: create daily/monthly resets from cumulative Miele sensor ──
