@@ -143,24 +143,28 @@ template:
       - name: "Desktop Desk Plug Energy Cost Monthly"
         unique_id: desktop_desk_plug_energy_cost_monthly
         unit_of_measurement: "$"
+        state_class: measurement
         state: >
           {% set rate = states('sensor.peco_variable_rate') | float(0) %}
           {{ (states('sensor.tapo_p110m_1_this_month_s_consumption') | float(0) * rate) | round(2) }}
       - name: "Nursery Heater Plug Energy Cost Monthly"
         unique_id: nursery_heater_plug_energy_cost_monthly
         unit_of_measurement: "$"
+        state_class: measurement
         state: >
           {% set rate = states('sensor.peco_variable_rate') | float(0) %}
           {{ (states('sensor.tapo_p110m_2_nursery_heater_this_month_s_consumption') | float(0) * rate) | round(2) }}
       - name: "Dyson Heater Plug Energy Cost Monthly"
         unique_id: dyson_heater_plug_energy_cost_monthly
         unit_of_measurement: "$"
+        state_class: measurement
         state: >
           {% set rate = states('sensor.peco_variable_rate') | float(0) %}
           {{ (states('sensor.tapo_p110m_3_this_month_s_consumption') | float(0) * rate) | round(2) }}
       - name: "Basement Heater Plug Energy Cost Monthly"
         unique_id: basement_heater_plug_energy_cost_monthly
         unit_of_measurement: "$"
+        state_class: measurement
         state: >
           {% set rate = states('sensor.peco_variable_rate') | float(0) %}
           {{ (states('sensor.tapo_p110m_4_basement_heater_this_month_s_consumption') | float(0) * rate) | round(2) }}
@@ -174,6 +178,7 @@ template:
       - name: "Tumble Dryer Energy Cost Monthly"
         unique_id: tumble_dryer_energy_cost_monthly
         unit_of_measurement: "$"
+        state_class: measurement
         state: >
           {% set rate = states('sensor.peco_variable_rate') | float(0) %}
           {{ (states('sensor.tumble_dryer_energy_monthly') | float(0) * rate) | round(2) }}
@@ -187,6 +192,7 @@ template:
       - name: "Guest Bedroom Desk Plug Energy Cost Monthly"
         unique_id: guest_bedroom_desk_plug_energy_cost_monthly
         unit_of_measurement: "$"
+        state_class: measurement
         state: >
           {% set rate = states('sensor.peco_variable_rate') | float(0) %}
           {{ (states('sensor.guest_bedroom_desk_plug_this_month_s_consumption') | float(0) * rate) | round(2) }}

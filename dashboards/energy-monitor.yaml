@@ -305,49 +305,83 @@ views:
                           - entity: input_boolean.show_device_desktop
                             state: "on"
                         card:
-                          type: gauge
-                          entity: sensor.tapo_p110m_1_current_consumption
-                          name: Desktop
-                          unit: W
-                          min: 0
-                          max: 500
-                          needle: true
-                          severity:
-                            green: 0
-                            yellow: 150
-                            red: 350
-                          card_mod:
-                            style: |
-                              ha-card {
-                                background: var(--ha-card-background, var(--card-background-color));
-                                border-radius: 16px;
-                                box-shadow: none;
-                                min-height: 155px;
-                              }
+                          type: vertical-stack
+                          cards:
+                            - type: gauge
+                              entity: sensor.tapo_p110m_1_current_consumption
+                              name: Desktop
+                              unit: W
+                              min: 0
+                              max: 500
+                              needle: true
+                              severity:
+                                green: 0
+                                yellow: 150
+                                red: 350
+                              card_mod:
+                                style: |
+                                  ha-card {
+                                    background: var(--ha-card-background, var(--card-background-color));
+                                    border-radius: 16px 16px 0 0;
+                                    box-shadow: none;
+                                    min-height: 140px;
+                                  }
+                            - type: markdown
+                              content: >
+                                {%- set w = states('sensor.tapo_p110m_1_current_consumption')|float(0) -%}
+                                {%- set r = states('sensor.peco_variable_rate')|float(0) -%}
+                                ~${{ (w * 24 / 1000 * r)|round(2) }}/day
+                              card_mod:
+                                style: |
+                                  ha-card {
+                                    background: var(--ha-card-background, var(--card-background-color));
+                                    border-radius: 0 0 16px 16px;
+                                    box-shadow: none;
+                                    margin-top: -1px;
+                                  }
+                                  ha-markdown { padding: 2px 8px 10px !important; }
+                                  ha-markdown p { text-align: center; font-size: 0.74em; color: var(--secondary-text-color); margin: 0 !important; }
                       - type: conditional
                         conditions:
                           - entity: input_boolean.show_device_nursery
                             state: "on"
                         card:
-                          type: gauge
-                          entity: sensor.tapo_p110m_2_nursery_heater_current_consumption
-                          name: Nursery Heater
-                          unit: W
-                          min: 0
-                          max: 1500
-                          needle: true
-                          severity:
-                            green: 0
-                            yellow: 500
-                            red: 1000
-                          card_mod:
-                            style: |
-                              ha-card {
-                                background: var(--ha-card-background, var(--card-background-color));
-                                border-radius: 16px;
-                                box-shadow: none;
-                                min-height: 155px;
-                              }
+                          type: vertical-stack
+                          cards:
+                            - type: gauge
+                              entity: sensor.tapo_p110m_2_nursery_heater_current_consumption
+                              name: Nursery Heater
+                              unit: W
+                              min: 0
+                              max: 1500
+                              needle: true
+                              severity:
+                                green: 0
+                                yellow: 500
+                                red: 1000
+                              card_mod:
+                                style: |
+                                  ha-card {
+                                    background: var(--ha-card-background, var(--card-background-color));
+                                    border-radius: 16px 16px 0 0;
+                                    box-shadow: none;
+                                    min-height: 140px;
+                                  }
+                            - type: markdown
+                              content: >
+                                {%- set w = states('sensor.tapo_p110m_2_nursery_heater_current_consumption')|float(0) -%}
+                                {%- set r = states('sensor.peco_variable_rate')|float(0) -%}
+                                ~${{ (w * 24 / 1000 * r)|round(2) }}/day
+                              card_mod:
+                                style: |
+                                  ha-card {
+                                    background: var(--ha-card-background, var(--card-background-color));
+                                    border-radius: 0 0 16px 16px;
+                                    box-shadow: none;
+                                    margin-top: -1px;
+                                  }
+                                  ha-markdown { padding: 2px 8px 10px !important; }
+                                  ha-markdown p { text-align: center; font-size: 0.74em; color: var(--secondary-text-color); margin: 0 !important; }
                   - type: horizontal-stack
                     cards:
                       - type: conditional
@@ -355,49 +389,83 @@ views:
                           - entity: input_boolean.show_device_dyson
                             state: "on"
                         card:
-                          type: gauge
-                          entity: sensor.tapo_p110m_3_current_consumption
-                          name: Dyson Heater
-                          unit: W
-                          min: 0
-                          max: 2000
-                          needle: true
-                          severity:
-                            green: 0
-                            yellow: 500
-                            red: 1200
-                          card_mod:
-                            style: |
-                              ha-card {
-                                background: var(--ha-card-background, var(--card-background-color));
-                                border-radius: 16px;
-                                box-shadow: none;
-                                min-height: 155px;
-                              }
+                          type: vertical-stack
+                          cards:
+                            - type: gauge
+                              entity: sensor.tapo_p110m_3_current_consumption
+                              name: Dyson Heater
+                              unit: W
+                              min: 0
+                              max: 2000
+                              needle: true
+                              severity:
+                                green: 0
+                                yellow: 500
+                                red: 1200
+                              card_mod:
+                                style: |
+                                  ha-card {
+                                    background: var(--ha-card-background, var(--card-background-color));
+                                    border-radius: 16px 16px 0 0;
+                                    box-shadow: none;
+                                    min-height: 140px;
+                                  }
+                            - type: markdown
+                              content: >
+                                {%- set w = states('sensor.tapo_p110m_3_current_consumption')|float(0) -%}
+                                {%- set r = states('sensor.peco_variable_rate')|float(0) -%}
+                                ~${{ (w * 24 / 1000 * r)|round(2) }}/day
+                              card_mod:
+                                style: |
+                                  ha-card {
+                                    background: var(--ha-card-background, var(--card-background-color));
+                                    border-radius: 0 0 16px 16px;
+                                    box-shadow: none;
+                                    margin-top: -1px;
+                                  }
+                                  ha-markdown { padding: 2px 8px 10px !important; }
+                                  ha-markdown p { text-align: center; font-size: 0.74em; color: var(--secondary-text-color); margin: 0 !important; }
                       - type: conditional
                         conditions:
                           - entity: input_boolean.show_device_basement
                             state: "on"
                         card:
-                          type: gauge
-                          entity: sensor.tapo_p110m_4_basement_heater_current_consumption
-                          name: Basement Heater
-                          unit: W
-                          min: 0
-                          max: 1500
-                          needle: true
-                          severity:
-                            green: 0
-                            yellow: 500
-                            red: 1000
-                          card_mod:
-                            style: |
-                              ha-card {
-                                background: var(--ha-card-background, var(--card-background-color));
-                                border-radius: 16px;
-                                box-shadow: none;
-                                min-height: 155px;
-                              }
+                          type: vertical-stack
+                          cards:
+                            - type: gauge
+                              entity: sensor.tapo_p110m_4_basement_heater_current_consumption
+                              name: Basement Heater
+                              unit: W
+                              min: 0
+                              max: 1500
+                              needle: true
+                              severity:
+                                green: 0
+                                yellow: 500
+                                red: 1000
+                              card_mod:
+                                style: |
+                                  ha-card {
+                                    background: var(--ha-card-background, var(--card-background-color));
+                                    border-radius: 16px 16px 0 0;
+                                    box-shadow: none;
+                                    min-height: 140px;
+                                  }
+                            - type: markdown
+                              content: >
+                                {%- set w = states('sensor.tapo_p110m_4_basement_heater_current_consumption')|float(0) -%}
+                                {%- set r = states('sensor.peco_variable_rate')|float(0) -%}
+                                ~${{ (w * 24 / 1000 * r)|round(2) }}/day
+                              card_mod:
+                                style: |
+                                  ha-card {
+                                    background: var(--ha-card-background, var(--card-background-color));
+                                    border-radius: 0 0 16px 16px;
+                                    box-shadow: none;
+                                    margin-top: -1px;
+                                  }
+                                  ha-markdown { padding: 2px 8px 10px !important; }
+                                  ha-markdown p { text-align: center; font-size: 0.74em; color: var(--secondary-text-color); margin: 0 !important; }
                   - type: horizontal-stack
                     cards:
                       - type: conditional
@@ -405,25 +473,42 @@ views:
                           - entity: input_boolean.show_device_guest_bedroom
                             state: "on"
                         card:
-                          type: gauge
-                          entity: sensor.guest_bedroom_desk_plug_current_consumption
-                          name: Guest Bedroom
-                          unit: W
-                          min: 0
-                          max: 1500
-                          needle: true
-                          severity:
-                            green: 0
-                            yellow: 200
-                            red: 800
-                          card_mod:
-                            style: |
-                              ha-card {
-                                background: var(--ha-card-background, var(--card-background-color));
-                                border-radius: 16px;
-                                box-shadow: none;
-                                min-height: 155px;
-                              }
+                          type: vertical-stack
+                          cards:
+                            - type: gauge
+                              entity: sensor.guest_bedroom_desk_plug_current_consumption
+                              name: Guest Bedroom
+                              unit: W
+                              min: 0
+                              max: 1500
+                              needle: true
+                              severity:
+                                green: 0
+                                yellow: 200
+                                red: 800
+                              card_mod:
+                                style: |
+                                  ha-card {
+                                    background: var(--ha-card-background, var(--card-background-color));
+                                    border-radius: 16px 16px 0 0;
+                                    box-shadow: none;
+                                    min-height: 140px;
+                                  }
+                            - type: markdown
+                              content: >
+                                {%- set w = states('sensor.guest_bedroom_desk_plug_current_consumption')|float(0) -%}
+                                {%- set r = states('sensor.peco_variable_rate')|float(0) -%}
+                                ~${{ (w * 24 / 1000 * r)|round(2) }}/day
+                              card_mod:
+                                style: |
+                                  ha-card {
+                                    background: var(--ha-card-background, var(--card-background-color));
+                                    border-radius: 0 0 16px 16px;
+                                    box-shadow: none;
+                                    margin-top: -1px;
+                                  }
+                                  ha-markdown { padding: 2px 8px 10px !important; }
+                                  ha-markdown p { text-align: center; font-size: 0.74em; color: var(--secondary-text-color); margin: 0 !important; }
                       # ── 6th slot: placeholder gauge for a future device ──
                       - type: gauge
                         entity: input_number.placeholder_gauge
@@ -453,7 +538,7 @@ views:
                 card_mod:
                   style: |
                     ha-card {
-                      min-height: 515px;
+                      min-height: 580px;
                     }
                 entities:
                   - entity: sensor.tapo_p110m_1_today_s_consumption
@@ -481,7 +566,7 @@ views:
                 card_mod:
                   style: |
                     ha-card {
-                      min-height: 515px;
+                      min-height: 580px;
                       height: 100%;
                     }
 
@@ -582,7 +667,7 @@ views:
           - type: horizontal-stack
             cards:
 
-              # ── Cost Left: Estimated daily cost per device — bar chart ──
+              # ── Cost Left: Estimated daily cost per device — table bar chart ──
               - type: markdown
                 card_mod:
                   style: |
@@ -612,42 +697,80 @@ views:
                   {%- set dm = [d1, d2, d3, d4, d5, d6, 0.001]|max -%}
                   {%- set dt = d1 + d2 + d3 + d4 + d5 + d6 -%}
                   #### Est. Daily Cost per Device
-                  <div style="color:var(--secondary-text-color);font-size:0.8em;margin:-2px 0 14px;">Cycle start: <strong>{{ cs }}{{ sfx }}</strong> · <strong>{{ cd }} day{{ 's' if cd != 1 }}</strong> elapsed · <strong>${{ rate }}/kWh</strong></div>
-                  <div style="margin-bottom:9px;"><div style="display:flex;align-items:center;gap:6px;margin-bottom:1px;"><span style="min-width:120px;font-size:0.84em;font-weight:600;color:#f39c12;">Desktop</span><div style="flex:1;height:9px;background:rgba(243,156,18,0.15);border-radius:5px;overflow:hidden;"><div style="height:100%;width:{{ [(d1/dm*100)|int,1]|max }}%;background:#f39c12;border-radius:5px;"></div></div><span style="min-width:52px;text-align:right;font-size:0.84em;font-weight:600;color:#f39c12;">${{ d1|round(3) }}</span></div><div style="font-size:0.74em;color:var(--secondary-text-color);padding-left:126px;">{{ (k1/cd)|round(3) }} kWh/day · {{ k1|round(2) }} kWh total</div></div>
-                  <div style="margin-bottom:9px;"><div style="display:flex;align-items:center;gap:6px;margin-bottom:1px;"><span style="min-width:120px;font-size:0.84em;font-weight:600;color:#3498db;">Nursery Heater</span><div style="flex:1;height:9px;background:rgba(52,152,219,0.15);border-radius:5px;overflow:hidden;"><div style="height:100%;width:{{ [(d2/dm*100)|int,1]|max }}%;background:#3498db;border-radius:5px;"></div></div><span style="min-width:52px;text-align:right;font-size:0.84em;font-weight:600;color:#3498db;">${{ d2|round(3) }}</span></div><div style="font-size:0.74em;color:var(--secondary-text-color);padding-left:126px;">{{ (k2/cd)|round(3) }} kWh/day · {{ k2|round(2) }} kWh total</div></div>
-                  <div style="margin-bottom:9px;"><div style="display:flex;align-items:center;gap:6px;margin-bottom:1px;"><span style="min-width:120px;font-size:0.84em;font-weight:600;color:#2ecc71;">Dyson Heater</span><div style="flex:1;height:9px;background:rgba(46,204,113,0.15);border-radius:5px;overflow:hidden;"><div style="height:100%;width:{{ [(d3/dm*100)|int,1]|max }}%;background:#2ecc71;border-radius:5px;"></div></div><span style="min-width:52px;text-align:right;font-size:0.84em;font-weight:600;color:#2ecc71;">${{ d3|round(3) }}</span></div><div style="font-size:0.74em;color:var(--secondary-text-color);padding-left:126px;">{{ (k3/cd)|round(3) }} kWh/day · {{ k3|round(2) }} kWh total</div></div>
-                  <div style="margin-bottom:9px;"><div style="display:flex;align-items:center;gap:6px;margin-bottom:1px;"><span style="min-width:120px;font-size:0.84em;font-weight:600;color:#e74c3c;">Basement Heater</span><div style="flex:1;height:9px;background:rgba(231,76,60,0.15);border-radius:5px;overflow:hidden;"><div style="height:100%;width:{{ [(d4/dm*100)|int,1]|max }}%;background:#e74c3c;border-radius:5px;"></div></div><span style="min-width:52px;text-align:right;font-size:0.84em;font-weight:600;color:#e74c3c;">${{ d4|round(3) }}</span></div><div style="font-size:0.74em;color:var(--secondary-text-color);padding-left:126px;">{{ (k4/cd)|round(3) }} kWh/day · {{ k4|round(2) }} kWh total</div></div>
-                  <div style="margin-bottom:9px;"><div style="display:flex;align-items:center;gap:6px;margin-bottom:1px;"><span style="min-width:120px;font-size:0.84em;font-weight:600;color:#9b59b6;">Tumble Dryer</span><div style="flex:1;height:9px;background:rgba(155,89,182,0.15);border-radius:5px;overflow:hidden;"><div style="height:100%;width:{{ [(d5/dm*100)|int,1]|max }}%;background:#9b59b6;border-radius:5px;"></div></div><span style="min-width:52px;text-align:right;font-size:0.84em;font-weight:600;color:#9b59b6;">${{ d5|round(3) }}</span></div><div style="font-size:0.74em;color:var(--secondary-text-color);padding-left:126px;">{{ (k5/cd)|round(3) }} kWh/day · {{ k5|round(2) }} kWh total</div></div>
-                  <div style="margin-bottom:12px;"><div style="display:flex;align-items:center;gap:6px;margin-bottom:1px;"><span style="min-width:120px;font-size:0.84em;font-weight:600;color:#1abc9c;">Guest Bedroom</span><div style="flex:1;height:9px;background:rgba(26,188,156,0.15);border-radius:5px;overflow:hidden;"><div style="height:100%;width:{{ [(d6/dm*100)|int,1]|max }}%;background:#1abc9c;border-radius:5px;"></div></div><span style="min-width:52px;text-align:right;font-size:0.84em;font-weight:600;color:#1abc9c;">${{ d6|round(3) }}</span></div><div style="font-size:0.74em;color:var(--secondary-text-color);padding-left:126px;">{{ (k6/cd)|round(3) }} kWh/day · {{ k6|round(2) }} kWh total</div></div>
-                  <div style="border-top:1px solid var(--divider-color);padding-top:8px;display:flex;justify-content:space-between;align-items:center;"><span style="font-weight:600;font-size:0.88em;">Total</span><span style="font-weight:700;font-size:0.95em;color:var(--primary-color);">${{ dt|round(3) }}/day</span></div>
+                  <table style="width:100%;border-collapse:collapse;font-size:0.84em;">
+                  <tr><td colspan="3" style="color:var(--secondary-text-color);padding:0 0 12px;font-size:0.9em;">Cycle: <b>{{ cs }}{{ sfx }}</b> &middot; <b>{{ cd }} day{{ 's' if cd != 1 }}</b> elapsed &middot; <b>${{ rate }}/kWh</b></td></tr>
+                  <tr>
+                    <td style="color:#f39c12;font-weight:600;padding:3px 6px 1px 0;width:110px;vertical-align:middle;">Desktop</td>
+                    <td style="padding:3px 0 1px;vertical-align:middle;"><table style="width:100%;border-collapse:collapse;"><tr><td style="background:#f39c12;height:9px;width:{{ [(d1/dm*100)|int,1]|max }}%;border-radius:3px;"></td><td style="background:var(--divider-color);height:9px;border-radius:0 3px 3px 0;"></td></tr></table></td>
+                    <td style="color:#f39c12;font-weight:600;text-align:right;padding:3px 0 1px 6px;white-space:nowrap;width:50px;vertical-align:middle;">${{ d1|round(3) }}</td>
+                  </tr>
+                  <tr><td></td><td colspan="2" style="color:var(--secondary-text-color);font-size:0.85em;padding:0 0 8px 0;">{{ (k1/cd)|round(3) }} kWh/day &middot; {{ k1|round(2) }} kWh total</td></tr>
+                  <tr>
+                    <td style="color:#3498db;font-weight:600;padding:3px 6px 1px 0;vertical-align:middle;">Nursery Heater</td>
+                    <td style="padding:3px 0 1px;vertical-align:middle;"><table style="width:100%;border-collapse:collapse;"><tr><td style="background:#3498db;height:9px;width:{{ [(d2/dm*100)|int,1]|max }}%;border-radius:3px;"></td><td style="background:var(--divider-color);height:9px;border-radius:0 3px 3px 0;"></td></tr></table></td>
+                    <td style="color:#3498db;font-weight:600;text-align:right;padding:3px 0 1px 6px;white-space:nowrap;vertical-align:middle;">${{ d2|round(3) }}</td>
+                  </tr>
+                  <tr><td></td><td colspan="2" style="color:var(--secondary-text-color);font-size:0.85em;padding:0 0 8px 0;">{{ (k2/cd)|round(3) }} kWh/day &middot; {{ k2|round(2) }} kWh total</td></tr>
+                  <tr>
+                    <td style="color:#2ecc71;font-weight:600;padding:3px 6px 1px 0;vertical-align:middle;">Dyson Heater</td>
+                    <td style="padding:3px 0 1px;vertical-align:middle;"><table style="width:100%;border-collapse:collapse;"><tr><td style="background:#2ecc71;height:9px;width:{{ [(d3/dm*100)|int,1]|max }}%;border-radius:3px;"></td><td style="background:var(--divider-color);height:9px;border-radius:0 3px 3px 0;"></td></tr></table></td>
+                    <td style="color:#2ecc71;font-weight:600;text-align:right;padding:3px 0 1px 6px;white-space:nowrap;vertical-align:middle;">${{ d3|round(3) }}</td>
+                  </tr>
+                  <tr><td></td><td colspan="2" style="color:var(--secondary-text-color);font-size:0.85em;padding:0 0 8px 0;">{{ (k3/cd)|round(3) }} kWh/day &middot; {{ k3|round(2) }} kWh total</td></tr>
+                  <tr>
+                    <td style="color:#e74c3c;font-weight:600;padding:3px 6px 1px 0;vertical-align:middle;">Basement Heater</td>
+                    <td style="padding:3px 0 1px;vertical-align:middle;"><table style="width:100%;border-collapse:collapse;"><tr><td style="background:#e74c3c;height:9px;width:{{ [(d4/dm*100)|int,1]|max }}%;border-radius:3px;"></td><td style="background:var(--divider-color);height:9px;border-radius:0 3px 3px 0;"></td></tr></table></td>
+                    <td style="color:#e74c3c;font-weight:600;text-align:right;padding:3px 0 1px 6px;white-space:nowrap;vertical-align:middle;">${{ d4|round(3) }}</td>
+                  </tr>
+                  <tr><td></td><td colspan="2" style="color:var(--secondary-text-color);font-size:0.85em;padding:0 0 8px 0;">{{ (k4/cd)|round(3) }} kWh/day &middot; {{ k4|round(2) }} kWh total</td></tr>
+                  <tr>
+                    <td style="color:#9b59b6;font-weight:600;padding:3px 6px 1px 0;vertical-align:middle;">Tumble Dryer</td>
+                    <td style="padding:3px 0 1px;vertical-align:middle;"><table style="width:100%;border-collapse:collapse;"><tr><td style="background:#9b59b6;height:9px;width:{{ [(d5/dm*100)|int,1]|max }}%;border-radius:3px;"></td><td style="background:var(--divider-color);height:9px;border-radius:0 3px 3px 0;"></td></tr></table></td>
+                    <td style="color:#9b59b6;font-weight:600;text-align:right;padding:3px 0 1px 6px;white-space:nowrap;vertical-align:middle;">${{ d5|round(3) }}</td>
+                  </tr>
+                  <tr><td></td><td colspan="2" style="color:var(--secondary-text-color);font-size:0.85em;padding:0 0 8px 0;">{{ (k5/cd)|round(3) }} kWh/day &middot; {{ k5|round(2) }} kWh total</td></tr>
+                  <tr>
+                    <td style="color:#1abc9c;font-weight:600;padding:3px 6px 1px 0;vertical-align:middle;">Guest Bedroom</td>
+                    <td style="padding:3px 0 1px;vertical-align:middle;"><table style="width:100%;border-collapse:collapse;"><tr><td style="background:#1abc9c;height:9px;width:{{ [(d6/dm*100)|int,1]|max }}%;border-radius:3px;"></td><td style="background:var(--divider-color);height:9px;border-radius:0 3px 3px 0;"></td></tr></table></td>
+                    <td style="color:#1abc9c;font-weight:600;text-align:right;padding:3px 0 1px 6px;white-space:nowrap;vertical-align:middle;">${{ d6|round(3) }}</td>
+                  </tr>
+                  <tr><td></td><td colspan="2" style="color:var(--secondary-text-color);font-size:0.85em;padding:0 0 10px 0;">{{ (k6/cd)|round(3) }} kWh/day &middot; {{ k6|round(2) }} kWh total</td></tr>
+                  <tr style="border-top:1px solid var(--divider-color);">
+                    <td style="font-weight:700;padding:8px 0 2px;">Total</td>
+                    <td></td>
+                    <td style="font-weight:700;text-align:right;padding:8px 0 2px;color:var(--primary-color);">${{ dt|round(3) }}/day</td>
+                  </tr>
+                  </table>
 
-              # ── Cost Right: 30-day per-device energy trend ──
-              # Uses kWh sensors (have existing statistics). Cost sensors need
-              # ~24h after HA restart before statistics accumulate — swap once ready.
+              # ── Cost Right: 30-day cumulative cost trend per device ($) ──
+              # Uses *_energy_cost_monthly sensors (state_class: measurement added).
+              # stat_types: state shows the sensor's current accumulated value each day
+              # → gives a rising $ line matching the billing cycle. History builds after
+              # the first HA restart following this config change.
               - type: statistics-graph
-                title: 30-Day Energy Trend by Device (kWh)
+                title: 30-Day Cost Trend by Device ($)
                 period: day
                 days_to_show: 30
                 stat_types:
-                  - sum
+                  - state
                 chart_type: line
                 entities:
-                  - entity: sensor.tapo_p110m_1_today_s_consumption
+                  - entity: sensor.desktop_desk_plug_energy_cost_monthly
                     name: Desktop
                     color: "#f39c12"
-                  - entity: sensor.tapo_p110m_2_nursery_heater_today_s_consumption
+                  - entity: sensor.nursery_heater_plug_energy_cost_monthly
                     name: Nursery Heater
                     color: "#3498db"
-                  - entity: sensor.tapo_p110m_3_today_s_consumption
+                  - entity: sensor.dyson_heater_plug_energy_cost_monthly
                     name: Dyson Heater
                     color: "#2ecc71"
-                  - entity: sensor.tapo_p110m_4_basement_heater_today_s_consumption
+                  - entity: sensor.basement_heater_plug_energy_cost_monthly
                     name: Basement Heater
                     color: "#e74c3c"
-                  - entity: sensor.tumble_dryer_energy_daily
+                  - entity: sensor.tumble_dryer_energy_cost_monthly
                     name: Tumble Dryer
                     color: "#9b59b6"
-                  - entity: sensor.guest_bedroom_desk_plug_today_s_consumption
+                  - entity: sensor.guest_bedroom_desk_plug_energy_cost_monthly
                     name: Guest Bedroom
                     color: "#1abc9c"
 
