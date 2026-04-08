@@ -83,6 +83,9 @@ views:
                       text-transform: lowercase !important;
                       padding: 10px 16px !important;
                     }
+                    .card-content {
+                      padding-top: 16px !important;
+                    }
                 entities:
                   - entity: sensor.peco_variable_rate
                     name: Combined Rate ($/kWh)
@@ -94,9 +97,9 @@ views:
                     name: Supply ($/kWh)
                   - entity: input_number.peco_transmission_rate
                     name: Transmission ($/kWh)
-                  - type: divider
                   - entity: input_number.peco_customer_charge
                     name: Customer Charge ($/mo)
+                  - type: divider
                   - entity: input_number.billing_cycle_start_day
                     name: Billing Cycle Start Day
 
@@ -139,7 +142,7 @@ views:
                 card_mod:
                   style: |
                     ha-card {
-                      min-height: 370px;
+                      min-height: 420px;
                       display: flex;
                       flex-direction: column;
                       justify-content: center;
@@ -160,7 +163,7 @@ views:
                               background: var(--ha-card-background, var(--card-background-color));
                               border-radius: 16px;
                               box-shadow: none;
-                              min-height: 180px;
+                              min-height: 205px;
                             }
                       - type: entity
                         entity: sensor.total_energy_cost_today
@@ -172,7 +175,7 @@ views:
                               background: var(--ha-card-background, var(--card-background-color));
                               border-radius: 16px;
                               box-shadow: none;
-                              min-height: 180px;
+                              min-height: 205px;
                             }
                       - type: entity
                         entity: sensor.total_energy_cost_monthly
@@ -184,7 +187,7 @@ views:
                               background: var(--ha-card-background, var(--card-background-color));
                               border-radius: 16px;
                               box-shadow: none;
-                              min-height: 180px;
+                              min-height: 205px;
                             }
                   - type: horizontal-stack
                     cards:
@@ -198,7 +201,7 @@ views:
                               background: var(--ha-card-background, var(--card-background-color));
                               border-radius: 16px;
                               box-shadow: none;
-                              min-height: 180px;
+                              min-height: 205px;
                             }
                       - type: entity
                         entity: sensor.daily_average_energy_cost_this_month
@@ -210,7 +213,7 @@ views:
                               background: var(--ha-card-background, var(--card-background-color));
                               border-radius: 16px;
                               box-shadow: none;
-                              min-height: 180px;
+                              min-height: 205px;
                             }
                       - type: entity
                         entity: sensor.estimated_annual_energy_cost
@@ -222,7 +225,7 @@ views:
                               background: var(--ha-card-background, var(--card-background-color));
                               border-radius: 16px;
                               box-shadow: none;
-                              min-height: 180px;
+                              min-height: 205px;
                             }
 
           # ══════════════════════════════════════════════════════
@@ -479,6 +482,7 @@ views:
                   style: |
                     ha-card {
                       min-height: 515px;
+                      height: 100%;
                     }
 
           # ══════════════════════════════════════════════════════
