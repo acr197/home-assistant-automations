@@ -244,9 +244,27 @@ views:
           - type: horizontal-stack
             cards:
 
-              # ── Bottom Left: 4 real-time power gauges (card-mod styled) ──
+              # ── Bottom Left: "Current Usage" title + 6 real-time gauges ──
               - type: vertical-stack
                 cards:
+                  - type: markdown
+                    content: "## Current Usage"
+                    card_mod:
+                      style: |
+                        ha-card {
+                          background: var(--ha-card-background, var(--card-background-color));
+                          border-radius: 16px;
+                          box-shadow: none;
+                        }
+                        ha-markdown {
+                          padding: 12px 16px 16px !important;
+                        }
+                        ha-markdown h2 {
+                          font-size: 24px !important;
+                          font-weight: 400 !important;
+                          margin: 0 !important;
+                          color: var(--primary-text-color);
+                        }
                   - type: horizontal-stack
                     cards:
                       - type: conditional
@@ -271,6 +289,7 @@ views:
                                 background: var(--ha-card-background, var(--card-background-color));
                                 border-radius: 16px;
                                 box-shadow: none;
+                                min-height: 140px;
                               }
                       - type: conditional
                         conditions:
@@ -294,6 +313,7 @@ views:
                                 background: var(--ha-card-background, var(--card-background-color));
                                 border-radius: 16px;
                                 box-shadow: none;
+                                min-height: 140px;
                               }
                   - type: horizontal-stack
                     cards:
@@ -319,6 +339,7 @@ views:
                                 background: var(--ha-card-background, var(--card-background-color));
                                 border-radius: 16px;
                                 box-shadow: none;
+                                min-height: 140px;
                               }
                       - type: conditional
                         conditions:
@@ -342,6 +363,7 @@ views:
                                 background: var(--ha-card-background, var(--card-background-color));
                                 border-radius: 16px;
                                 box-shadow: none;
+                                min-height: 140px;
                               }
                   - type: horizontal-stack
                     cards:
@@ -367,16 +389,39 @@ views:
                                 background: var(--ha-card-background, var(--card-background-color));
                                 border-radius: 16px;
                                 box-shadow: none;
+                                min-height: 140px;
                               }
+                      # ── 6th slot: placeholder gauge for a future device ──
+                      - type: gauge
+                        entity: input_number.placeholder_gauge
+                        name: Open Slot
+                        unit: W
+                        min: 0
+                        max: 1500
+                        needle: true
+                        card_mod:
+                          style: |
+                            ha-card {
+                              background: var(--ha-card-background, var(--card-background-color));
+                              border-radius: 16px;
+                              box-shadow: none;
+                              min-height: 140px;
+                              opacity: 0.45;
+                            }
 
-              # ── Bottom Middle: Daily energy by device (14 days) ──
+              # ── Bottom Middle: Daily energy by device (14 days, per-day delta) ──
               - type: statistics-graph
                 title: Daily Energy by Device (kWh)
                 period: day
                 days_to_show: 14
                 stat_types:
-                  - sum
+                  - change
                 chart_type: bar
+                card_mod:
+                  style: |
+                    ha-card {
+                      min-height: 515px;
+                    }
                 entities:
                   - entity: sensor.tapo_p110m_1_today_s_consumption
                     name: Desktop
@@ -394,6 +439,11 @@ views:
               # ── Bottom Right: Individual device usage ──
               - type: energy-devices-graph
                 title: Individual Devices Total Usage
+                card_mod:
+                  style: |
+                    ha-card {
+                      min-height: 515px;
+                    }
 
           # ══════════════════════════════════════════════════════
           #  POWER ROW 2: Per-device history (24h + 7 days)

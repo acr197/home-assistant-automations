@@ -463,6 +463,14 @@ input_number:
     mode: box
     icon: mdi:calendar-start
     initial: 1
+  placeholder_gauge:
+    name: Placeholder Gauge
+    unit_of_measurement: "W"
+    min: 0
+    max: 1500
+    step: 1
+    icon: mdi:help-circle-outline
+    initial: 0
 
 input_boolean:
   show_device_desktop:
