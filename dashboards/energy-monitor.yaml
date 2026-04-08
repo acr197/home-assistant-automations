@@ -60,8 +60,10 @@ views:
           - type: horizontal-stack
             cards:
 
-              # ── Top Left: PECO Rate — gradient banner + styled table ──
-              - type: markdown
+              # ── Top Left: PECO Rate — editable inputs with gradient header ──
+              - type: entities
+                title: peco
+                show_header_toggle: false
                 card_mod:
                   style: |
                     ha-card {
@@ -70,41 +72,32 @@ views:
                       box-shadow: none;
                       height: 100%;
                     }
-                content: |
-                  <div style="background:linear-gradient(135deg,#00b4ab,#6b2fa0);border-radius:8px;padding:7px 0 5px;text-align:center;margin-bottom:10px;">
-                    <span style="color:white;font-size:22px;font-weight:700;letter-spacing:5px;font-family:sans-serif;">peco</span>
-                  </div>
-
-                  **PECO Rate: ${{ states('sensor.peco_variable_rate') }}/kWh**
-
-                  Last bill: **${{ states('input_number.peco_last_bill_amount') }}** for **{{ states('input_number.peco_last_bill_kwh') | int }} kWh** ({{ states('input_number.peco_last_bill_days') | int }} days)
-
-                  <table style="width:100%;border-collapse:collapse;margin-top:8px;font-size:0.88em;">
-                    <thead>
-                      <tr style="background:linear-gradient(90deg,#00b4ab,#6b2fa0);">
-                        <th style="color:white;padding:6px 8px;text-align:left;font-weight:600;">Component</th>
-                        <th style="color:white;padding:6px 8px;text-align:right;font-weight:600;">Rate</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr>
-                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);">Delivery</td>
-                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;color:var(--primary-color);">${{ states('input_number.peco_delivery_rate') }}/kWh</td>
-                      </tr>
-                      <tr>
-                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);">Supply</td>
-                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;color:var(--primary-color);">${{ states('input_number.peco_supply_rate') }}/kWh</td>
-                      </tr>
-                      <tr>
-                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);">Transmission</td>
-                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;color:var(--primary-color);">${{ states('input_number.peco_transmission_rate') }}/kWh</td>
-                      </tr>
-                      <tr>
-                        <td style="padding:5px 8px;">Customer charge</td>
-                        <td style="padding:5px 8px;text-align:right;color:var(--primary-color);">${{ states('input_number.peco_customer_charge') }}/mo fixed</td>
-                      </tr>
-                    </tbody>
-                  </table>
+                    .card-header {
+                      background: linear-gradient(135deg, #00b4ab, #6b2fa0) !important;
+                      border-radius: 16px 16px 0 0 !important;
+                      color: white !important;
+                      font-size: 20px !important;
+                      font-weight: 700 !important;
+                      letter-spacing: 5px !important;
+                      text-transform: lowercase !important;
+                      padding: 10px 16px !important;
+                    }
+                entities:
+                  - entity: sensor.peco_variable_rate
+                    name: Combined Rate ($/kWh)
+                    icon: mdi:lightning-bolt
+                  - type: divider
+                  - entity: input_number.peco_delivery_rate
+                    name: Delivery ($/kWh)
+                  - entity: input_number.peco_supply_rate
+                    name: Supply ($/kWh)
+                  - entity: input_number.peco_transmission_rate
+                    name: Transmission ($/kWh)
+                  - type: divider
+                  - entity: input_number.peco_customer_charge
+                    name: Customer Charge ($/mo)
+                  - entity: input_number.billing_cycle_start_day
+                    name: Billing Cycle Start Day
 
               # ── Top Middle: Energy Distribution ──
               - type: energy-distribution
@@ -112,7 +105,7 @@ views:
                 card_mod:
                   style: |
                     ha-card {
-                      min-height: 310px;
+                      min-height: 370px;
                       display: flex;
                       flex-direction: column;
                       justify-content: center;
@@ -133,7 +126,7 @@ views:
                               background: var(--ha-card-background, var(--card-background-color));
                               border-radius: 16px;
                               box-shadow: none;
-                              min-height: 150px;
+                              min-height: 180px;
                             }
                       - type: entity
                         entity: sensor.total_energy_cost_today
@@ -145,7 +138,7 @@ views:
                               background: var(--ha-card-background, var(--card-background-color));
                               border-radius: 16px;
                               box-shadow: none;
-                              min-height: 150px;
+                              min-height: 180px;
                             }
                       - type: entity
                         entity: sensor.total_energy_cost_monthly
@@ -157,7 +150,7 @@ views:
                               background: var(--ha-card-background, var(--card-background-color));
                               border-radius: 16px;
                               box-shadow: none;
-                              min-height: 150px;
+                              min-height: 180px;
                             }
                   - type: horizontal-stack
                     cards:
@@ -171,7 +164,7 @@ views:
                               background: var(--ha-card-background, var(--card-background-color));
                               border-radius: 16px;
                               box-shadow: none;
-                              min-height: 150px;
+                              min-height: 180px;
                             }
                       - type: entity
                         entity: sensor.daily_average_energy_cost_this_month
@@ -183,7 +176,7 @@ views:
                               background: var(--ha-card-background, var(--card-background-color));
                               border-radius: 16px;
                               box-shadow: none;
-                              min-height: 150px;
+                              min-height: 180px;
                             }
                       - type: entity
                         entity: sensor.estimated_annual_energy_cost
@@ -195,7 +188,7 @@ views:
                               background: var(--ha-card-background, var(--card-background-color));
                               border-radius: 16px;
                               box-shadow: none;
-                              min-height: 150px;
+                              min-height: 180px;
                             }
 
           # ══════════════════════════════════════════════════════
@@ -292,7 +285,7 @@ views:
                                 background: var(--ha-card-background, var(--card-background-color));
                                 border-radius: 16px;
                                 box-shadow: none;
-                                min-height: 140px;
+                                min-height: 155px;
                               }
                       - type: conditional
                         conditions:
@@ -316,7 +309,7 @@ views:
                                 background: var(--ha-card-background, var(--card-background-color));
                                 border-radius: 16px;
                                 box-shadow: none;
-                                min-height: 140px;
+                                min-height: 155px;
                               }
                   - type: horizontal-stack
                     cards:
@@ -342,7 +335,7 @@ views:
                                 background: var(--ha-card-background, var(--card-background-color));
                                 border-radius: 16px;
                                 box-shadow: none;
-                                min-height: 140px;
+                                min-height: 155px;
                               }
                       - type: conditional
                         conditions:
@@ -366,7 +359,7 @@ views:
                                 background: var(--ha-card-background, var(--card-background-color));
                                 border-radius: 16px;
                                 box-shadow: none;
-                                min-height: 140px;
+                                min-height: 155px;
                               }
                   - type: horizontal-stack
                     cards:
@@ -392,7 +385,7 @@ views:
                                 background: var(--ha-card-background, var(--card-background-color));
                                 border-radius: 16px;
                                 box-shadow: none;
-                                min-height: 140px;
+                                min-height: 155px;
                               }
                       # ── 6th slot: placeholder gauge for a future device ──
                       - type: gauge
@@ -428,16 +421,22 @@ views:
                 entities:
                   - entity: sensor.tapo_p110m_1_today_s_consumption
                     name: Desktop
+                    color: "#f39c12"
                   - entity: sensor.tapo_p110m_2_nursery_heater_today_s_consumption
                     name: Nursery Heater
+                    color: "#3498db"
                   - entity: sensor.tapo_p110m_3_today_s_consumption
                     name: Dyson Heater
+                    color: "#2ecc71"
                   - entity: sensor.tapo_p110m_4_basement_heater_today_s_consumption
                     name: Basement Heater
+                    color: "#e74c3c"
                   - entity: sensor.tumble_dryer_energy_daily
                     name: Tumble Dryer
+                    color: "#9b59b6"
                   - entity: sensor.guest_bedroom_desk_plug_today_s_consumption
                     name: Guest Bedroom
+                    color: "#1abc9c"
 
               # ── Bottom Right: Individual device usage ──
               - type: energy-devices-graph
@@ -456,31 +455,45 @@ views:
               - type: history-graph
                 title: Power Draw by Device (24h)
                 hours_to_show: 24
+                min_y_axis: 0
+                max_y_axis: 2000
                 entities:
                   - entity: sensor.tapo_p110m_1_current_consumption
                     name: Desktop
+                    color: "#f39c12"
                   - entity: sensor.tapo_p110m_2_nursery_heater_current_consumption
                     name: Nursery Heater
+                    color: "#3498db"
                   - entity: sensor.tapo_p110m_3_current_consumption
                     name: Dyson Heater
+                    color: "#2ecc71"
                   - entity: sensor.tapo_p110m_4_basement_heater_current_consumption
                     name: Basement Heater
+                    color: "#e74c3c"
                   - entity: sensor.guest_bedroom_desk_plug_current_consumption
                     name: Guest Bedroom
+                    color: "#1abc9c"
               - type: history-graph
                 title: Power Draw by Device (7 Days)
                 hours_to_show: 168
+                min_y_axis: 0
+                max_y_axis: 2000
                 entities:
                   - entity: sensor.tapo_p110m_1_current_consumption
                     name: Desktop
+                    color: "#f39c12"
                   - entity: sensor.tapo_p110m_2_nursery_heater_current_consumption
                     name: Nursery Heater
+                    color: "#3498db"
                   - entity: sensor.tapo_p110m_3_current_consumption
                     name: Dyson Heater
+                    color: "#2ecc71"
                   - entity: sensor.tapo_p110m_4_basement_heater_current_consumption
                     name: Basement Heater
+                    color: "#e74c3c"
                   - entity: sensor.guest_bedroom_desk_plug_current_consumption
                     name: Guest Bedroom
+                    color: "#1abc9c"
 
           # ══════════════════════════════════════════════════════
           #  SECTION HEADER — cost (purple)
@@ -531,7 +544,7 @@ views:
           - type: horizontal-stack
             cards:
 
-              # ── Cost Left: Estimated daily cost per device (template math) ──
+              # ── Cost Left: Estimated daily cost per device — bar chart ──
               - type: markdown
                 card_mod:
                   style: |
@@ -543,69 +556,32 @@ views:
                 content: |
                   {%- set cs = states('input_number.billing_cycle_start_day')|int(1) -%}
                   {%- set today = now().day -%}
-                  {%- set cycle_days = [(today - cs + 1), 1]|max if today >= cs else [(today + 30 - cs + 1), 1]|max -%}
+                  {%- set cd = [(today - cs + 1), 1]|max if today >= cs else [(today + 30 - cs + 1), 1]|max -%}
                   {%- set rate = states('sensor.peco_variable_rate')|float(0) -%}
-                  {%- set suffix = 'st' if cs in [1,21] else ('nd' if cs in [2,22] else ('rd' if cs in [3,23] else 'th')) -%}
-                  {%- set dryer_kwh = states('sensor.tumble_dryer_energy_monthly')|float(0) -%}
-                  {%- set guest_kwh = states('sensor.guest_bedroom_desk_plug_this_month_s_consumption')|float(0) -%}
-                  #### Estimated Daily Cost per Device
-
-                  Billing cycle starts **{{ cs }}{{ suffix }}** each month · **{{ cycle_days }} day{{ 's' if cycle_days != 1 }}** elapsed · Rate: **${{ rate }}/kWh**
-
-                  <table style="width:100%;border-collapse:collapse;margin-top:8px;font-size:0.88em;">
-                    <thead>
-                      <tr style="background:linear-gradient(90deg,#9b59b6,#6b2fa0);">
-                        <th style="color:white;padding:6px 8px;text-align:left;font-weight:600;">Device</th>
-                        <th style="color:white;padding:6px 8px;text-align:right;font-weight:600;">kWh/cycle</th>
-                        <th style="color:white;padding:6px 8px;text-align:right;font-weight:600;">kWh/day</th>
-                        <th style="color:white;padding:6px 8px;text-align:right;font-weight:600;">$/day est.</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr>
-                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);"><strong>Desktop</strong></td>
-                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;">{{ states('sensor.tapo_p110m_1_this_month_s_consumption')|float(0)|round(2) }} kWh</td>
-                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;">{{ (states('sensor.tapo_p110m_1_this_month_s_consumption')|float(0) / cycle_days)|round(3) }}</td>
-                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;color:#f39c12;">${{ ((states('sensor.tapo_p110m_1_this_month_s_consumption')|float(0) / cycle_days) * rate)|round(3) }}</td>
-                      </tr>
-                      <tr>
-                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);"><strong>Nursery Heater</strong></td>
-                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;">{{ states('sensor.tapo_p110m_2_nursery_heater_this_month_s_consumption')|float(0)|round(2) }} kWh</td>
-                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;">{{ (states('sensor.tapo_p110m_2_nursery_heater_this_month_s_consumption')|float(0) / cycle_days)|round(3) }}</td>
-                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;color:#3498db;">${{ ((states('sensor.tapo_p110m_2_nursery_heater_this_month_s_consumption')|float(0) / cycle_days) * rate)|round(3) }}</td>
-                      </tr>
-                      <tr>
-                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);"><strong>Dyson Heater</strong></td>
-                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;">{{ states('sensor.tapo_p110m_3_this_month_s_consumption')|float(0)|round(2) }} kWh</td>
-                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;">{{ (states('sensor.tapo_p110m_3_this_month_s_consumption')|float(0) / cycle_days)|round(3) }}</td>
-                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;color:#2ecc71;">${{ ((states('sensor.tapo_p110m_3_this_month_s_consumption')|float(0) / cycle_days) * rate)|round(3) }}</td>
-                      </tr>
-                      <tr>
-                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);"><strong>Basement Heater</strong></td>
-                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;">{{ states('sensor.tapo_p110m_4_basement_heater_this_month_s_consumption')|float(0)|round(2) }} kWh</td>
-                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;">{{ (states('sensor.tapo_p110m_4_basement_heater_this_month_s_consumption')|float(0) / cycle_days)|round(3) }}</td>
-                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;color:#e74c3c;">${{ ((states('sensor.tapo_p110m_4_basement_heater_this_month_s_consumption')|float(0) / cycle_days) * rate)|round(3) }}</td>
-                      </tr>
-                      <tr>
-                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);"><strong>Tumble Dryer</strong></td>
-                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;">{{ dryer_kwh|round(2) }} kWh</td>
-                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;">{{ (dryer_kwh / cycle_days)|round(3) }}</td>
-                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;color:#9b59b6;">${{ ((dryer_kwh / cycle_days) * rate)|round(3) }}</td>
-                      </tr>
-                      <tr>
-                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);"><strong>Guest Bedroom</strong></td>
-                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;">{{ guest_kwh|round(2) }} kWh</td>
-                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;">{{ (guest_kwh / cycle_days)|round(3) }}</td>
-                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;color:#1abc9c;">${{ ((guest_kwh / cycle_days) * rate)|round(3) }}</td>
-                      </tr>
-                      <tr style="font-weight:600;">
-                        <td style="padding:5px 8px;">Total</td>
-                        <td style="padding:5px 8px;text-align:right;">{{ states('sensor.total_energy_this_month')|float(0)|round(2) }} kWh</td>
-                        <td style="padding:5px 8px;text-align:right;">{{ (states('sensor.total_energy_this_month')|float(0) / cycle_days)|round(3) }}</td>
-                        <td style="padding:5px 8px;text-align:right;color:var(--primary-color);">${{ states('sensor.daily_average_energy_cost_this_month') }}</td>
-                      </tr>
-                    </tbody>
-                  </table>
+                  {%- set sfx = 'st' if cs in [1,21] else ('nd' if cs in [2,22] else ('rd' if cs in [3,23] else 'th')) -%}
+                  {%- set k1 = states('sensor.tapo_p110m_1_this_month_s_consumption')|float(0) -%}
+                  {%- set k2 = states('sensor.tapo_p110m_2_nursery_heater_this_month_s_consumption')|float(0) -%}
+                  {%- set k3 = states('sensor.tapo_p110m_3_this_month_s_consumption')|float(0) -%}
+                  {%- set k4 = states('sensor.tapo_p110m_4_basement_heater_this_month_s_consumption')|float(0) -%}
+                  {%- set k5 = states('sensor.tumble_dryer_energy_monthly')|float(0) -%}
+                  {%- set k6 = states('sensor.guest_bedroom_desk_plug_this_month_s_consumption')|float(0) -%}
+                  {%- set d1 = (k1 / cd) * rate -%}
+                  {%- set d2 = (k2 / cd) * rate -%}
+                  {%- set d3 = (k3 / cd) * rate -%}
+                  {%- set d4 = (k4 / cd) * rate -%}
+                  {%- set d5 = (k5 / cd) * rate -%}
+                  {%- set d6 = (k6 / cd) * rate -%}
+                  {%- set dm = [d1, d2, d3, d4, d5, d6, 0.001]|max -%}
+                  {%- set dt = d1 + d2 + d3 + d4 + d5 + d6 -%}
+                  #### Est. Daily Cost per Device
+                  <div style="color:var(--secondary-text-color);font-size:0.8em;margin:-2px 0 14px;">Cycle start: <strong>{{ cs }}{{ sfx }}</strong> · <strong>{{ cd }} day{{ 's' if cd != 1 }}</strong> elapsed · <strong>${{ rate }}/kWh</strong></div>
+                  <div style="margin-bottom:9px;"><div style="display:flex;align-items:center;gap:6px;margin-bottom:1px;"><span style="min-width:120px;font-size:0.84em;font-weight:600;color:#f39c12;">Desktop</span><div style="flex:1;height:9px;background:rgba(243,156,18,0.15);border-radius:5px;overflow:hidden;"><div style="height:100%;width:{{ [(d1/dm*100)|int,1]|max }}%;background:#f39c12;border-radius:5px;"></div></div><span style="min-width:52px;text-align:right;font-size:0.84em;font-weight:600;color:#f39c12;">${{ d1|round(3) }}</span></div><div style="font-size:0.74em;color:var(--secondary-text-color);padding-left:126px;">{{ (k1/cd)|round(3) }} kWh/day · {{ k1|round(2) }} kWh total</div></div>
+                  <div style="margin-bottom:9px;"><div style="display:flex;align-items:center;gap:6px;margin-bottom:1px;"><span style="min-width:120px;font-size:0.84em;font-weight:600;color:#3498db;">Nursery Heater</span><div style="flex:1;height:9px;background:rgba(52,152,219,0.15);border-radius:5px;overflow:hidden;"><div style="height:100%;width:{{ [(d2/dm*100)|int,1]|max }}%;background:#3498db;border-radius:5px;"></div></div><span style="min-width:52px;text-align:right;font-size:0.84em;font-weight:600;color:#3498db;">${{ d2|round(3) }}</span></div><div style="font-size:0.74em;color:var(--secondary-text-color);padding-left:126px;">{{ (k2/cd)|round(3) }} kWh/day · {{ k2|round(2) }} kWh total</div></div>
+                  <div style="margin-bottom:9px;"><div style="display:flex;align-items:center;gap:6px;margin-bottom:1px;"><span style="min-width:120px;font-size:0.84em;font-weight:600;color:#2ecc71;">Dyson Heater</span><div style="flex:1;height:9px;background:rgba(46,204,113,0.15);border-radius:5px;overflow:hidden;"><div style="height:100%;width:{{ [(d3/dm*100)|int,1]|max }}%;background:#2ecc71;border-radius:5px;"></div></div><span style="min-width:52px;text-align:right;font-size:0.84em;font-weight:600;color:#2ecc71;">${{ d3|round(3) }}</span></div><div style="font-size:0.74em;color:var(--secondary-text-color);padding-left:126px;">{{ (k3/cd)|round(3) }} kWh/day · {{ k3|round(2) }} kWh total</div></div>
+                  <div style="margin-bottom:9px;"><div style="display:flex;align-items:center;gap:6px;margin-bottom:1px;"><span style="min-width:120px;font-size:0.84em;font-weight:600;color:#e74c3c;">Basement Heater</span><div style="flex:1;height:9px;background:rgba(231,76,60,0.15);border-radius:5px;overflow:hidden;"><div style="height:100%;width:{{ [(d4/dm*100)|int,1]|max }}%;background:#e74c3c;border-radius:5px;"></div></div><span style="min-width:52px;text-align:right;font-size:0.84em;font-weight:600;color:#e74c3c;">${{ d4|round(3) }}</span></div><div style="font-size:0.74em;color:var(--secondary-text-color);padding-left:126px;">{{ (k4/cd)|round(3) }} kWh/day · {{ k4|round(2) }} kWh total</div></div>
+                  <div style="margin-bottom:9px;"><div style="display:flex;align-items:center;gap:6px;margin-bottom:1px;"><span style="min-width:120px;font-size:0.84em;font-weight:600;color:#9b59b6;">Tumble Dryer</span><div style="flex:1;height:9px;background:rgba(155,89,182,0.15);border-radius:5px;overflow:hidden;"><div style="height:100%;width:{{ [(d5/dm*100)|int,1]|max }}%;background:#9b59b6;border-radius:5px;"></div></div><span style="min-width:52px;text-align:right;font-size:0.84em;font-weight:600;color:#9b59b6;">${{ d5|round(3) }}</span></div><div style="font-size:0.74em;color:var(--secondary-text-color);padding-left:126px;">{{ (k5/cd)|round(3) }} kWh/day · {{ k5|round(2) }} kWh total</div></div>
+                  <div style="margin-bottom:12px;"><div style="display:flex;align-items:center;gap:6px;margin-bottom:1px;"><span style="min-width:120px;font-size:0.84em;font-weight:600;color:#1abc9c;">Guest Bedroom</span><div style="flex:1;height:9px;background:rgba(26,188,156,0.15);border-radius:5px;overflow:hidden;"><div style="height:100%;width:{{ [(d6/dm*100)|int,1]|max }}%;background:#1abc9c;border-radius:5px;"></div></div><span style="min-width:52px;text-align:right;font-size:0.84em;font-weight:600;color:#1abc9c;">${{ d6|round(3) }}</span></div><div style="font-size:0.74em;color:var(--secondary-text-color);padding-left:126px;">{{ (k6/cd)|round(3) }} kWh/day · {{ k6|round(2) }} kWh total</div></div>
+                  <div style="border-top:1px solid var(--divider-color);padding-top:8px;display:flex;justify-content:space-between;align-items:center;"><span style="font-weight:600;font-size:0.88em;">Total</span><span style="font-weight:700;font-size:0.95em;color:var(--primary-color);">${{ dt|round(3) }}/day</span></div>
 
               # ── Cost Right: 30-day per-device energy trend ──
               # Uses kWh sensors (have existing statistics). Cost sensors need
@@ -620,16 +596,22 @@ views:
                 entities:
                   - entity: sensor.tapo_p110m_1_today_s_consumption
                     name: Desktop
+                    color: "#f39c12"
                   - entity: sensor.tapo_p110m_2_nursery_heater_today_s_consumption
                     name: Nursery Heater
+                    color: "#3498db"
                   - entity: sensor.tapo_p110m_3_today_s_consumption
                     name: Dyson Heater
+                    color: "#2ecc71"
                   - entity: sensor.tapo_p110m_4_basement_heater_today_s_consumption
                     name: Basement Heater
+                    color: "#e74c3c"
                   - entity: sensor.tumble_dryer_energy_daily
                     name: Tumble Dryer
+                    color: "#9b59b6"
                   - entity: sensor.guest_bedroom_desk_plug_today_s_consumption
                     name: Guest Bedroom
+                    color: "#1abc9c"
 
           # ══════════════════════════════════════════════════════
           #  COST ROW 2: This billing cycle | Today's costs
@@ -790,14 +772,19 @@ views:
                 entities:
                   - entity: sensor.tapo_p110m_1_today_s_consumption
                     name: Desktop
+                    color: "#f39c12"
                   - entity: sensor.tapo_p110m_2_nursery_heater_today_s_consumption
                     name: Nursery Heater
+                    color: "#3498db"
                   - entity: sensor.tapo_p110m_3_today_s_consumption
                     name: Dyson Heater
+                    color: "#2ecc71"
                   - entity: sensor.tapo_p110m_4_basement_heater_today_s_consumption
                     name: Basement Heater
+                    color: "#e74c3c"
                   - entity: sensor.guest_bedroom_desk_plug_today_s_consumption
                     name: Guest Bedroom
+                    color: "#1abc9c"
 
               # ── Usage Right: Monthly energy bar chart ──
               - type: statistics-graph
@@ -806,17 +793,23 @@ views:
                 stat_types:
                   - sum
                 chart_type: bar
+                max_y_axis: 2000
                 entities:
                   - entity: sensor.tapo_p110m_1_this_month_s_consumption
                     name: Desktop
+                    color: "#f39c12"
                   - entity: sensor.tapo_p110m_2_nursery_heater_this_month_s_consumption
                     name: Nursery Heater
+                    color: "#3498db"
                   - entity: sensor.tapo_p110m_3_this_month_s_consumption
                     name: Dyson Heater
+                    color: "#2ecc71"
                   - entity: sensor.tapo_p110m_4_basement_heater_this_month_s_consumption
                     name: Basement Heater
+                    color: "#e74c3c"
                   - entity: sensor.guest_bedroom_desk_plug_this_month_s_consumption
                     name: Guest Bedroom
+                    color: "#1abc9c"
   # ═══════════════════════════════════════════════════════════
   #  VIEW 5: DEVICES — detailed per-device drill-down
   # ═══════════════════════════════════════════════════════════
@@ -1110,10 +1103,6 @@ views:
           - entity: input_number.peco_last_bill_days
             name: Billing Period (days)
             icon: mdi:calendar-range
-          - type: divider
-          - entity: input_number.billing_cycle_start_day
-            name: Billing Cycle Start Day
-            icon: mdi:calendar-start
 
       - type: markdown
         card_mod:
@@ -1143,21 +1132,6 @@ views:
           - **Billing Period** → number of days printed on the bill
 
       # ══════════════════════════════════════════════════════
-      #  PECO RATE COMPONENTS
+      #  PECO RATE COMPONENTS — now editable in Overview top-left
       # ══════════════════════════════════════════════════════
-      - type: entities
-        title: PECO Rate Components
-        show_header_toggle: false
-        entities:
-          - entity: input_number.peco_delivery_rate
-            name: Delivery Rate ($/kWh)
-          - entity: input_number.peco_supply_rate
-            name: Supply Rate ($/kWh)
-          - entity: input_number.peco_transmission_rate
-            name: Transmission Rate ($/kWh)
-          - type: divider
-          - entity: input_number.peco_customer_charge
-            name: Customer Charge ($/mo)
-          - type: divider
-          - entity: sensor.peco_variable_rate
-            name: Combined Variable Rate
+      # (Rate inputs moved to Overview → PECO card — edit them there)
