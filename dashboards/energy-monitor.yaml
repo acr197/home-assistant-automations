@@ -346,6 +346,31 @@ views:
                                 border-radius: 16px;
                                 box-shadow: none;
                               }
+                  - type: horizontal-stack
+                    cards:
+                      - type: conditional
+                        conditions:
+                          - entity: input_boolean.show_device_guest_bedroom
+                            state: "on"
+                        card:
+                          type: gauge
+                          entity: sensor.guest_bedroom_desk_plug_current_consumption
+                          name: Guest Bedroom
+                          unit: W
+                          min: 0
+                          max: 1500
+                          needle: true
+                          severity:
+                            green: 0
+                            yellow: 200
+                            red: 800
+                          card_mod:
+                            style: |
+                              ha-card {
+                                background: var(--ha-card-background, var(--card-background-color));
+                                border-radius: 16px;
+                                box-shadow: none;
+                              }
 
               # ── Bottom Middle: Daily energy by device (14 days) ──
               - type: statistics-graph
@@ -366,6 +391,8 @@ views:
                     name: Basement Heater
                   - entity: sensor.tumble_dryer_energy_daily
                     name: Tumble Dryer
+                  - entity: sensor.guest_bedroom_desk_plug_today_s_consumption
+                    name: Guest Bedroom
 
               # ── Bottom Right: Individual device usage ──
               - type: energy-devices-graph
@@ -388,6 +415,8 @@ views:
                     name: Dyson Heater
                   - entity: sensor.tapo_p110m_4_basement_heater_current_consumption
                     name: Basement Heater
+                  - entity: sensor.guest_bedroom_desk_plug_current_consumption
+                    name: Guest Bedroom
               - type: history-graph
                 title: Power Draw by Device (7 Days)
                 hours_to_show: 168
@@ -400,6 +429,8 @@ views:
                     name: Dyson Heater
                   - entity: sensor.tapo_p110m_4_basement_heater_current_consumption
                     name: Basement Heater
+                  - entity: sensor.guest_bedroom_desk_plug_current_consumption
+                    name: Guest Bedroom
 
           # ══════════════════════════════════════════════════════
           #  SECTION HEADER — cost (purple)
@@ -466,6 +497,7 @@ views:
                   {%- set rate = states('sensor.peco_variable_rate')|float(0) -%}
                   {%- set suffix = 'st' if cs in [1,21] else ('nd' if cs in [2,22] else ('rd' if cs in [3,23] else 'th')) -%}
                   {%- set dryer_kwh = states('sensor.tumble_dryer_energy_monthly')|float(0) -%}
+                  {%- set guest_kwh = states('sensor.guest_bedroom_desk_plug_this_month_s_consumption')|float(0) -%}
                   #### Estimated Daily Cost per Device
 
                   Billing cycle starts **{{ cs }}{{ suffix }}** each month · **{{ cycle_days }} day{{ 's' if cycle_days != 1 }}** elapsed · Rate: **${{ rate }}/kWh**
@@ -510,6 +542,12 @@ views:
                         <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;">{{ (dryer_kwh / cycle_days)|round(3) }}</td>
                         <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;color:#9b59b6;">${{ ((dryer_kwh / cycle_days) * rate)|round(3) }}</td>
                       </tr>
+                      <tr>
+                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);"><strong>Guest Bedroom</strong></td>
+                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;">{{ guest_kwh|round(2) }} kWh</td>
+                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;">{{ (guest_kwh / cycle_days)|round(3) }}</td>
+                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;color:#1abc9c;">${{ ((guest_kwh / cycle_days) * rate)|round(3) }}</td>
+                      </tr>
                       <tr style="font-weight:600;">
                         <td style="padding:5px 8px;">Total</td>
                         <td style="padding:5px 8px;text-align:right;">{{ states('sensor.total_energy_this_month')|float(0)|round(2) }} kWh</td>
@@ -540,6 +578,8 @@ views:
                     name: Basement Heater
                   - entity: sensor.tumble_dryer_energy_daily
                     name: Tumble Dryer
+                  - entity: sensor.guest_bedroom_desk_plug_today_s_consumption
+                    name: Guest Bedroom
 
           # ══════════════════════════════════════════════════════
           #  COST ROW 2: This billing cycle | Today's costs
@@ -567,6 +607,9 @@ views:
                   - entity: sensor.tumble_dryer_energy_cost_monthly
                     name: Tumble Dryer
                     icon: mdi:tumble-dryer
+                  - entity: sensor.guest_bedroom_desk_plug_energy_cost_monthly
+                    name: Guest Bedroom
+                    icon: mdi:desk
                   - type: divider
                   - entity: sensor.total_energy_cost_monthly
                     name: Total This Month
@@ -592,6 +635,9 @@ views:
                   - entity: sensor.tumble_dryer_energy_cost_today
                     name: Tumble Dryer
                     icon: mdi:tumble-dryer
+                  - entity: sensor.guest_bedroom_desk_plug_energy_cost_today
+                    name: Guest Bedroom
+                    icon: mdi:desk
                   - type: divider
                   - entity: sensor.total_energy_cost_today
                     name: Total Today
@@ -700,6 +746,8 @@ views:
                     name: Dyson Heater
                   - entity: sensor.tapo_p110m_4_basement_heater_today_s_consumption
                     name: Basement Heater
+                  - entity: sensor.guest_bedroom_desk_plug_today_s_consumption
+                    name: Guest Bedroom
 
               # ── Usage Right: Monthly energy bar chart ──
               - type: statistics-graph
@@ -717,6 +765,8 @@ views:
                     name: Dyson Heater
                   - entity: sensor.tapo_p110m_4_basement_heater_this_month_s_consumption
                     name: Basement Heater
+                  - entity: sensor.guest_bedroom_desk_plug_this_month_s_consumption
+                    name: Guest Bedroom
   # ═══════════════════════════════════════════════════════════
   #  VIEW 5: DEVICES — detailed per-device drill-down
   # ═══════════════════════════════════════════════════════════
@@ -880,6 +930,45 @@ views:
               - entity: sensor.tapo_p110m_4_basement_heater_current_consumption
                 name: Power (W)
 
+      # ── Guest Bedroom Desk Plug ──
+      - type: vertical-stack
+        cards:
+          - type: markdown
+            content: "## Guest Bedroom Desk Plug"
+          - type: horizontal-stack
+            cards:
+              - type: entity
+                entity: sensor.guest_bedroom_desk_plug_current_consumption
+                name: Power Now
+                icon: mdi:flash
+              - type: entity
+                entity: sensor.guest_bedroom_desk_plug_today_s_consumption
+                name: Today (kWh)
+                icon: mdi:lightning-bolt
+              - type: entity
+                entity: sensor.guest_bedroom_desk_plug_energy_cost_today
+                name: Cost Today
+                icon: mdi:cash
+          - type: horizontal-stack
+            cards:
+              - type: entity
+                entity: sensor.guest_bedroom_desk_plug_this_month_s_consumption
+                name: Month (kWh)
+                icon: mdi:calendar
+              - type: entity
+                entity: sensor.guest_bedroom_desk_plug_energy_cost_monthly
+                name: Cost Month
+                icon: mdi:cash-multiple
+              - type: entity
+                entity: sensor.guest_bedroom_desk_plug_share_of_total
+                name: Share
+                icon: mdi:percent
+          - type: history-graph
+            hours_to_show: 48
+            entities:
+              - entity: sensor.guest_bedroom_desk_plug_current_consumption
+                name: Power (W)
+
   # ═══════════════════════════════════════════════════════════
   #  VIEW 3: SETTINGS — device toggles, billing, PECO rates
   # ═══════════════════════════════════════════════════════════
@@ -947,6 +1036,13 @@ views:
             name: "5 · Miele Tumble Dryer"
             icon: mdi:tumble-dryer
             secondary_info: last-changed
+          - type: divider
+          - entity: sensor.guest_bedroom_desk_plug_current_consumption
+            name: "6 · Guest Bedroom Desk Plug"
+            icon: mdi:desk
+            secondary_info: last-changed
+          - entity: input_boolean.show_device_guest_bedroom
+            name: "  Show in Overview"
 
       # ══════════════════════════════════════════════════════
       #  PECO BILL — manual entry + future AI upload
