@@ -711,8 +711,16 @@ views:
           - type: horizontal-stack
             cards:
 
-              # ── Cost Left: Placeholder (Est. Daily Cost per Device removed) ──
-              - type: markdown
+              # ── Cost Left: Est. Daily Cost per Device (Pie Chart) ──
+              - type: custom:apexcharts-card
+                chart_type: pie
+                graph_span: 30d
+                span:
+                  end: day
+                header:
+                  title: "Est. Daily Cost per Device"
+                  show: true
+                  show_states: false
                 card_mod:
                   style: |
                     ha-card {
@@ -720,17 +728,90 @@ views:
                       border-radius: 16px;
                       box-shadow: none;
                     }
-                    ha-markdown {
-                      display: flex;
-                      align-items: center;
-                      justify-content: center;
-                      min-height: 200px;
-                    }
-                content: |
-                  <div style="text-align:center;color:var(--secondary-text-color);padding:24px 16px;">
-                    <p style="margin:12px 0 4px;font-size:0.88em;font-weight:600;opacity:0.45;letter-spacing:1px;">Est. Daily Cost per Device</p>
-                    <p style="margin:0;font-size:0.75em;opacity:0.3;">placeholder</p>
-                  </div>
+                apex_config:
+                  chart:
+                    height: 280
+                  legend:
+                    show: true
+                    position: bottom
+                    fontSize: "12px"
+                  dataLabels:
+                    enabled: true
+                    style:
+                      fontSize: "11px"
+                    formatter: |
+                      EVAL:function(val, opts) {
+                        var name = opts.w.globals.labels[opts.seriesIndex];
+                        var amount = opts.w.globals.series[opts.seriesIndex].toFixed(2);
+                        return name + '\n$' + amount;
+                      }
+                  tooltip:
+                    y:
+                      formatter: |
+                        EVAL:function(val) {
+                          return '$' + val.toFixed(2) + '/day';
+                        }
+                series:
+                  - entity: sensor.desktop_desk_plug_energy_cost_today
+                    name: Desktop
+                    color: "#f39c12"
+                    statistics:
+                      type: max
+                      period: day
+                      align: end
+                    group_by:
+                      func: avg
+                      duration: 30d
+                  - entity: sensor.nursery_heater_plug_energy_cost_today
+                    name: Nursery Heater
+                    color: "#3498db"
+                    statistics:
+                      type: max
+                      period: day
+                      align: end
+                    group_by:
+                      func: avg
+                      duration: 30d
+                  - entity: sensor.dyson_heater_plug_energy_cost_today
+                    name: Dyson Heater
+                    color: "#2ecc71"
+                    statistics:
+                      type: max
+                      period: day
+                      align: end
+                    group_by:
+                      func: avg
+                      duration: 30d
+                  - entity: sensor.basement_heater_plug_energy_cost_today
+                    name: Basement Heater
+                    color: "#e74c3c"
+                    statistics:
+                      type: max
+                      period: day
+                      align: end
+                    group_by:
+                      func: avg
+                      duration: 30d
+                  - entity: sensor.tumble_dryer_energy_cost_today
+                    name: Tumble Dryer
+                    color: "#9b59b6"
+                    statistics:
+                      type: max
+                      period: day
+                      align: end
+                    group_by:
+                      func: avg
+                      duration: 30d
+                  - entity: sensor.guest_bedroom_desk_plug_energy_cost_today
+                    name: Guest Bedroom
+                    color: "#1abc9c"
+                    statistics:
+                      type: max
+                      period: day
+                      align: end
+                    group_by:
+                      func: avg
+                      duration: 30d
 
               # ── Cost Right: 30-day daily cost per device (bar chart) ──
               # Uses *_energy_cost_today sensors with stat_types: max.
