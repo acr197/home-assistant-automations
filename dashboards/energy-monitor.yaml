@@ -848,11 +848,13 @@ views:
                   background: var(--ha-card-background, var(--card-background-color));
                   border-radius: 16px;
                   box-shadow: none;
+                  min-height: 200px;
+                  max-height: 350px;
+                  overflow: hidden;
                 }
             apex_config:
               chart:
                 stacked: true
-                height: 150
               subtitle:
                 text: "bars = daily cost ($)  ·  dotted lines = avg power (W)"
                 align: center
