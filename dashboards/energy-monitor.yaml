@@ -337,7 +337,8 @@ views:
                     cards:
                       - type: conditional
                         conditions:
-                          - entity: input_boolean.show_device_desktop
+                          - condition: state
+                            entity: input_boolean.show_device_desktop
                             state: "on"
                         card:
                           type: vertical-stack
@@ -379,7 +380,8 @@ views:
                                   ha-markdown p { text-align: center; font-size: 0.74em; color: var(--secondary-text-color); margin: 0 !important; }
                       - type: conditional
                         conditions:
-                          - entity: input_boolean.show_device_nursery
+                          - condition: state
+                            entity: input_boolean.show_device_nursery
                             state: "on"
                         card:
                           type: vertical-stack
@@ -423,7 +425,8 @@ views:
                     cards:
                       - type: conditional
                         conditions:
-                          - entity: input_boolean.show_device_dyson
+                          - condition: state
+                            entity: input_boolean.show_device_dyson
                             state: "on"
                         card:
                           type: vertical-stack
@@ -465,7 +468,8 @@ views:
                                   ha-markdown p { text-align: center; font-size: 0.74em; color: var(--secondary-text-color); margin: 0 !important; }
                       - type: conditional
                         conditions:
-                          - entity: input_boolean.show_device_basement
+                          - condition: state
+                            entity: input_boolean.show_device_basement
                             state: "on"
                         card:
                           type: vertical-stack
@@ -509,7 +513,8 @@ views:
                     cards:
                       - type: conditional
                         conditions:
-                          - entity: input_boolean.show_device_guest_bedroom
+                          - condition: state
+                            entity: input_boolean.show_device_guest_bedroom
                             state: "on"
                         card:
                           type: vertical-stack
