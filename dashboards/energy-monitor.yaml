@@ -685,7 +685,8 @@ views:
               # ── 24h view (shown when power_draw_7d_view = off) ──
               - type: conditional
                 conditions:
-                  - entity: input_boolean.power_draw_7d_view
+                  - condition: state
+                    entity: input_boolean.power_draw_7d_view
                     state: "off"
                 card:
                   type: custom:apexcharts-card
@@ -735,7 +736,8 @@ views:
               # ── 7d view (shown when power_draw_7d_view = on) ──
               - type: conditional
                 conditions:
-                  - entity: input_boolean.power_draw_7d_view
+                  - condition: state
+                    entity: input_boolean.power_draw_7d_view
                     state: "on"
                 card:
                   type: custom:apexcharts-card
@@ -848,9 +850,6 @@ views:
                   background: var(--ha-card-background, var(--card-background-color));
                   border-radius: 16px;
                   box-shadow: none;
-                  min-height: 200px;
-                  max-height: 350px;
-                  overflow: hidden;
                 }
             apex_config:
               chart:
