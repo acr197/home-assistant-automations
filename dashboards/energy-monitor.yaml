@@ -852,6 +852,24 @@ views:
             apex_config:
               chart:
                 stacked: true
+                height: 150
+              subtitle:
+                text: "bars = daily cost ($)  ·  dotted lines = avg power (W)"
+                align: center
+                style:
+                  fontSize: "10px"
+                  color: "var(--secondary-text-color)"
+              legend:
+                show: true
+                position: bottom
+                horizontalAlign: center
+                fontSize: "11px"
+                itemMargin:
+                  horizontal: 8
+                  vertical: 3
+                markers:
+                  width: 8
+                  height: 8
               yaxis:
                 - id: cost
                   title:
