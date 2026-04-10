@@ -499,6 +499,10 @@ input_boolean:
     name: "Show: Guest Bedroom Desk"
     icon: mdi:desk
     initial: true
+  power_draw_7d_view:
+    name: "Power Draw: 7-Day View"
+    icon: mdi:calendar-week
+    initial: false
 
 # ── Utility meters: create daily/monthly resets from cumulative Miele sensor ──
 # sensor.tumble_dryer_energy_consumption is a total_increasing lifetime counter.
