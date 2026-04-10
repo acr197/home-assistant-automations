@@ -71,20 +71,24 @@ views:
                       border-radius: 16px;
                       box-shadow: none;
                       height: 100%;
+                      max-width: 100%;
                     }
 
                     .card-header {
                       background: linear-gradient(135deg, #00b4ab, #6b2fa0) !important;
                       border-radius: 16px 16px 0 0 !important;
                       color: white !important;
-                      font-size: 20px !important;
+                      font-size: 16px !important;
                       font-weight: 700 !important;
-                      letter-spacing: 5px !important;
+                      letter-spacing: 4px !important;
                       text-transform: lowercase !important;
-                      padding: 10px 16px !important;
+                      padding: 7px 12px !important;
                     }
                     .card-content {
-                      padding-top: 16px !important;
+                      padding: 8px 8px 0 !important;
+                    }
+                    .card-content > div {
+                      font-size: 0.9em;
                     }
                 entities:
                   - entity: sensor.peco_variable_rate
@@ -136,7 +140,7 @@ views:
                     </tbody>
                   </table>
 
-              # ── Top Middle: Energy Distribution + usage totals ──
+              # ── Top Middle: usage totals ──
               - type: vertical-stack
                 cards:
                   - type: entity
@@ -154,6 +158,17 @@ views:
                     entity: sensor.total_energy_this_month
                     name: Total This Month
                     icon: mdi:lightning-bolt-circle
+                    card_mod:
+                      style: |
+                        ha-card {
+                          background: var(--ha-card-background, var(--card-background-color));
+                          border-radius: 16px;
+                          box-shadow: none;
+                        }
+                  - type: entity
+                    entity: sensor.daily_average_energy_this_month
+                    name: Daily Avg kWh
+                    icon: mdi:chart-line
                     card_mod:
                       style: |
                         ha-card {
@@ -241,17 +256,6 @@ views:
                               box-shadow: none;
                               min-height: 120px;
                             }
-                  - type: entity
-                    entity: sensor.daily_average_energy_this_month
-                    name: Daily Avg kWh
-                    icon: mdi:chart-line
-                    card_mod:
-                      style: |
-                        ha-card {
-                          background: var(--ha-card-background, var(--card-background-color));
-                          border-radius: 16px;
-                          box-shadow: none;
-                        }
 
           # ══════════════════════════════════════════════════════
           #  SECTION HEADER — power (live wattage)
