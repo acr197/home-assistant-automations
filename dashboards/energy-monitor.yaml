@@ -187,7 +187,7 @@ views:
                               background: var(--ha-card-background, var(--card-background-color));
                               border-radius: 16px;
                               box-shadow: none;
-                              min-height: 205px;
+                              min-height: 120px;
                             }
                       - type: entity
                         entity: sensor.total_energy_cost_today
@@ -199,7 +199,7 @@ views:
                               background: var(--ha-card-background, var(--card-background-color));
                               border-radius: 16px;
                               box-shadow: none;
-                              min-height: 205px;
+                              min-height: 120px;
                             }
                       - type: entity
                         entity: sensor.total_energy_cost_monthly
@@ -211,7 +211,7 @@ views:
                               background: var(--ha-card-background, var(--card-background-color));
                               border-radius: 16px;
                               box-shadow: none;
-                              min-height: 205px;
+                              min-height: 120px;
                             }
                   - type: horizontal-stack
                     cards:
@@ -225,7 +225,7 @@ views:
                               background: var(--ha-card-background, var(--card-background-color));
                               border-radius: 16px;
                               box-shadow: none;
-                              min-height: 205px;
+                              min-height: 120px;
                             }
                       - type: entity
                         entity: sensor.daily_average_energy_cost_this_month
@@ -237,7 +237,7 @@ views:
                               background: var(--ha-card-background, var(--card-background-color));
                               border-radius: 16px;
                               box-shadow: none;
-                              min-height: 205px;
+                              min-height: 120px;
                             }
                       - type: entity
                         entity: sensor.estimated_annual_energy_cost
@@ -249,7 +249,7 @@ views:
                               background: var(--ha-card-background, var(--card-background-color));
                               border-radius: 16px;
                               box-shadow: none;
-                              min-height: 205px;
+                              min-height: 120px;
                             }
                   - type: entity
                     entity: sensor.daily_average_energy_this_month
@@ -711,7 +711,7 @@ views:
           - type: horizontal-stack
             cards:
 
-              # ── Cost Left: Estimated daily cost per device — SVG donut chart ──
+              # ── Cost Left: Placeholder (Est. Daily Cost per Device removed) ──
               - type: markdown
                 card_mod:
                   style: |
@@ -720,60 +720,22 @@ views:
                       border-radius: 16px;
                       box-shadow: none;
                     }
-                content: >
-                  {%- set cs = states('input_number.billing_cycle_start_day')|int(1) -%}
-                  {%- set today = now().day -%}
-                  {%- set cd = [(today - cs + 1), 1]|max if today >= cs else [(today + 30 - cs + 1), 1]|max -%}
-                  {%- set rate = states('sensor.peco_variable_rate')|float(0) -%}
-                  {%- set sfx = 'st' if cs in [1,21] else ('nd' if cs in [2,22] else ('rd' if cs in [3,23] else 'th')) -%}
-                  {%- set k1 = states('sensor.tapo_p110m_1_this_month_s_consumption')|float(0) -%}
-                  {%- set k2 = states('sensor.tapo_p110m_2_nursery_heater_this_month_s_consumption')|float(0) -%}
-                  {%- set k3 = states('sensor.tapo_p110m_3_this_month_s_consumption')|float(0) -%}
-                  {%- set k4 = states('sensor.tapo_p110m_4_basement_heater_this_month_s_consumption')|float(0) -%}
-                  {%- set k5 = states('sensor.tumble_dryer_energy_monthly')|float(0) -%}
-                  {%- set k6 = states('sensor.guest_bedroom_desk_plug_this_month_s_consumption')|float(0) -%}
-                  {%- set d1 = (k1 / cd) * rate -%}
-                  {%- set d2 = (k2 / cd) * rate -%}
-                  {%- set d3 = (k3 / cd) * rate -%}
-                  {%- set d4 = (k4 / cd) * rate -%}
-                  {%- set d5 = (k5 / cd) * rate -%}
-                  {%- set d6 = (k6 / cd) * rate -%}
-                  {%- set dt = d1 + d2 + d3 + d4 + d5 + d6 -%}
-                  {%- set dt_safe = dt if dt > 0 else 1 -%}
-                  {%- set p1 = (d1 / dt_safe * 100)|round(3) -%}
-                  {%- set p2 = (d2 / dt_safe * 100)|round(3) -%}
-                  {%- set p3 = (d3 / dt_safe * 100)|round(3) -%}
-                  {%- set p4 = (d4 / dt_safe * 100)|round(3) -%}
-                  {%- set p5 = (d5 / dt_safe * 100)|round(3) -%}
-                  {%- set p6 = (d6 / dt_safe * 100)|round(3) -%}
-                  {%- set o1 = 25 -%}
-                  {%- set o2 = 25 - p1 -%}
-                  {%- set o3 = 25 - p1 - p2 -%}
-                  {%- set o4 = 25 - p1 - p2 - p3 -%}
-                  {%- set o5 = 25 - p1 - p2 - p3 - p4 -%}
-                  {%- set o6 = 25 - p1 - p2 - p3 - p4 - p5 -%}
-                  #### Est. Daily Cost per Device
-
-                  <p style="font-size:0.82em;color:var(--secondary-text-color);margin:0 0 10px;">Cycle: <b>{{ cs }}{{ sfx }}</b> &middot; <b>{{ cd }} day{{ 's' if cd != 1 }}</b> elapsed &middot; <b>${{ rate }}/kWh</b></p>
-
-                  <svg viewBox="0 0 42 42" width="200" height="200" style="display:block;margin:0 auto;">
-                    <circle cx="21" cy="21" r="15.9155" fill="transparent" stroke="#f39c12" stroke-width="10" stroke-dasharray="{{ p1 }} {{ 100 - p1 }}" stroke-dashoffset="{{ o1 }}"/>
-                    <circle cx="21" cy="21" r="15.9155" fill="transparent" stroke="#3498db" stroke-width="10" stroke-dasharray="{{ p2 }} {{ 100 - p2 }}" stroke-dashoffset="{{ o2 }}"/>
-                    <circle cx="21" cy="21" r="15.9155" fill="transparent" stroke="#2ecc71" stroke-width="10" stroke-dasharray="{{ p3 }} {{ 100 - p3 }}" stroke-dashoffset="{{ o3 }}"/>
-                    <circle cx="21" cy="21" r="15.9155" fill="transparent" stroke="#e74c3c" stroke-width="10" stroke-dasharray="{{ p4 }} {{ 100 - p4 }}" stroke-dashoffset="{{ o4 }}"/>
-                    <circle cx="21" cy="21" r="15.9155" fill="transparent" stroke="#9b59b6" stroke-width="10" stroke-dasharray="{{ p5 }} {{ 100 - p5 }}" stroke-dashoffset="{{ o5 }}"/>
-                    <circle cx="21" cy="21" r="15.9155" fill="transparent" stroke="#1abc9c" stroke-width="10" stroke-dasharray="{{ p6 }} {{ 100 - p6 }}" stroke-dashoffset="{{ o6 }}"/>
-                  </svg>
-
-                  <table style="width:100%;border-collapse:collapse;margin-top:10px;font-size:0.83em;">
-                    <tr><td><svg width="12" height="12"><circle cx="6" cy="6" r="6" fill="#f39c12"/></svg> Desktop</td><td style="text-align:right;font-weight:600;color:#f39c12;">${{ "%.4f" % d1 }}/day</td><td style="text-align:right;color:var(--secondary-text-color);">{{ p1|round(1) }}%</td></tr>
-                    <tr><td><svg width="12" height="12"><circle cx="6" cy="6" r="6" fill="#3498db"/></svg> Nursery Heater</td><td style="text-align:right;font-weight:600;color:#3498db;">${{ "%.4f" % d2 }}/day</td><td style="text-align:right;color:var(--secondary-text-color);">{{ p2|round(1) }}%</td></tr>
-                    <tr><td><svg width="12" height="12"><circle cx="6" cy="6" r="6" fill="#2ecc71"/></svg> Dyson Heater</td><td style="text-align:right;font-weight:600;color:#2ecc71;">${{ "%.4f" % d3 }}/day</td><td style="text-align:right;color:var(--secondary-text-color);">{{ p3|round(1) }}%</td></tr>
-                    <tr><td><svg width="12" height="12"><circle cx="6" cy="6" r="6" fill="#e74c3c"/></svg> Basement Heater</td><td style="text-align:right;font-weight:600;color:#e74c3c;">${{ "%.4f" % d4 }}/day</td><td style="text-align:right;color:var(--secondary-text-color);">{{ p4|round(1) }}%</td></tr>
-                    <tr><td><svg width="12" height="12"><circle cx="6" cy="6" r="6" fill="#9b59b6"/></svg> Tumble Dryer</td><td style="text-align:right;font-weight:600;color:#9b59b6;">${{ "%.4f" % d5 }}/day</td><td style="text-align:right;color:var(--secondary-text-color);">{{ p5|round(1) }}%</td></tr>
-                    <tr><td><svg width="12" height="12"><circle cx="6" cy="6" r="6" fill="#1abc9c"/></svg> Guest Bedroom</td><td style="text-align:right;font-weight:600;color:#1abc9c;">${{ "%.4f" % d6 }}/day</td><td style="text-align:right;color:var(--secondary-text-color);">{{ p6|round(1) }}%</td></tr>
-                    <tr style="border-top:1px solid var(--divider-color);"><td style="padding-top:6px;font-weight:700;">Total</td><td style="padding-top:6px;text-align:right;font-weight:700;color:var(--primary-color);">${{ "%.4f" % dt }}/day</td><td></td></tr>
-                  </table>
+                    ha-markdown {
+                      display: flex;
+                      align-items: center;
+                      justify-content: center;
+                      min-height: 200px;
+                    }
+                content: |
+                  <div style="text-align:center;color:var(--secondary-text-color);padding:24px 16px;">
+                    <svg viewBox="0 0 42 42" width="80" height="80" style="display:block;margin:0 auto;opacity:0.18;">
+                      <circle cx="21" cy="21" r="15.9155" fill="transparent" stroke="var(--primary-color)" stroke-width="10" stroke-dasharray="60 40"/>
+                      <circle cx="21" cy="21" r="15.9155" fill="transparent" stroke="var(--accent-color)" stroke-width="10" stroke-dasharray="25 75" stroke-dashoffset="-60"/>
+                      <circle cx="21" cy="21" r="15.9155" fill="transparent" stroke="var(--secondary-text-color)" stroke-width="10" stroke-dasharray="15 85" stroke-dashoffset="-85"/>
+                    </svg>
+                    <p style="margin:12px 0 4px;font-size:0.88em;font-weight:600;opacity:0.45;letter-spacing:1px;">Est. Daily Cost per Device</p>
+                    <p style="margin:0;font-size:0.75em;opacity:0.3;">placeholder</p>
+                  </div>
 
               # ── Cost Right: 30-day daily cost per device (bar chart) ──
               # Uses *_energy_cost_today sensors with stat_types: max.
