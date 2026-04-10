@@ -532,48 +532,85 @@ views:
                               opacity: 0.45;
                             }
 
-              # ── Bottom Middle: Daily energy by device (14 days, per-day delta) ──
-              - type: statistics-graph
-                title: Daily Energy by Device - 14-Day (kWh)
-                period: day
-                days_to_show: 14
-                stat_types:
-                  - change
-                chart_type: bar
-                card_mod:
-                  style: |
-                    ha-card {
-                      min-height: 580px;
-                    }
-                entities:
-                  - entity: sensor.tapo_p110m_1_today_s_consumption
-                    name: Desktop
-                    color: "#f39c12"
-                  - entity: sensor.tapo_p110m_2_nursery_heater_today_s_consumption
-                    name: Nursery Heater
-                    color: "#3498db"
-                  - entity: sensor.tapo_p110m_3_today_s_consumption
-                    name: Dyson Heater
-                    color: "#2ecc71"
-                  - entity: sensor.tapo_p110m_4_basement_heater_today_s_consumption
-                    name: Basement Heater
-                    color: "#e74c3c"
-                  - entity: sensor.tumble_dryer_energy_daily
-                    name: Tumble Dryer
-                    color: "#9b59b6"
-                  - entity: sensor.guest_bedroom_desk_plug_today_s_consumption
-                    name: Guest Bedroom
-                    color: "#1abc9c"
+              # ── Bottom Middle: Daily energy by device (14 days) + usage summary ──
+              - type: vertical-stack
+                cards:
+                  - type: statistics-graph
+                    title: Daily Energy by Device - 14-Day (kWh)
+                    period: day
+                    days_to_show: 14
+                    stat_types:
+                      - change
+                    chart_type: bar
+                    card_mod:
+                      style: |
+                        ha-card {
+                          min-height: 290px;
+                        }
+                    entities:
+                      - entity: sensor.tapo_p110m_1_today_s_consumption
+                        name: Desktop
+                        color: "#f39c12"
+                      - entity: sensor.tapo_p110m_2_nursery_heater_today_s_consumption
+                        name: Nursery Heater
+                        color: "#3498db"
+                      - entity: sensor.tapo_p110m_3_today_s_consumption
+                        name: Dyson Heater
+                        color: "#2ecc71"
+                      - entity: sensor.tapo_p110m_4_basement_heater_today_s_consumption
+                        name: Basement Heater
+                        color: "#e74c3c"
+                      - entity: sensor.tumble_dryer_energy_daily
+                        name: Tumble Dryer
+                        color: "#9b59b6"
+                      - entity: sensor.guest_bedroom_desk_plug_today_s_consumption
+                        name: Guest Bedroom
+                        color: "#1abc9c"
+                  - type: entity
+                    entity: sensor.total_energy_today
+                    name: Total Usage Today
+                    icon: mdi:lightning-bolt
+                    card_mod:
+                      style: |
+                        ha-card {
+                          background: var(--ha-card-background, var(--card-background-color));
+                          border-radius: 16px;
+                          box-shadow: none;
+                        }
+                  - type: entity
+                    entity: sensor.total_energy_this_month
+                    name: Total This Month
+                    icon: mdi:lightning-bolt-circle
+                    card_mod:
+                      style: |
+                        ha-card {
+                          background: var(--ha-card-background, var(--card-background-color));
+                          border-radius: 16px;
+                          box-shadow: none;
+                        }
 
-              # ── Bottom Right: Individual device usage ──
-              - type: energy-devices-graph
-                title: Individual Devices Total Usage
-                card_mod:
-                  style: |
-                    ha-card {
-                      min-height: 580px;
-                      height: 100%;
-                    }
+              # ── Bottom Right: Individual device usage + daily average ──
+              - type: vertical-stack
+                cards:
+                  - type: energy-devices-graph
+                    title: Individual Devices Total Usage
+                    card_mod:
+                      style: |
+                        ha-card {
+                          min-height: 290px;
+                          height: 100%;
+                        }
+                  - type: entity
+                    entity: sensor.daily_average_energy_this_month
+                    name: Daily Avg kWh
+                    icon: mdi:chart-line
+                    card_mod:
+                      style: |
+                        ha-card {
+                          background: var(--ha-card-background, var(--card-background-color));
+                          border-radius: 16px;
+                          box-shadow: none;
+                        }
 
           # ══════════════════════════════════════════════════════
           #  POWER ROW 2: Per-device history (24h + 7 days)
@@ -676,7 +713,7 @@ views:
           - type: horizontal-stack
             cards:
 
-              # ── Cost Left: Estimated daily cost per device — clean table ──
+              # ── Cost Left: Estimated daily cost per device — pie chart ──
               - type: markdown
                 card_mod:
                   style: |
@@ -704,43 +741,29 @@ views:
                   {%- set d5 = (k5 / cd) * rate -%}
                   {%- set d6 = (k6 / cd) * rate -%}
                   {%- set dt = d1 + d2 + d3 + d4 + d5 + d6 -%}
-                  {%- set max_d = [d1, d2, d3, d4, d5, d6] | max -%}
-                  {%- set max_d = max_d if max_d > 0 else 1 -%}
+                  {%- set dt_safe = dt if dt > 0 else 1 -%}
+                  {%- set s0 = 0 -%}
+                  {%- set s1 = s0 + (d1 / dt_safe * 360) -%}
+                  {%- set s2 = s1 + (d2 / dt_safe * 360) -%}
+                  {%- set s3 = s2 + (d3 / dt_safe * 360) -%}
+                  {%- set s4 = s3 + (d4 / dt_safe * 360) -%}
+                  {%- set s5 = s4 + (d5 / dt_safe * 360) -%}
                   #### Est. Daily Cost per Device
-                  <div style="font-size:0.82em;color:var(--secondary-text-color);margin-bottom:10px;">Cycle: <b>{{ cs }}{{ sfx }}</b> &middot; <b>{{ cd }} day{{ 's' if cd != 1 }}</b> elapsed &middot; <b>${{ rate }}/kWh</b></div>
-                  <div style="display:flex;align-items:center;margin:5px 0;gap:6px;">
-                    <div style="min-width:115px;text-align:right;color:#f39c12;font-weight:600;font-size:0.84em;">Desktop</div>
-                    <div style="flex:1;background:rgba(255,255,255,0.06);border-radius:3px;height:15px;overflow:hidden;"><div style="width:{{ (d1/max_d*100)|round(1) }}%;background:#f39c12;height:100%;border-radius:3px;"></div></div>
-                    <div style="min-width:80px;color:#f39c12;font-size:0.84em;white-space:nowrap;">${{ "%.3f" % d1 }}/day</div>
-                  </div>
-                  <div style="display:flex;align-items:center;margin:5px 0;gap:6px;">
-                    <div style="min-width:115px;text-align:right;color:#3498db;font-weight:600;font-size:0.84em;">Nursery Heater</div>
-                    <div style="flex:1;background:rgba(255,255,255,0.06);border-radius:3px;height:15px;overflow:hidden;"><div style="width:{{ (d2/max_d*100)|round(1) }}%;background:#3498db;height:100%;border-radius:3px;"></div></div>
-                    <div style="min-width:80px;color:#3498db;font-size:0.84em;white-space:nowrap;">${{ "%.3f" % d2 }}/day</div>
-                  </div>
-                  <div style="display:flex;align-items:center;margin:5px 0;gap:6px;">
-                    <div style="min-width:115px;text-align:right;color:#2ecc71;font-weight:600;font-size:0.84em;">Dyson Heater</div>
-                    <div style="flex:1;background:rgba(255,255,255,0.06);border-radius:3px;height:15px;overflow:hidden;"><div style="width:{{ (d3/max_d*100)|round(1) }}%;background:#2ecc71;height:100%;border-radius:3px;"></div></div>
-                    <div style="min-width:80px;color:#2ecc71;font-size:0.84em;white-space:nowrap;">${{ "%.3f" % d3 }}/day</div>
-                  </div>
-                  <div style="display:flex;align-items:center;margin:5px 0;gap:6px;">
-                    <div style="min-width:115px;text-align:right;color:#e74c3c;font-weight:600;font-size:0.84em;">Basement Heater</div>
-                    <div style="flex:1;background:rgba(255,255,255,0.06);border-radius:3px;height:15px;overflow:hidden;"><div style="width:{{ (d4/max_d*100)|round(1) }}%;background:#e74c3c;height:100%;border-radius:3px;"></div></div>
-                    <div style="min-width:80px;color:#e74c3c;font-size:0.84em;white-space:nowrap;">${{ "%.3f" % d4 }}/day</div>
-                  </div>
-                  <div style="display:flex;align-items:center;margin:5px 0;gap:6px;">
-                    <div style="min-width:115px;text-align:right;color:#9b59b6;font-weight:600;font-size:0.84em;">Tumble Dryer</div>
-                    <div style="flex:1;background:rgba(255,255,255,0.06);border-radius:3px;height:15px;overflow:hidden;"><div style="width:{{ (d5/max_d*100)|round(1) }}%;background:#9b59b6;height:100%;border-radius:3px;"></div></div>
-                    <div style="min-width:80px;color:#9b59b6;font-size:0.84em;white-space:nowrap;">${{ "%.3f" % d5 }}/day</div>
-                  </div>
-                  <div style="display:flex;align-items:center;margin:5px 0;gap:6px;">
-                    <div style="min-width:115px;text-align:right;color:#1abc9c;font-weight:600;font-size:0.84em;">Guest Bedroom</div>
-                    <div style="flex:1;background:rgba(255,255,255,0.06);border-radius:3px;height:15px;overflow:hidden;"><div style="width:{{ (d6/max_d*100)|round(1) }}%;background:#1abc9c;height:100%;border-radius:3px;"></div></div>
-                    <div style="min-width:80px;color:#1abc9c;font-size:0.84em;white-space:nowrap;">${{ "%.3f" % d6 }}/day</div>
-                  </div>
-                  <div style="border-top:1px solid var(--divider-color);margin-top:8px;padding-top:8px;display:flex;justify-content:space-between;font-weight:700;font-size:0.9em;">
-                    <span>Total</span>
-                    <span style="color:var(--primary-color);">${{ "%.3f" % dt }}/day</span>
+                  <div style="font-size:0.82em;color:var(--secondary-text-color);margin-bottom:12px;">Cycle: <b>{{ cs }}{{ sfx }}</b> &middot; <b>{{ cd }} day{{ 's' if cd != 1 }}</b> elapsed &middot; <b>${{ rate }}/kWh</b></div>
+                  <div style="display:flex;flex-direction:column;align-items:center;gap:16px;">
+                    <div style="width:180px;height:180px;border-radius:50%;background:conic-gradient(#f39c12 {{ s0|round(1) }}deg {{ s1|round(1) }}deg,#3498db {{ s1|round(1) }}deg {{ s2|round(1) }}deg,#2ecc71 {{ s2|round(1) }}deg {{ s3|round(1) }}deg,#e74c3c {{ s3|round(1) }}deg {{ s4|round(1) }}deg,#9b59b6 {{ s4|round(1) }}deg {{ s5|round(1) }}deg,#1abc9c {{ s5|round(1) }}deg 360deg);box-shadow:0 0 0 4px rgba(255,255,255,0.05);"></div>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px 16px;font-size:0.82em;width:100%;">
+                      <div style="display:flex;align-items:center;gap:6px;"><div style="width:10px;height:10px;border-radius:50%;background:#f39c12;flex-shrink:0;"></div><span style="color:#f39c12;">Desktop</span><span style="margin-left:auto;font-weight:600;">${{ "%.3f" % d1 }}</span></div>
+                      <div style="display:flex;align-items:center;gap:6px;"><div style="width:10px;height:10px;border-radius:50%;background:#3498db;flex-shrink:0;"></div><span style="color:#3498db;">Nursery Httr</span><span style="margin-left:auto;font-weight:600;">${{ "%.3f" % d2 }}</span></div>
+                      <div style="display:flex;align-items:center;gap:6px;"><div style="width:10px;height:10px;border-radius:50%;background:#2ecc71;flex-shrink:0;"></div><span style="color:#2ecc71;">Dyson Httr</span><span style="margin-left:auto;font-weight:600;">${{ "%.3f" % d3 }}</span></div>
+                      <div style="display:flex;align-items:center;gap:6px;"><div style="width:10px;height:10px;border-radius:50%;background:#e74c3c;flex-shrink:0;"></div><span style="color:#e74c3c;">Basement Httr</span><span style="margin-left:auto;font-weight:600;">${{ "%.3f" % d4 }}</span></div>
+                      <div style="display:flex;align-items:center;gap:6px;"><div style="width:10px;height:10px;border-radius:50%;background:#9b59b6;flex-shrink:0;"></div><span style="color:#9b59b6;">Tumble Dryer</span><span style="margin-left:auto;font-weight:600;">${{ "%.3f" % d5 }}</span></div>
+                      <div style="display:flex;align-items:center;gap:6px;"><div style="width:10px;height:10px;border-radius:50%;background:#1abc9c;flex-shrink:0;"></div><span style="color:#1abc9c;">Guest Bedroom</span><span style="margin-left:auto;font-weight:600;">${{ "%.3f" % d6 }}</span></div>
+                    </div>
+                    <div style="border-top:1px solid var(--divider-color);padding-top:8px;display:flex;justify-content:space-between;font-weight:700;font-size:0.9em;width:100%;">
+                      <span>Total</span>
+                      <span style="color:var(--primary-color);">${{ "%.3f" % dt }}/day</span>
+                    </div>
                   </div>
 
               # ── Cost Right: 30-day daily cost per device (bar chart) ──
@@ -884,43 +907,6 @@ views:
           # ══════════════════════════════════════════════════════
           - type: horizontal-stack
             cards:
-
-              # ── Usage Left: kWh summary stats ──
-              - type: vertical-stack
-                cards:
-                  - type: entity
-                    entity: sensor.total_energy_today
-                    name: Total Today
-                    icon: mdi:lightning-bolt
-                    card_mod:
-                      style: |
-                        ha-card {
-                          background: var(--ha-card-background, var(--card-background-color));
-                          border-radius: 16px;
-                          box-shadow: none;
-                        }
-                  - type: entity
-                    entity: sensor.total_energy_this_month
-                    name: Total This Month
-                    icon: mdi:lightning-bolt-circle
-                    card_mod:
-                      style: |
-                        ha-card {
-                          background: var(--ha-card-background, var(--card-background-color));
-                          border-radius: 16px;
-                          box-shadow: none;
-                        }
-                  - type: entity
-                    entity: sensor.daily_average_energy_this_month
-                    name: Daily Avg kWh
-                    icon: mdi:chart-line
-                    card_mod:
-                      style: |
-                        ha-card {
-                          background: var(--ha-card-background, var(--card-background-color));
-                          border-radius: 16px;
-                          box-shadow: none;
-                        }
 
               # ── Usage Middle: Daily energy bar chart (last 30 days) ──
               - type: statistics-graph
