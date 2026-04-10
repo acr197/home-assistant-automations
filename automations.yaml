@@ -1512,3 +1512,21 @@
       seconds: 3
   - action: homeassistant.restart
   mode: single
+- id: '1771270799106'
+  alias: 'GitHub: Auto Pull and Reboot on Merge to Main'
+  description: Pulls latest config from GitHub and reboots Home Assistant whenever
+    a commit is merged to the main branch. Triggered by the GitHub Actions webhook.
+    The HA_WEBHOOK_URL GitHub secret must point to https://[your-ha]/api/webhook/github-main-merge
+  triggers:
+  - trigger: webhook
+    webhook_id: github-main-merge
+    allowed_methods:
+      - POST
+    local_only: false
+  conditions: []
+  actions:
+  - action: shell_command.git_pull
+  - delay:
+      seconds: 3
+  - action: homeassistant.restart
+  mode: single
