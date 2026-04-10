@@ -634,63 +634,141 @@ views:
           # Tap the 24h or 7d tab to switch views.
           # input_boolean.power_draw_7d_view: off = 24h, on = 7d
           # ══════════════════════════════════════════════════════
-          # ══════════════════════════════════════════════════════
-          #  TEST: flat 24h apexcharts-card (no toggle, no conditional)
-          # ══════════════════════════════════════════════════════
-          - type: custom:apexcharts-card
-            graph_span: 24h
-            span:
-              end: now
-            header:
-              title: "Avg Power Draw by Device (W) — 24h"
-              show: true
-              show_states: false
-            card_mod:
-              style: |
-                ha-card {
-                  background: var(--ha-card-background, var(--card-background-color));
-                  border-radius: 16px;
-                  box-shadow: none;
-                }
-            apex_config:
-              chart:
-                stacked: false
-            series:
-              - entity: sensor.tapo_p110m_1_current_consumption
-                name: Desktop
-                color: "#f39c12"
-                type: column
-                group_by:
-                  func: avg
-                  duration: 1h
-              - entity: sensor.tapo_p110m_2_nursery_heater_current_consumption
-                name: Nursery Heater
-                color: "#3498db"
-                type: column
-                group_by:
-                  func: avg
-                  duration: 1h
-              - entity: sensor.tapo_p110m_3_current_consumption
-                name: Dyson Heater
-                color: "#2ecc71"
-                type: column
-                group_by:
-                  func: avg
-                  duration: 1h
-              - entity: sensor.tapo_p110m_4_basement_heater_current_consumption
-                name: Basement Heater
-                color: "#e74c3c"
-                type: column
-                group_by:
-                  func: avg
-                  duration: 1h
-              - entity: sensor.guest_bedroom_desk_plug_current_consumption
-                name: Guest Bedroom
-                color: "#1abc9c"
-                type: column
-                group_by:
-                  func: avg
-                  duration: 1h
+          - type: vertical-stack
+            cards:
+              # ── Tab bar: 24h / 7d toggle ──
+              - type: horizontal-stack
+                cards:
+                  - type: custom:button-card
+                    entity: input_boolean.power_draw_7d_view
+                    name: "24h"
+                    show_name: true
+                    show_icon: false
+                    show_state: false
+                    tap_action:
+                      action: call-service
+                      service: input_boolean.turn_off
+                      service_data:
+                        entity_id: input_boolean.power_draw_7d_view
+                    state:
+                      - value: "off"
+                        styles:
+                          card:
+                            - background: "linear-gradient(135deg, #00b4ab, #6b2fa0)"
+                          name:
+                            - color: "white"
+                    styles:
+                      card:
+                        - background: "var(--ha-card-background, var(--card-background-color))"
+                        - border-radius: "16px 0 0 0"
+                        - box-shadow: none
+                        - padding: "8px 0"
+                        - border-bottom: "1px solid var(--divider-color)"
+                      name:
+                        - font-size: "12px"
+                        - font-weight: "600"
+                        - letter-spacing: "2px"
+                        - color: "var(--secondary-text-color)"
+                        - text-transform: uppercase
+                  - type: custom:button-card
+                    entity: input_boolean.power_draw_7d_view
+                    name: "7d"
+                    show_name: true
+                    show_icon: false
+                    show_state: false
+                    tap_action:
+                      action: call-service
+                      service: input_boolean.turn_on
+                      service_data:
+                        entity_id: input_boolean.power_draw_7d_view
+                    state:
+                      - value: "on"
+                        styles:
+                          card:
+                            - background: "linear-gradient(135deg, #00b4ab, #6b2fa0)"
+                          name:
+                            - color: "white"
+                    styles:
+                      card:
+                        - background: "var(--ha-card-background, var(--card-background-color))"
+                        - border-radius: "0 16px 0 0"
+                        - box-shadow: none
+                        - padding: "8px 0"
+                        - border-bottom: "1px solid var(--divider-color)"
+                      name:
+                        - font-size: "12px"
+                        - font-weight: "600"
+                        - letter-spacing: "2px"
+                        - color: "var(--secondary-text-color)"
+                        - text-transform: uppercase
+              # ── 24h view (shown when power_draw_7d_view = off) ──
+              - type: conditional
+                conditions:
+                  - condition: state
+                    entity: input_boolean.power_draw_7d_view
+                    state: "off"
+                card:
+                  type: statistics-graph
+                  title: "Avg Power Draw by Device (W) — 24h"
+                  period: hour
+                  days_to_show: 1
+                  stat_types:
+                    - mean
+                  chart_type: bar
+                  card_mod:
+                    style: |
+                      ha-card {
+                        background: var(--ha-card-background, var(--card-background-color));
+                        border-radius: 0 0 16px 16px;
+                        box-shadow: none;
+                        margin-top: -1px;
+                        min-height: 290px;
+                      }
+                  entities:
+                    - entity: sensor.tapo_p110m_1_current_consumption
+                      name: Desktop
+                    - entity: sensor.tapo_p110m_2_nursery_heater_current_consumption
+                      name: Nursery Heater
+                    - entity: sensor.tapo_p110m_3_current_consumption
+                      name: Dyson Heater
+                    - entity: sensor.tapo_p110m_4_basement_heater_current_consumption
+                      name: Basement Heater
+                    - entity: sensor.guest_bedroom_desk_plug_current_consumption
+                      name: Guest Bedroom
+              # ── 7d view (shown when power_draw_7d_view = on) ──
+              - type: conditional
+                conditions:
+                  - condition: state
+                    entity: input_boolean.power_draw_7d_view
+                    state: "on"
+                card:
+                  type: statistics-graph
+                  title: "Avg Power Draw by Device (W) — 7d"
+                  period: day
+                  days_to_show: 7
+                  stat_types:
+                    - mean
+                  chart_type: bar
+                  card_mod:
+                    style: |
+                      ha-card {
+                        background: var(--ha-card-background, var(--card-background-color));
+                        border-radius: 0 0 16px 16px;
+                        box-shadow: none;
+                        margin-top: -1px;
+                        min-height: 290px;
+                      }
+                  entities:
+                    - entity: sensor.tapo_p110m_1_current_consumption
+                      name: Desktop
+                    - entity: sensor.tapo_p110m_2_nursery_heater_current_consumption
+                      name: Nursery Heater
+                    - entity: sensor.tapo_p110m_3_current_consumption
+                      name: Dyson Heater
+                    - entity: sensor.tapo_p110m_4_basement_heater_current_consumption
+                      name: Basement Heater
+                    - entity: sensor.guest_bedroom_desk_plug_current_consumption
+                      name: Guest Bedroom
 
           # ══════════════════════════════════════════════════════
           #  SECTION HEADER — cost (purple)
