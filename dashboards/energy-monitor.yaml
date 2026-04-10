@@ -711,9 +711,9 @@ views:
           - type: horizontal-stack
             cards:
 
-              # ── Cost Left: Est. Daily Cost per Device (Pie Chart) ──
+              # ── Cost Left: Est. Daily Cost per Device (Donut Chart) ──
               - type: custom:apexcharts-card
-                chart_type: pie
+                chart_type: donut
                 graph_span: 30d
                 span:
                   end: day
@@ -728,22 +728,43 @@ views:
                       border-radius: 16px;
                       box-shadow: none;
                     }
+                all_series_config:
+                  statistics:
+                    type: max
+                    period: day
+                    align: end
+                  group_by:
+                    func: avg
+                    duration: 30d
                 apex_config:
-                  chart:
-                    height: 280
+                  plotOptions:
+                    pie:
+                      donut:
+                        size: "60%"
+                        labels:
+                          show: true
+                          total:
+                            show: true
+                            showAlways: true
+                            label: "Avg Daily"
+                            fontSize: "13px"
+                            color: "var(--secondary-text-color)"
+                            formatter: |
+                              EVAL:function(w) {
+                                var t = w.globals.seriesTotals.reduce(function(a,b){return a+b},0);
+                                return '$' + t.toFixed(2);
+                              }
+                          value:
+                            show: false
+                  dataLabels:
+                    enabled: false
                   legend:
                     show: true
                     position: bottom
                     fontSize: "12px"
-                  dataLabels:
-                    enabled: true
-                    style:
-                      fontSize: "11px"
                     formatter: |
-                      EVAL:function(val, opts) {
-                        var name = opts.w.globals.labels[opts.seriesIndex];
-                        var amount = opts.w.globals.series[opts.seriesIndex].toFixed(2);
-                        return name + '\n$' + amount;
+                      EVAL:function(name, opts) {
+                        return name + ': $' + opts.w.globals.series[opts.seriesIndex].toFixed(2);
                       }
                   tooltip:
                     y:
@@ -755,63 +776,21 @@ views:
                   - entity: sensor.desktop_desk_plug_energy_cost_today
                     name: Desktop
                     color: "#f39c12"
-                    statistics:
-                      type: max
-                      period: day
-                      align: end
-                    group_by:
-                      func: avg
-                      duration: 30d
                   - entity: sensor.nursery_heater_plug_energy_cost_today
                     name: Nursery Heater
                     color: "#3498db"
-                    statistics:
-                      type: max
-                      period: day
-                      align: end
-                    group_by:
-                      func: avg
-                      duration: 30d
                   - entity: sensor.dyson_heater_plug_energy_cost_today
                     name: Dyson Heater
                     color: "#2ecc71"
-                    statistics:
-                      type: max
-                      period: day
-                      align: end
-                    group_by:
-                      func: avg
-                      duration: 30d
                   - entity: sensor.basement_heater_plug_energy_cost_today
                     name: Basement Heater
                     color: "#e74c3c"
-                    statistics:
-                      type: max
-                      period: day
-                      align: end
-                    group_by:
-                      func: avg
-                      duration: 30d
                   - entity: sensor.tumble_dryer_energy_cost_today
                     name: Tumble Dryer
                     color: "#9b59b6"
-                    statistics:
-                      type: max
-                      period: day
-                      align: end
-                    group_by:
-                      func: avg
-                      duration: 30d
                   - entity: sensor.guest_bedroom_desk_plug_energy_cost_today
                     name: Guest Bedroom
                     color: "#1abc9c"
-                    statistics:
-                      type: max
-                      period: day
-                      align: end
-                    group_by:
-                      func: avg
-                      duration: 30d
 
               # ── Cost Right: 30-day daily cost per device (bar chart) ──
               # Uses *_energy_cost_today sensors with stat_types: max.
