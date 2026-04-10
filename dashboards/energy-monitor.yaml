@@ -575,11 +575,13 @@ views:
           # ══════════════════════════════════════════════════════
           - type: horizontal-stack
             cards:
-              - type: history-graph
-                title: Power Draw by Device (24h)
-                hours_to_show: 24
-                min_y_axis: 0
-                max_y_axis: 2000
+              - type: statistics-graph
+                title: Avg Power Draw by Device – 24h (W)
+                period: hour
+                days_to_show: 1
+                stat_types:
+                  - mean
+                chart_type: bar
                 entities:
                   - entity: sensor.tapo_p110m_1_current_consumption
                     name: Desktop
@@ -596,11 +598,13 @@ views:
                   - entity: sensor.guest_bedroom_desk_plug_current_consumption
                     name: Guest Bedroom
                     color: "#1abc9c"
-              - type: history-graph
-                title: Power Draw by Device (7 Days)
-                hours_to_show: 168
-                min_y_axis: 0
-                max_y_axis: 2000
+              - type: statistics-graph
+                title: Avg Power Draw by Device – 7 Days (W)
+                period: day
+                days_to_show: 7
+                stat_types:
+                  - mean
+                chart_type: bar
                 entities:
                   - entity: sensor.tapo_p110m_1_current_consumption
                     name: Desktop
@@ -667,7 +671,7 @@ views:
           - type: horizontal-stack
             cards:
 
-              # ── Cost Left: Estimated daily cost per device — table bar chart ──
+              # ── Cost Left: Estimated daily cost per device — clean table ──
               - type: markdown
                 card_mod:
                   style: |
@@ -694,83 +698,53 @@ views:
                   {%- set d4 = (k4 / cd) * rate -%}
                   {%- set d5 = (k5 / cd) * rate -%}
                   {%- set d6 = (k6 / cd) * rate -%}
-                  {%- set dm = [d1, d2, d3, d4, d5, d6, 0.001]|max -%}
                   {%- set dt = d1 + d2 + d3 + d4 + d5 + d6 -%}
                   #### Est. Daily Cost per Device
                   <table style="width:100%;border-collapse:collapse;font-size:0.84em;">
-                  <tr><td colspan="3" style="color:var(--secondary-text-color);padding:0 0 12px;font-size:0.9em;">Cycle: <b>{{ cs }}{{ sfx }}</b> &middot; <b>{{ cd }} day{{ 's' if cd != 1 }}</b> elapsed &middot; <b>${{ rate }}/kWh</b></td></tr>
-                  <tr>
-                    <td style="color:#f39c12;font-weight:600;padding:3px 6px 1px 0;width:110px;vertical-align:middle;">Desktop</td>
-                    <td style="padding:3px 0 1px;vertical-align:middle;"><table style="width:100%;border-collapse:collapse;"><tr><td style="background:#f39c12;height:9px;width:{{ [(d1/dm*100)|int,1]|max }}%;border-radius:3px;"></td><td style="background:var(--divider-color);height:9px;border-radius:0 3px 3px 0;"></td></tr></table></td>
-                    <td style="color:#f39c12;font-weight:600;text-align:right;padding:3px 0 1px 6px;white-space:nowrap;width:50px;vertical-align:middle;">${{ d1|round(3) }}</td>
-                  </tr>
-                  <tr><td></td><td colspan="2" style="color:var(--secondary-text-color);font-size:0.85em;padding:0 0 8px 0;">{{ (k1/cd)|round(3) }} kWh/day &middot; {{ k1|round(2) }} kWh total</td></tr>
-                  <tr>
-                    <td style="color:#3498db;font-weight:600;padding:3px 6px 1px 0;vertical-align:middle;">Nursery Heater</td>
-                    <td style="padding:3px 0 1px;vertical-align:middle;"><table style="width:100%;border-collapse:collapse;"><tr><td style="background:#3498db;height:9px;width:{{ [(d2/dm*100)|int,1]|max }}%;border-radius:3px;"></td><td style="background:var(--divider-color);height:9px;border-radius:0 3px 3px 0;"></td></tr></table></td>
-                    <td style="color:#3498db;font-weight:600;text-align:right;padding:3px 0 1px 6px;white-space:nowrap;vertical-align:middle;">${{ d2|round(3) }}</td>
-                  </tr>
-                  <tr><td></td><td colspan="2" style="color:var(--secondary-text-color);font-size:0.85em;padding:0 0 8px 0;">{{ (k2/cd)|round(3) }} kWh/day &middot; {{ k2|round(2) }} kWh total</td></tr>
-                  <tr>
-                    <td style="color:#2ecc71;font-weight:600;padding:3px 6px 1px 0;vertical-align:middle;">Dyson Heater</td>
-                    <td style="padding:3px 0 1px;vertical-align:middle;"><table style="width:100%;border-collapse:collapse;"><tr><td style="background:#2ecc71;height:9px;width:{{ [(d3/dm*100)|int,1]|max }}%;border-radius:3px;"></td><td style="background:var(--divider-color);height:9px;border-radius:0 3px 3px 0;"></td></tr></table></td>
-                    <td style="color:#2ecc71;font-weight:600;text-align:right;padding:3px 0 1px 6px;white-space:nowrap;vertical-align:middle;">${{ d3|round(3) }}</td>
-                  </tr>
-                  <tr><td></td><td colspan="2" style="color:var(--secondary-text-color);font-size:0.85em;padding:0 0 8px 0;">{{ (k3/cd)|round(3) }} kWh/day &middot; {{ k3|round(2) }} kWh total</td></tr>
-                  <tr>
-                    <td style="color:#e74c3c;font-weight:600;padding:3px 6px 1px 0;vertical-align:middle;">Basement Heater</td>
-                    <td style="padding:3px 0 1px;vertical-align:middle;"><table style="width:100%;border-collapse:collapse;"><tr><td style="background:#e74c3c;height:9px;width:{{ [(d4/dm*100)|int,1]|max }}%;border-radius:3px;"></td><td style="background:var(--divider-color);height:9px;border-radius:0 3px 3px 0;"></td></tr></table></td>
-                    <td style="color:#e74c3c;font-weight:600;text-align:right;padding:3px 0 1px 6px;white-space:nowrap;vertical-align:middle;">${{ d4|round(3) }}</td>
-                  </tr>
-                  <tr><td></td><td colspan="2" style="color:var(--secondary-text-color);font-size:0.85em;padding:0 0 8px 0;">{{ (k4/cd)|round(3) }} kWh/day &middot; {{ k4|round(2) }} kWh total</td></tr>
-                  <tr>
-                    <td style="color:#9b59b6;font-weight:600;padding:3px 6px 1px 0;vertical-align:middle;">Tumble Dryer</td>
-                    <td style="padding:3px 0 1px;vertical-align:middle;"><table style="width:100%;border-collapse:collapse;"><tr><td style="background:#9b59b6;height:9px;width:{{ [(d5/dm*100)|int,1]|max }}%;border-radius:3px;"></td><td style="background:var(--divider-color);height:9px;border-radius:0 3px 3px 0;"></td></tr></table></td>
-                    <td style="color:#9b59b6;font-weight:600;text-align:right;padding:3px 0 1px 6px;white-space:nowrap;vertical-align:middle;">${{ d5|round(3) }}</td>
-                  </tr>
-                  <tr><td></td><td colspan="2" style="color:var(--secondary-text-color);font-size:0.85em;padding:0 0 8px 0;">{{ (k5/cd)|round(3) }} kWh/day &middot; {{ k5|round(2) }} kWh total</td></tr>
-                  <tr>
-                    <td style="color:#1abc9c;font-weight:600;padding:3px 6px 1px 0;vertical-align:middle;">Guest Bedroom</td>
-                    <td style="padding:3px 0 1px;vertical-align:middle;"><table style="width:100%;border-collapse:collapse;"><tr><td style="background:#1abc9c;height:9px;width:{{ [(d6/dm*100)|int,1]|max }}%;border-radius:3px;"></td><td style="background:var(--divider-color);height:9px;border-radius:0 3px 3px 0;"></td></tr></table></td>
-                    <td style="color:#1abc9c;font-weight:600;text-align:right;padding:3px 0 1px 6px;white-space:nowrap;vertical-align:middle;">${{ d6|round(3) }}</td>
-                  </tr>
-                  <tr><td></td><td colspan="2" style="color:var(--secondary-text-color);font-size:0.85em;padding:0 0 10px 0;">{{ (k6/cd)|round(3) }} kWh/day &middot; {{ k6|round(2) }} kWh total</td></tr>
-                  <tr style="border-top:1px solid var(--divider-color);">
-                    <td style="font-weight:700;padding:8px 0 2px;">Total</td>
-                    <td></td>
-                    <td style="font-weight:700;text-align:right;padding:8px 0 2px;color:var(--primary-color);">${{ dt|round(3) }}/day</td>
-                  </tr>
+                  <tr><td colspan="2" style="color:var(--secondary-text-color);padding:0 0 12px;font-size:0.9em;">Cycle: <b>{{ cs }}{{ sfx }}</b> &middot; <b>{{ cd }} day{{ 's' if cd != 1 }}</b> elapsed &middot; <b>${{ rate }}/kWh</b></td></tr>
+                  <tr><td style="color:#f39c12;font-weight:600;padding:5px 8px 2px 0;">Desktop</td><td style="text-align:right;color:#f39c12;font-weight:600;padding:5px 0 2px;white-space:nowrap;">${{ d1|round(3) }}/day</td></tr>
+                  <tr><td colspan="2" style="color:var(--secondary-text-color);font-size:0.82em;padding:0 0 8px;">{{ (k1/cd)|round(3) }} kWh/day &middot; {{ k1|round(2) }} kWh total</td></tr>
+                  <tr><td style="color:#3498db;font-weight:600;padding:5px 8px 2px 0;">Nursery Heater</td><td style="text-align:right;color:#3498db;font-weight:600;padding:5px 0 2px;white-space:nowrap;">${{ d2|round(3) }}/day</td></tr>
+                  <tr><td colspan="2" style="color:var(--secondary-text-color);font-size:0.82em;padding:0 0 8px;">{{ (k2/cd)|round(3) }} kWh/day &middot; {{ k2|round(2) }} kWh total</td></tr>
+                  <tr><td style="color:#2ecc71;font-weight:600;padding:5px 8px 2px 0;">Dyson Heater</td><td style="text-align:right;color:#2ecc71;font-weight:600;padding:5px 0 2px;white-space:nowrap;">${{ d3|round(3) }}/day</td></tr>
+                  <tr><td colspan="2" style="color:var(--secondary-text-color);font-size:0.82em;padding:0 0 8px;">{{ (k3/cd)|round(3) }} kWh/day &middot; {{ k3|round(2) }} kWh total</td></tr>
+                  <tr><td style="color:#e74c3c;font-weight:600;padding:5px 8px 2px 0;">Basement Heater</td><td style="text-align:right;color:#e74c3c;font-weight:600;padding:5px 0 2px;white-space:nowrap;">${{ d4|round(3) }}/day</td></tr>
+                  <tr><td colspan="2" style="color:var(--secondary-text-color);font-size:0.82em;padding:0 0 8px;">{{ (k4/cd)|round(3) }} kWh/day &middot; {{ k4|round(2) }} kWh total</td></tr>
+                  <tr><td style="color:#9b59b6;font-weight:600;padding:5px 8px 2px 0;">Tumble Dryer</td><td style="text-align:right;color:#9b59b6;font-weight:600;padding:5px 0 2px;white-space:nowrap;">${{ d5|round(3) }}/day</td></tr>
+                  <tr><td colspan="2" style="color:var(--secondary-text-color);font-size:0.82em;padding:0 0 8px;">{{ (k5/cd)|round(3) }} kWh/day &middot; {{ k5|round(2) }} kWh total</td></tr>
+                  <tr><td style="color:#1abc9c;font-weight:600;padding:5px 8px 2px 0;">Guest Bedroom</td><td style="text-align:right;color:#1abc9c;font-weight:600;padding:5px 0 2px;white-space:nowrap;">${{ d6|round(3) }}/day</td></tr>
+                  <tr><td colspan="2" style="color:var(--secondary-text-color);font-size:0.82em;padding:0 0 10px;">{{ (k6/cd)|round(3) }} kWh/day &middot; {{ k6|round(2) }} kWh total</td></tr>
+                  <tr style="border-top:1px solid var(--divider-color);"><td style="font-weight:700;padding:8px 0 2px;">Total</td><td style="font-weight:700;text-align:right;padding:8px 0 2px;color:var(--primary-color);white-space:nowrap;">${{ dt|round(3) }}/day</td></tr>
                   </table>
 
-              # ── Cost Right: 30-day cumulative cost trend per device ($) ──
-              # Uses *_energy_cost_monthly sensors (state_class: measurement added).
-              # stat_types: state shows the sensor's current accumulated value each day
-              # → gives a rising $ line matching the billing cycle. History builds after
-              # the first HA restart following this config change.
+              # ── Cost Right: 30-day daily cost per device (bar chart) ──
+              # Uses *_energy_cost_today sensors with stat_types: max.
+              # Each today-sensor resets at midnight and accumulates through the day;
+              # the daily max = end-of-day total, giving a reliable per-day bar chart.
               - type: statistics-graph
-                title: 30-Day Cost Trend by Device ($)
+                title: 30-Day Daily Cost by Device ($)
                 period: day
                 days_to_show: 30
                 stat_types:
-                  - state
-                chart_type: line
+                  - max
+                chart_type: bar
                 entities:
-                  - entity: sensor.desktop_desk_plug_energy_cost_monthly
+                  - entity: sensor.desktop_desk_plug_energy_cost_today
                     name: Desktop
                     color: "#f39c12"
-                  - entity: sensor.nursery_heater_plug_energy_cost_monthly
+                  - entity: sensor.nursery_heater_plug_energy_cost_today
                     name: Nursery Heater
                     color: "#3498db"
-                  - entity: sensor.dyson_heater_plug_energy_cost_monthly
+                  - entity: sensor.dyson_heater_plug_energy_cost_today
                     name: Dyson Heater
                     color: "#2ecc71"
-                  - entity: sensor.basement_heater_plug_energy_cost_monthly
+                  - entity: sensor.basement_heater_plug_energy_cost_today
                     name: Basement Heater
                     color: "#e74c3c"
-                  - entity: sensor.tumble_dryer_energy_cost_monthly
+                  - entity: sensor.tumble_dryer_energy_cost_today
                     name: Tumble Dryer
                     color: "#9b59b6"
-                  - entity: sensor.guest_bedroom_desk_plug_energy_cost_monthly
+                  - entity: sensor.guest_bedroom_desk_plug_energy_cost_today
                     name: Guest Bedroom
                     color: "#1abc9c"
 
