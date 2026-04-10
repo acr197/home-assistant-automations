@@ -1516,10 +1516,9 @@
   alias: 'GitHub: Auto Pull and Reboot on Merge to Main'
   description: Pulls latest config from GitHub and reboots Home Assistant whenever
     a commit is merged to the main branch. Triggered by the GitHub Actions webhook.
-    The HA_WEBHOOK_URL GitHub secret must point to https://[your-ha]/api/webhook/github-main-merge
   triggers:
   - trigger: webhook
-    webhook_id: github-main-merge
+    webhook_id: 4a115006f7f0a2bce53cb35881d54f5ca93c337c08da7888ce7d9842b5a1b5eb
     allowed_methods:
       - POST
     local_only: false
