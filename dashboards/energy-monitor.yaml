@@ -728,11 +728,6 @@ views:
                     }
                 content: |
                   <div style="text-align:center;color:var(--secondary-text-color);padding:24px 16px;">
-                    <svg viewBox="0 0 42 42" width="80" height="80" style="display:block;margin:0 auto;opacity:0.18;">
-                      <circle cx="21" cy="21" r="15.9155" fill="transparent" stroke="var(--primary-color)" stroke-width="10" stroke-dasharray="60 40"/>
-                      <circle cx="21" cy="21" r="15.9155" fill="transparent" stroke="var(--accent-color)" stroke-width="10" stroke-dasharray="25 75" stroke-dashoffset="-60"/>
-                      <circle cx="21" cy="21" r="15.9155" fill="transparent" stroke="var(--secondary-text-color)" stroke-width="10" stroke-dasharray="15 85" stroke-dashoffset="-85"/>
-                    </svg>
                     <p style="margin:12px 0 4px;font-size:0.88em;font-weight:600;opacity:0.45;letter-spacing:1px;">Est. Daily Cost per Device</p>
                     <p style="margin:0;font-size:0.75em;opacity:0.3;">placeholder</p>
                   </div>
