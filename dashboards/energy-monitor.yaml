@@ -711,9 +711,6 @@ views:
                         margin-top: -1px;
                       }
                   all_series_config:
-                    statistics:
-                      type: mean
-                      period: hour
                     group_by:
                       func: avg
                       duration: 1h
@@ -762,9 +759,6 @@ views:
                         margin-top: -1px;
                       }
                   all_series_config:
-                    statistics:
-                      type: mean
-                      period: day
                     group_by:
                       func: avg
                       duration: 1d
