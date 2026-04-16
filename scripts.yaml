@@ -44,3 +44,51 @@ git_pull_and_reload:
     - delay:
         seconds: 5
     - action: homeassistant.reload_all
+
+github_sync_from_remote_and_restart:
+  alias: "GitHub: Sync from Remote & Restart HA"
+  description: >-
+    Pull the latest config from GitHub and restart Home Assistant if there
+    are changes.  The dashboard button that calls this script uses a
+    tap_action confirmation dialog to prevent accidental double-clicks.
+    mode: single ensures only one run at a time.
+  icon: mdi:cloud-download
+  mode: single
+  sequence:
+    # 1. Pull latest from GitHub
+    - action: shell_command.git_pull
+      response_variable: pull_result
+    # 2. If pull failed, notify and stop
+    - if:
+        - condition: template
+          value_template: "{{ pull_result['returncode'] != 0 }}"
+      then:
+        - action: persistent_notification.create
+          data:
+            title: "GitHub Sync Failed"
+            notification_id: github_sync_status
+            message: >-
+              Pull from GitHub failed (return code {{ pull_result['returncode'] }}).
+              Check /config/git_pull.log for details.  Home Assistant was not restarted.
+        - stop: "git_pull failed"
+    # 3. If no changes, notify and skip restart
+    - if:
+        - condition: template
+          value_template: "{{ 'changed' not in pull_result.get('stdout', '') }}"
+      then:
+        - action: persistent_notification.create
+          data:
+            title: "GitHub Sync: Up to Date"
+            notification_id: github_sync_status
+            message: "No changes pulled from GitHub — Home Assistant is already up to date."
+        - stop: "no changes"
+    # 4. Changes pulled — notify then restart
+    - action: persistent_notification.create
+      data:
+        title: "GitHub Sync: Restarting"
+        notification_id: github_sync_status
+        message: >-
+          Pulled new config from GitHub. Home Assistant will restart in 5 seconds.
+    - delay:
+        seconds: 5
+    - action: homeassistant.restart
