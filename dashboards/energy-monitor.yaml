@@ -330,6 +330,9 @@ views:
                           - condition: state
                             entity: input_boolean.show_device_desktop
                             state: "on"
+                          - condition: state
+                            entity: sensor.tapo_p110m_1_current_consumption
+                            state_not: unavailable
                         card:
                           type: vertical-stack
                           cards:
@@ -373,6 +376,9 @@ views:
                           - condition: state
                             entity: input_boolean.show_device_nursery
                             state: "on"
+                          - condition: state
+                            entity: sensor.tapo_p110m_2_nursery_heater_current_consumption
+                            state_not: unavailable
                         card:
                           type: vertical-stack
                           cards:
@@ -418,6 +424,9 @@ views:
                           - condition: state
                             entity: input_boolean.show_device_dyson
                             state: "on"
+                          - condition: state
+                            entity: sensor.tapo_p110m_3_current_consumption
+                            state_not: unavailable
                         card:
                           type: vertical-stack
                           cards:
@@ -461,6 +470,9 @@ views:
                           - condition: state
                             entity: input_boolean.show_device_basement
                             state: "on"
+                          - condition: state
+                            entity: sensor.tapo_p110m_4_basement_heater_current_consumption
+                            state_not: unavailable
                         card:
                           type: vertical-stack
                           cards:
@@ -506,6 +518,9 @@ views:
                           - condition: state
                             entity: input_boolean.show_device_guest_bedroom
                             state: "on"
+                          - condition: state
+                            entity: sensor.guest_bedroom_desk_plug_current_consumption
+                            state_not: unavailable
                         card:
                           type: vertical-stack
                           cards:
@@ -546,8 +561,8 @@ views:
                                   ha-markdown p { text-align: center; font-size: 0.74em; color: var(--secondary-text-color); margin: 0 !important; }
 
               # ── Bottom Right: Daily energy by device with 7d / 14d / 30d toggle ──
-              # Tabs set input_select.energy_chart_period; the apexcharts-card
-              # below reads that helper to set its graph_span dynamically.
+              # Tabs set input_select.energy_chart_period; three conditional
+              # apexcharts-cards (hardcoded graph_span each) gate on the value.
               - type: vertical-stack
                 cards:
                   # Tab bar: 7d / 14d / 30d
@@ -649,104 +664,321 @@ views:
                             - letter-spacing: "2px"
                             - color: "var(--secondary-text-color)"
                             - text-transform: uppercase
-                  # Stacked daily-energy bar chart (graph_span follows the tab)
-                  - type: custom:apexcharts-card
-                    graph_span: "{{ states('input_select.energy_chart_period') }}"
-                    span:
-                      end: day
-                    update_interval: 30s
-                    header:
-                      title: "Daily Energy by Device (kWh)"
-                      show: true
-                      show_states: false
-                    card_mod:
-                      style: |
-                        ha-card {
-                          background: var(--ha-card-background, var(--card-background-color));
-                          border-radius: 0 0 16px 16px;
-                          box-shadow: none;
-                          margin-top: -1px;
-                          min-height: 290px;
-                        }
-                    apex_config:
-                      chart:
-                        type: bar
-                        stacked: true
-                      plotOptions:
-                        bar:
-                          columnWidth: "70%"
-                      legend:
+                  # Stacked daily-energy bar chart — three hardcoded-span cards
+                  # gated by input_select.energy_chart_period (templated
+                  # graph_span is not supported by apexcharts-card).
+                  # ── 7d view ──
+                  - type: conditional
+                    conditions:
+                      - condition: state
+                        entity: input_select.energy_chart_period
+                        state: "7d"
+                    card:
+                      type: custom:apexcharts-card
+                      graph_span: 7d
+                      span:
+                        end: day
+                      update_interval: 30s
+                      header:
+                        title: "Daily Energy by Device (kWh)"
                         show: true
-                        position: bottom
-                        horizontalAlign: center
-                        fontSize: "11px"
-                        itemMargin:
-                          horizontal: 8
-                          vertical: 3
-                        markers:
-                          width: 8
-                          height: 8
-                    series:
-                      - entity: sensor.tapo_p110m_1_today_s_consumption
-                        name: Desktop
-                        type: column
-                        color: "#f39c12"
-                        statistics:
-                          type: change
-                          period: day
-                        group_by:
-                          func: max
-                          duration: 1d
-                      - entity: sensor.tapo_p110m_2_nursery_heater_today_s_consumption
-                        name: Nursery Heater
-                        type: column
-                        color: "#3498db"
-                        statistics:
-                          type: change
-                          period: day
-                        group_by:
-                          func: max
-                          duration: 1d
-                      - entity: sensor.tapo_p110m_3_today_s_consumption
-                        name: Dyson Heater
-                        type: column
-                        color: "#2ecc71"
-                        statistics:
-                          type: change
-                          period: day
-                        group_by:
-                          func: max
-                          duration: 1d
-                      - entity: sensor.tapo_p110m_4_basement_heater_today_s_consumption
-                        name: Basement Heater
-                        type: column
-                        color: "#e74c3c"
-                        statistics:
-                          type: change
-                          period: day
-                        group_by:
-                          func: max
-                          duration: 1d
-                      - entity: sensor.tumble_dryer_energy_daily
-                        name: Tumble Dryer
-                        type: column
-                        color: "#9b59b6"
-                        statistics:
-                          type: change
-                          period: day
-                        group_by:
-                          func: max
-                          duration: 1d
-                      - entity: sensor.guest_bedroom_desk_plug_today_s_consumption
-                        name: Guest Bedroom
-                        type: column
-                        color: "#1abc9c"
-                        statistics:
-                          type: change
-                          period: day
-                        group_by:
-                          func: max
-                          duration: 1d
+                        show_states: false
+                      card_mod:
+                        style: |
+                          ha-card {
+                            background: var(--ha-card-background, var(--card-background-color));
+                            border-radius: 0 0 16px 16px;
+                            box-shadow: none;
+                            margin-top: -1px;
+                            min-height: 290px;
+                          }
+                      apex_config:
+                        chart:
+                          type: bar
+                          stacked: true
+                        plotOptions:
+                          bar:
+                            columnWidth: "70%"
+                        legend:
+                          show: true
+                          position: bottom
+                          horizontalAlign: center
+                          fontSize: "11px"
+                          itemMargin:
+                            horizontal: 8
+                            vertical: 3
+                          markers:
+                            width: 8
+                            height: 8
+                      series:
+                        - entity: sensor.tapo_p110m_1_today_s_consumption
+                          name: Desktop
+                          type: column
+                          color: "#f39c12"
+                          statistics:
+                            type: change
+                            period: day
+                          group_by:
+                            func: max
+                            duration: 1d
+                        - entity: sensor.tapo_p110m_2_nursery_heater_today_s_consumption
+                          name: Nursery Heater
+                          type: column
+                          color: "#3498db"
+                          statistics:
+                            type: change
+                            period: day
+                          group_by:
+                            func: max
+                            duration: 1d
+                        - entity: sensor.tapo_p110m_3_today_s_consumption
+                          name: Dyson Heater
+                          type: column
+                          color: "#2ecc71"
+                          statistics:
+                            type: change
+                            period: day
+                          group_by:
+                            func: max
+                            duration: 1d
+                        - entity: sensor.tapo_p110m_4_basement_heater_today_s_consumption
+                          name: Basement Heater
+                          type: column
+                          color: "#e74c3c"
+                          statistics:
+                            type: change
+                            period: day
+                          group_by:
+                            func: max
+                            duration: 1d
+                        - entity: sensor.tumble_dryer_energy_daily
+                          name: Tumble Dryer
+                          type: column
+                          color: "#9b59b6"
+                          statistics:
+                            type: change
+                            period: day
+                          group_by:
+                            func: max
+                            duration: 1d
+                        - entity: sensor.guest_bedroom_desk_plug_today_s_consumption
+                          name: Guest Bedroom
+                          type: column
+                          color: "#1abc9c"
+                          statistics:
+                            type: change
+                            period: day
+                          group_by:
+                            func: max
+                            duration: 1d
+                  # ── 14d view ──
+                  - type: conditional
+                    conditions:
+                      - condition: state
+                        entity: input_select.energy_chart_period
+                        state: "14d"
+                    card:
+                      type: custom:apexcharts-card
+                      graph_span: 14d
+                      span:
+                        end: day
+                      update_interval: 30s
+                      header:
+                        title: "Daily Energy by Device (kWh)"
+                        show: true
+                        show_states: false
+                      card_mod:
+                        style: |
+                          ha-card {
+                            background: var(--ha-card-background, var(--card-background-color));
+                            border-radius: 0 0 16px 16px;
+                            box-shadow: none;
+                            margin-top: -1px;
+                            min-height: 290px;
+                          }
+                      apex_config:
+                        chart:
+                          type: bar
+                          stacked: true
+                        plotOptions:
+                          bar:
+                            columnWidth: "70%"
+                        legend:
+                          show: true
+                          position: bottom
+                          horizontalAlign: center
+                          fontSize: "11px"
+                          itemMargin:
+                            horizontal: 8
+                            vertical: 3
+                          markers:
+                            width: 8
+                            height: 8
+                      series:
+                        - entity: sensor.tapo_p110m_1_today_s_consumption
+                          name: Desktop
+                          type: column
+                          color: "#f39c12"
+                          statistics:
+                            type: change
+                            period: day
+                          group_by:
+                            func: max
+                            duration: 1d
+                        - entity: sensor.tapo_p110m_2_nursery_heater_today_s_consumption
+                          name: Nursery Heater
+                          type: column
+                          color: "#3498db"
+                          statistics:
+                            type: change
+                            period: day
+                          group_by:
+                            func: max
+                            duration: 1d
+                        - entity: sensor.tapo_p110m_3_today_s_consumption
+                          name: Dyson Heater
+                          type: column
+                          color: "#2ecc71"
+                          statistics:
+                            type: change
+                            period: day
+                          group_by:
+                            func: max
+                            duration: 1d
+                        - entity: sensor.tapo_p110m_4_basement_heater_today_s_consumption
+                          name: Basement Heater
+                          type: column
+                          color: "#e74c3c"
+                          statistics:
+                            type: change
+                            period: day
+                          group_by:
+                            func: max
+                            duration: 1d
+                        - entity: sensor.tumble_dryer_energy_daily
+                          name: Tumble Dryer
+                          type: column
+                          color: "#9b59b6"
+                          statistics:
+                            type: change
+                            period: day
+                          group_by:
+                            func: max
+                            duration: 1d
+                        - entity: sensor.guest_bedroom_desk_plug_today_s_consumption
+                          name: Guest Bedroom
+                          type: column
+                          color: "#1abc9c"
+                          statistics:
+                            type: change
+                            period: day
+                          group_by:
+                            func: max
+                            duration: 1d
+                  # ── 30d view ──
+                  - type: conditional
+                    conditions:
+                      - condition: state
+                        entity: input_select.energy_chart_period
+                        state: "30d"
+                    card:
+                      type: custom:apexcharts-card
+                      graph_span: 30d
+                      span:
+                        end: day
+                      update_interval: 30s
+                      header:
+                        title: "Daily Energy by Device (kWh)"
+                        show: true
+                        show_states: false
+                      card_mod:
+                        style: |
+                          ha-card {
+                            background: var(--ha-card-background, var(--card-background-color));
+                            border-radius: 0 0 16px 16px;
+                            box-shadow: none;
+                            margin-top: -1px;
+                            min-height: 290px;
+                          }
+                      apex_config:
+                        chart:
+                          type: bar
+                          stacked: true
+                        plotOptions:
+                          bar:
+                            columnWidth: "70%"
+                        legend:
+                          show: true
+                          position: bottom
+                          horizontalAlign: center
+                          fontSize: "11px"
+                          itemMargin:
+                            horizontal: 8
+                            vertical: 3
+                          markers:
+                            width: 8
+                            height: 8
+                      series:
+                        - entity: sensor.tapo_p110m_1_today_s_consumption
+                          name: Desktop
+                          type: column
+                          color: "#f39c12"
+                          statistics:
+                            type: change
+                            period: day
+                          group_by:
+                            func: max
+                            duration: 1d
+                        - entity: sensor.tapo_p110m_2_nursery_heater_today_s_consumption
+                          name: Nursery Heater
+                          type: column
+                          color: "#3498db"
+                          statistics:
+                            type: change
+                            period: day
+                          group_by:
+                            func: max
+                            duration: 1d
+                        - entity: sensor.tapo_p110m_3_today_s_consumption
+                          name: Dyson Heater
+                          type: column
+                          color: "#2ecc71"
+                          statistics:
+                            type: change
+                            period: day
+                          group_by:
+                            func: max
+                            duration: 1d
+                        - entity: sensor.tapo_p110m_4_basement_heater_today_s_consumption
+                          name: Basement Heater
+                          type: column
+                          color: "#e74c3c"
+                          statistics:
+                            type: change
+                            period: day
+                          group_by:
+                            func: max
+                            duration: 1d
+                        - entity: sensor.tumble_dryer_energy_daily
+                          name: Tumble Dryer
+                          type: column
+                          color: "#9b59b6"
+                          statistics:
+                            type: change
+                            period: day
+                          group_by:
+                            func: max
+                            duration: 1d
+                        - entity: sensor.guest_bedroom_desk_plug_today_s_consumption
+                          name: Guest Bedroom
+                          type: column
+                          color: "#1abc9c"
+                          statistics:
+                            type: change
+                            period: day
+                          group_by:
+                            func: max
+                            duration: 1d
 
           # ══════════════════════════════════════════════════════
           #  POWER ROW 2: Per-device power history (24h / 7d toggle)
