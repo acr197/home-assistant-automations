@@ -1002,6 +1002,8 @@ views:
                               margin-top: -1px;
                             }
                         apex_config:
+                          chart:
+                            height: 220
                           plotOptions:
                             pie:
                               donut:
@@ -1027,7 +1029,7 @@ views:
                               {%- set color = colors[ns.idx % (colors | length)] -%}
                               {%- set ns.idx = ns.idx + 1 -%}
                               {%- set name = s.attributes.get('friendly_name', slug) | replace(" Today's Consumption",'') | replace(" Today's consumption",'') | replace(' Plug','') | trim -%}
-                              {{ {'entity': s.entity_id, 'name': name, 'color': color} }},
+                              {{ {'entity': s.entity_id, 'name': name, 'color': color, 'float_precision': 2} }},
                             {%- endif -%}
                           {%- endfor -%}
                     # ── Today cost + usage stat row ──
@@ -1131,6 +1133,8 @@ views:
                               margin-top: -1px;
                             }
                         apex_config:
+                          chart:
+                            height: 220
                           plotOptions:
                             pie:
                               donut:
@@ -1156,7 +1160,7 @@ views:
                               {%- set color = colors[ns.idx % (colors | length)] -%}
                               {%- set ns.idx = ns.idx + 1 -%}
                               {%- set name = s.attributes.get('friendly_name', slug) | replace(" This Month's Consumption",'') | replace(" This Month's consumption",'') | replace(' Plug','') | trim -%}
-                              {{ {'entity': s.entity_id, 'name': name, 'color': color} }},
+                              {{ {'entity': s.entity_id, 'name': name, 'color': color, 'float_precision': 2} }},
                             {%- endif -%}
                           {%- endfor -%}
                     # ── Billing cycle: customer charge + total cost ──
