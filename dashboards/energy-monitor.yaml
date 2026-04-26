@@ -514,7 +514,7 @@ views:
                         graph_span: 7d
                         span:
                           end: day
-                        update_interval: 30s
+                        update_interval: 5m
                         header:
                           title: "Daily Energy by Device (kWh)"
                           show: true
@@ -570,7 +570,7 @@ views:
                         graph_span: 14d
                         span:
                           end: day
-                        update_interval: 30s
+                        update_interval: 5m
                         header:
                           title: "Daily Energy by Device (kWh)"
                           show: true
@@ -626,7 +626,7 @@ views:
                         graph_span: 30d
                         span:
                           end: day
-                        update_interval: 30s
+                        update_interval: 5m
                         header:
                           title: "Daily Energy by Device (kWh)"
                           show: true
@@ -752,7 +752,7 @@ views:
                     graph_span: 24h
                     span:
                       end: day
-                    update_interval: 60s
+                    update_interval: 5m
                     header:
                       title: "Avg Power Draw by Device (W) — 24h"
                       show: true
@@ -812,7 +812,7 @@ views:
                     graph_span: 7d
                     span:
                       end: day
-                    update_interval: 60s
+                    update_interval: 5m
                     header:
                       title: "Avg Power Draw by Device (W) — 7d"
                       show: true
@@ -1070,7 +1070,7 @@ views:
             card:
               type: custom:apexcharts-card
               graph_span: 180d
-              update_interval: 10m
+              update_interval: 30m
               header:
                 title: "Monthly Energy by Device (kWh)"
                 show: true
