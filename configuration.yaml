@@ -50,17 +50,24 @@ input_button:
     name: Pull from GitHub
     icon: mdi:cloud-download
 
-# ═══════════════════════════════════════════════════════════
-#  Single source of truth for hidden devices.
-#  max: 255 is HA's hard upper limit. Six device slugs
-#  averaging ~30 chars each fits comfortably.
-# ═══════════════════════════════════════════════════════════
 input_text:
   energy_hidden_devices:
     name: "Hidden Energy Devices"
     max: 255
     icon: mdi:eye-off
 
+# ═══════════════════════════════════════════════════════════
+#  TEMPLATES
+#
+#  Two groups:
+#   1. State-based — cheap, depends on a few specific entities.
+#   2. Time-triggered — heavy (iterates states.sensor). Without
+#      a trigger HA re-evaluates on every state change of every
+#      referenced entity, which thrashes the CPU when dozens of
+#      power sensors are reporting every few seconds. A 30-second
+#      time_pattern keeps the values fresh enough for the dashboard
+#      while collapsing the work into a single periodic pass.
+# ═══════════════════════════════════════════════════════════
 template:
   - sensor:
       - name: Guest Mode Status
@@ -129,6 +136,19 @@ template:
               states('input_number.peco_supply_rate') | float(0) +
               states('input_number.peco_transmission_rate') | float(0)) | round(5) }}
 
+  - trigger:
+      - platform: time_pattern
+        seconds: "/30"
+      - platform: homeassistant
+        event: start
+      - platform: state
+        entity_id:
+          - input_text.energy_hidden_devices
+          - input_number.peco_delivery_rate
+          - input_number.peco_supply_rate
+          - input_number.peco_transmission_rate
+          - input_number.peco_customer_charge
+    sensor:
       - name: "Total Power Draw Now"
         unique_id: total_power_draw_now
         unit_of_measurement: "W"
@@ -193,8 +213,19 @@ template:
         unit_of_measurement: "$"
         state: >
           {% set rate = states('sensor.peco_variable_rate') | float(0) %}
-          {% set kwh = states('sensor.total_energy_today') | float(0) %}
-          {{ (kwh * rate) | round(2) }}
+          {% set raw = states('input_text.energy_hidden_devices') %}
+          {% set hidden = (raw if raw not in [none,'unknown','unavailable'] else '').split(',') | reject('eq','') | list %}
+          {% set ns = namespace(total=0) %}
+          {% for s in states.sensor
+              if s.entity_id.endswith('_today_s_consumption')
+              and 'total_' not in s.entity_id
+              and s.state not in ['unavailable','unknown'] %}
+            {% set slug = s.entity_id | replace('sensor.','') | replace('_today_s_consumption','') %}
+            {% if slug not in hidden %}
+              {% set ns.total = ns.total + (s.state | float(0)) %}
+            {% endif %}
+          {% endfor %}
+          {{ (ns.total * rate) | round(2) }}
 
       - name: "Total Energy Cost Monthly"
         unique_id: total_energy_cost_monthly
@@ -202,8 +233,19 @@ template:
         state: >
           {% set rate = states('sensor.peco_variable_rate') | float(0) %}
           {% set cust = states('input_number.peco_customer_charge') | float(0) %}
-          {% set kwh = states('sensor.total_energy_this_month') | float(0) %}
-          {{ (kwh * rate + cust) | round(2) }}
+          {% set raw = states('input_text.energy_hidden_devices') %}
+          {% set hidden = (raw if raw not in [none,'unknown','unavailable'] else '').split(',') | reject('eq','') | list %}
+          {% set ns = namespace(total=0) %}
+          {% for s in states.sensor
+              if s.entity_id.endswith('_this_month_s_consumption')
+              and 'total_' not in s.entity_id
+              and s.state not in ['unavailable','unknown'] %}
+            {% set slug = s.entity_id | replace('sensor.','') | replace('_this_month_s_consumption','') %}
+            {% if slug not in hidden %}
+              {% set ns.total = ns.total + (s.state | float(0)) %}
+            {% endif %}
+          {% endfor %}
+          {{ (ns.total * rate + cust) | round(2) }}
 
       - name: "Daily Average Energy This Month"
         unique_id: daily_average_energy_this_month
@@ -211,8 +253,19 @@ template:
         device_class: energy
         state: >
           {% set day = now().day %}
-          {% set kwh = states('sensor.total_energy_this_month') | float(0) %}
-          {{ (kwh / day) | round(2) if day > 0 else 0 }}
+          {% set raw = states('input_text.energy_hidden_devices') %}
+          {% set hidden = (raw if raw not in [none,'unknown','unavailable'] else '').split(',') | reject('eq','') | list %}
+          {% set ns = namespace(total=0) %}
+          {% for s in states.sensor
+              if s.entity_id.endswith('_this_month_s_consumption')
+              and 'total_' not in s.entity_id
+              and s.state not in ['unavailable','unknown'] %}
+            {% set slug = s.entity_id | replace('sensor.','') | replace('_this_month_s_consumption','') %}
+            {% if slug not in hidden %}
+              {% set ns.total = ns.total + (s.state | float(0)) %}
+            {% endif %}
+          {% endfor %}
+          {{ (ns.total / day) | round(2) if day > 0 else 0 }}
 
       - name: "Daily Average Energy Cost This Month"
         unique_id: daily_average_energy_cost_this_month
@@ -220,8 +273,19 @@ template:
         state: >
           {% set rate = states('sensor.peco_variable_rate') | float(0) %}
           {% set day = now().day %}
-          {% set kwh = states('sensor.total_energy_this_month') | float(0) %}
-          {{ ((kwh / day) * rate) | round(2) if day > 0 else 0 }}
+          {% set raw = states('input_text.energy_hidden_devices') %}
+          {% set hidden = (raw if raw not in [none,'unknown','unavailable'] else '').split(',') | reject('eq','') | list %}
+          {% set ns = namespace(total=0) %}
+          {% for s in states.sensor
+              if s.entity_id.endswith('_this_month_s_consumption')
+              and 'total_' not in s.entity_id
+              and s.state not in ['unavailable','unknown'] %}
+            {% set slug = s.entity_id | replace('sensor.','') | replace('_this_month_s_consumption','') %}
+            {% if slug not in hidden %}
+              {% set ns.total = ns.total + (s.state | float(0)) %}
+            {% endif %}
+          {% endfor %}
+          {{ ((ns.total / day) * rate) | round(2) if day > 0 else 0 }}
 
       - name: "Projected Monthly Energy Cost"
         unique_id: projected_monthly_energy_cost
@@ -231,9 +295,20 @@ template:
           {% set cust = states('input_number.peco_customer_charge') | float(0) %}
           {% set day = now().day %}
           {% set days_in_month = (now().replace(month=now().month % 12 + 1, day=1) - timedelta(days=1)).day if now().month < 12 else 31 %}
-          {% set kwh = states('sensor.total_energy_this_month') | float(0) %}
-          {% if day > 0 and kwh > 0 %}
-            {{ ((kwh / day) * days_in_month * rate + cust) | round(2) }}
+          {% set raw = states('input_text.energy_hidden_devices') %}
+          {% set hidden = (raw if raw not in [none,'unknown','unavailable'] else '').split(',') | reject('eq','') | list %}
+          {% set ns = namespace(total=0) %}
+          {% for s in states.sensor
+              if s.entity_id.endswith('_this_month_s_consumption')
+              and 'total_' not in s.entity_id
+              and s.state not in ['unavailable','unknown'] %}
+            {% set slug = s.entity_id | replace('sensor.','') | replace('_this_month_s_consumption','') %}
+            {% if slug not in hidden %}
+              {% set ns.total = ns.total + (s.state | float(0)) %}
+            {% endif %}
+          {% endfor %}
+          {% if day > 0 and ns.total > 0 %}
+            {{ ((ns.total / day) * days_in_month * rate + cust) | round(2) }}
           {% else %}
             {{ cust | round(2) }}
           {% endif %}
@@ -244,7 +319,20 @@ template:
         state: >
           {% set rate = states('sensor.peco_variable_rate') | float(0) %}
           {% set cust = states('input_number.peco_customer_charge') | float(0) %}
-          {% set daily_avg = states('sensor.daily_average_energy_this_month') | float(0) %}
+          {% set day = now().day %}
+          {% set raw = states('input_text.energy_hidden_devices') %}
+          {% set hidden = (raw if raw not in [none,'unknown','unavailable'] else '').split(',') | reject('eq','') | list %}
+          {% set ns = namespace(total=0) %}
+          {% for s in states.sensor
+              if s.entity_id.endswith('_this_month_s_consumption')
+              and 'total_' not in s.entity_id
+              and s.state not in ['unavailable','unknown'] %}
+            {% set slug = s.entity_id | replace('sensor.','') | replace('_this_month_s_consumption','') %}
+            {% if slug not in hidden %}
+              {% set ns.total = ns.total + (s.state | float(0)) %}
+            {% endif %}
+          {% endfor %}
+          {% set daily_avg = (ns.total / day) if day > 0 else 0 %}
           {{ (daily_avg * 365 * rate + cust * 12) | round(2) }}
 
 sensor:
