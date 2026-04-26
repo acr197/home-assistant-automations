@@ -298,10 +298,6 @@ views:
             cards:
 
               # ── Left: Current Usage as gradient-filled bar rows ──
-              # Each device row IS the bar. Card background uses
-              # a CSS gradient that fills based on current W,
-              # snapping to the new value on each state update.
-              # No extra HACS install required.
               - type: custom:vertical-stack-in-card
                 card_mod:
                   style: |
@@ -514,7 +510,7 @@ views:
                         graph_span: 7d
                         span:
                           end: day
-                        update_interval: 30s
+                        update_interval: 5m
                         header:
                           title: "Daily Energy by Device (kWh)"
                           show: true
@@ -570,7 +566,7 @@ views:
                         graph_span: 14d
                         span:
                           end: day
-                        update_interval: 30s
+                        update_interval: 5m
                         header:
                           title: "Daily Energy by Device (kWh)"
                           show: true
@@ -626,7 +622,7 @@ views:
                         graph_span: 30d
                         span:
                           end: day
-                        update_interval: 30s
+                        update_interval: 5m
                         header:
                           title: "Daily Energy by Device (kWh)"
                           show: true
@@ -752,7 +748,7 @@ views:
                     graph_span: 24h
                     span:
                       end: day
-                    update_interval: 60s
+                    update_interval: 5m
                     header:
                       title: "Avg Power Draw by Device (W) — 24h"
                       show: true
@@ -812,7 +808,7 @@ views:
                     graph_span: 7d
                     span:
                       end: day
-                    update_interval: 60s
+                    update_interval: 5m
                     header:
                       title: "Avg Power Draw by Device (W) — 7d"
                       show: true
@@ -906,6 +902,10 @@ views:
 
           # ══════════════════════════════════════════════════════
           #  COST ROW: Today / Billing Cycle toggle
+          #  Both tabs use an apexcharts donut showing kWh
+          #  proportions per device. Since PECO uses a flat rate,
+          #  kWh proportions are identical to cost proportions.
+          #  Cost totals are shown as stat tiles below each donut.
           # ══════════════════════════════════════════════════════
           - type: vertical-stack
             cards:
@@ -973,50 +973,261 @@ views:
                         - letter-spacing: "2px"
                         - color: "var(--secondary-text-color)"
                         - text-transform: uppercase
-              - type: markdown
-                card_mod:
-                  style: |
-                    ha-card {
-                      background: var(--ha-card-background, var(--card-background-color));
-                      border-radius: 0 0 16px 16px;
-                      box-shadow: none;
-                      margin-top: -1px;
-                    }
-                    ha-markdown { padding: 12px 16px 16px !important; }
-                    ha-markdown h3 { margin: 0 0 8px !important; font-size: 0.95em !important; color: var(--secondary-text-color) !important; font-weight: 600 !important; }
-                    ha-markdown table { width: 100%; border-collapse: collapse; font-size: 0.88em; }
-                    ha-markdown th { color: var(--secondary-text-color); font-weight: 600; padding: 6px 8px; text-align: left; border-bottom: 1px solid var(--divider-color); }
-                    ha-markdown td { padding: 5px 8px; border-bottom: 1px solid var(--divider-color); }
-                    ha-markdown td:not(:first-child) { text-align: right; }
-                    ha-markdown td:last-child { color: var(--primary-color); }
-                    ha-markdown tr:last-child td { font-weight: 700; border-bottom: none; }
-                content: |
-                  {%- set today = is_state('input_boolean.cost_view_today', 'on') -%}
-                  {%- set suffix = '_today_s_consumption' if today else '_this_month_s_consumption' -%}
-                  {%- set strip1 = " Today's Consumption" if today else " This Month's Consumption" -%}
-                  {%- set strip2 = " Today's consumption" if today else " This Month's consumption" -%}
-                  {%- set raw = states('input_text.energy_hidden_devices') -%}
-                  {%- set hidden = (raw if raw not in [none,'unknown','unavailable'] else '').split(',') | reject('eq','') | list -%}
-                  {%- set rate = states('sensor.peco_variable_rate')|float(0) -%}
-                  {%- set cust = states('input_number.peco_customer_charge')|float(0) -%}
-                  {%- set rows = namespace(out='') -%}
-                  {%- for s in states.sensor
-                      if s.entity_id.endswith(suffix)
-                      and 'total_' not in s.entity_id
-                      and s.state not in ['unavailable','unknown'] -%}
-                    {%- set slug = s.entity_id | replace('sensor.','') | replace(suffix,'') -%}
-                    {%- if slug not in hidden -%}
-                      {%- set kwh = s.state|float(0) -%}
-                      {%- set name = s.attributes.get('friendly_name', slug) | replace(strip1,'') | replace(strip2,'') | replace(' Plug','') | trim -%}
-                      {%- set rows.out = rows.out + '| ' + name + ' | ' + ('%.2f' % kwh) + ' | $' + ('%.2f' % (kwh * rate)) + ' |\n' -%}
-                    {%- endif -%}
-                  {%- endfor -%}
-                  ### {{ "Today's Energy Costs" if today else "This Billing Cycle's Energy Costs" }}
 
-                  | Device | kWh | Cost |
-                  |:---|---:|---:|
-                  {{ rows.out }}{% if not today %}| Customer charge |  | ${{ '%.2f' % cust }} |
-                  {% endif %}| **Total** | **{{ '%.2f' % (states(('sensor.total_energy_today' if today else 'sensor.total_energy_this_month'))|float(0)) }}** | **${{ '%.2f' % (states(('sensor.total_energy_cost_today' if today else 'sensor.total_energy_cost_monthly'))|float(0)) }}** |
+              # ── TODAY tab ──
+              - type: conditional
+                conditions:
+                  - condition: state
+                    entity: input_boolean.cost_view_today
+                    state: "on"
+                card:
+                  type: vertical-stack
+                  cards:
+                    - type: custom:auto-entities
+                      card:
+                        type: custom:apexcharts-card
+                        chart_type: donut
+                        update_interval: 30s
+                        header:
+                          show: true
+                          title: "Today — kWh by Device"
+                          show_states: true
+                          colorize_states: true
+                        card_mod:
+                          style: |
+                            ha-card {
+                              background: var(--ha-card-background, var(--card-background-color));
+                              border-radius: 0;
+                              box-shadow: none;
+                              margin-top: -1px;
+                            }
+                        apex_config:
+                          plotOptions:
+                            pie:
+                              donut:
+                                size: "60%"
+                          legend:
+                            show: true
+                            position: bottom
+                            horizontalAlign: center
+                            fontSize: "11px"
+                      card_param: series
+                      filter:
+                        template: |
+                          {%- set raw = states('input_text.energy_hidden_devices') -%}
+                          {%- set hidden = (raw if raw not in [none,'unknown','unavailable'] else '').split(',') | reject('eq','') | list -%}
+                          {%- set colors = ['#f39c12','#3498db','#2ecc71','#e74c3c','#9b59b6','#1abc9c','#e67e22','#8e44ad'] -%}
+                          {%- set ns = namespace(idx=0) -%}
+                          {%- for s in states.sensor
+                              if s.entity_id.endswith('_today_s_consumption')
+                              and 'total_' not in s.entity_id
+                              and s.state not in ['unavailable','unknown'] -%}
+                            {%- set slug = s.entity_id | replace('sensor.','') | replace('_today_s_consumption','') -%}
+                            {%- if slug not in hidden -%}
+                              {%- set color = colors[ns.idx % (colors | length)] -%}
+                              {%- set ns.idx = ns.idx + 1 -%}
+                              {%- set name = s.attributes.get('friendly_name', slug) | replace(" Today's Consumption",'') | replace(" Today's consumption",'') | replace(' Plug','') | trim -%}
+                              {{ {'entity': s.entity_id, 'name': name, 'color': color} }},
+                            {%- endif -%}
+                          {%- endfor -%}
+                    # ── Today cost + usage stat row ──
+                    - type: horizontal-stack
+                      cards:
+                        - type: custom:button-card
+                          entity: sensor.total_energy_today
+                          show_name: true
+                          show_state: true
+                          show_icon: true
+                          icon: mdi:lightning-bolt
+                          name: "total today"
+                          card_mod:
+                            style: |
+                              ha-card { border-radius: 0 0 0 16px; }
+                          styles:
+                            card:
+                              - background: "var(--ha-card-background, var(--card-background-color))"
+                              - border-radius: "0 0 0 16px"
+                              - box-shadow: none
+                              - padding: "12px 16px"
+                              - margin-top: "1px"
+                            grid:
+                              - grid-template-areas: '"i n" "i s"'
+                              - grid-template-columns: "min-content 1fr"
+                            icon:
+                              - color: "#f39c12"
+                              - width: "20px"
+                              - margin-right: "10px"
+                            name:
+                              - font-size: "10px"
+                              - color: "var(--secondary-text-color)"
+                              - text-align: left
+                              - justify-self: start
+                              - text-transform: lowercase
+                              - letter-spacing: "1px"
+                            state:
+                              - font-size: "20px"
+                              - font-weight: "700"
+                              - color: "var(--primary-text-color)"
+                              - justify-self: start
+                        - type: custom:button-card
+                          entity: sensor.total_energy_cost_today
+                          show_name: true
+                          show_state: true
+                          show_icon: true
+                          icon: mdi:currency-usd
+                          name: "cost today"
+                          styles:
+                            card:
+                              - background: "linear-gradient(135deg, rgba(0,180,171,0.12), rgba(107,47,160,0.12))"
+                              - border-radius: "0 0 16px 0"
+                              - box-shadow: none
+                              - padding: "12px 16px"
+                              - margin-top: "1px"
+                            grid:
+                              - grid-template-areas: '"i n" "i s"'
+                              - grid-template-columns: "min-content 1fr"
+                            icon:
+                              - color: "#00b4ab"
+                              - width: "20px"
+                              - margin-right: "10px"
+                            name:
+                              - font-size: "10px"
+                              - color: "var(--secondary-text-color)"
+                              - text-align: left
+                              - justify-self: start
+                              - text-transform: lowercase
+                              - letter-spacing: "1px"
+                            state:
+                              - font-size: "20px"
+                              - font-weight: "700"
+                              - color: "#00b4ab"
+                              - justify-self: start
+
+              # ── BILLING CYCLE tab ──
+              - type: conditional
+                conditions:
+                  - condition: state
+                    entity: input_boolean.cost_view_today
+                    state: "off"
+                card:
+                  type: vertical-stack
+                  cards:
+                    - type: custom:auto-entities
+                      card:
+                        type: custom:apexcharts-card
+                        chart_type: donut
+                        update_interval: 5m
+                        header:
+                          show: true
+                          title: "Billing Cycle — kWh by Device"
+                          show_states: true
+                          colorize_states: true
+                        card_mod:
+                          style: |
+                            ha-card {
+                              background: var(--ha-card-background, var(--card-background-color));
+                              border-radius: 0;
+                              box-shadow: none;
+                              margin-top: -1px;
+                            }
+                        apex_config:
+                          plotOptions:
+                            pie:
+                              donut:
+                                size: "60%"
+                          legend:
+                            show: true
+                            position: bottom
+                            horizontalAlign: center
+                            fontSize: "11px"
+                      card_param: series
+                      filter:
+                        template: |
+                          {%- set raw = states('input_text.energy_hidden_devices') -%}
+                          {%- set hidden = (raw if raw not in [none,'unknown','unavailable'] else '').split(',') | reject('eq','') | list -%}
+                          {%- set colors = ['#f39c12','#3498db','#2ecc71','#e74c3c','#9b59b6','#1abc9c','#e67e22','#8e44ad'] -%}
+                          {%- set ns = namespace(idx=0) -%}
+                          {%- for s in states.sensor
+                              if s.entity_id.endswith('_this_month_s_consumption')
+                              and 'total_' not in s.entity_id
+                              and s.state not in ['unavailable','unknown'] -%}
+                            {%- set slug = s.entity_id | replace('sensor.','') | replace('_this_month_s_consumption','') -%}
+                            {%- if slug not in hidden -%}
+                              {%- set color = colors[ns.idx % (colors | length)] -%}
+                              {%- set ns.idx = ns.idx + 1 -%}
+                              {%- set name = s.attributes.get('friendly_name', slug) | replace(" This Month's Consumption",'') | replace(" This Month's consumption",'') | replace(' Plug','') | trim -%}
+                              {{ {'entity': s.entity_id, 'name': name, 'color': color} }},
+                            {%- endif -%}
+                          {%- endfor -%}
+                    # ── Billing cycle: customer charge + total cost ──
+                    - type: horizontal-stack
+                      cards:
+                        - type: custom:button-card
+                          entity: input_number.peco_customer_charge
+                          show_name: true
+                          show_state: true
+                          show_icon: true
+                          icon: mdi:account-cash
+                          name: "customer charge"
+                          styles:
+                            card:
+                              - background: "var(--ha-card-background, var(--card-background-color))"
+                              - border-radius: "0 0 0 16px"
+                              - box-shadow: none
+                              - padding: "12px 16px"
+                              - margin-top: "1px"
+                            grid:
+                              - grid-template-areas: '"i n" "i s"'
+                              - grid-template-columns: "min-content 1fr"
+                            icon:
+                              - color: "#9b59b6"
+                              - width: "20px"
+                              - margin-right: "10px"
+                            name:
+                              - font-size: "10px"
+                              - color: "var(--secondary-text-color)"
+                              - text-align: left
+                              - justify-self: start
+                              - text-transform: lowercase
+                              - letter-spacing: "1px"
+                            state:
+                              - font-size: "20px"
+                              - font-weight: "700"
+                              - color: "var(--primary-text-color)"
+                              - justify-self: start
+                        - type: custom:button-card
+                          entity: sensor.total_energy_cost_monthly
+                          show_name: true
+                          show_state: true
+                          show_icon: true
+                          icon: mdi:receipt-text-outline
+                          name: "total with fees"
+                          styles:
+                            card:
+                              - background: "linear-gradient(135deg, rgba(0,180,171,0.12), rgba(107,47,160,0.12))"
+                              - border-radius: "0 0 16px 0"
+                              - box-shadow: none
+                              - padding: "12px 16px"
+                              - margin-top: "1px"
+                            grid:
+                              - grid-template-areas: '"i n" "i s"'
+                              - grid-template-columns: "min-content 1fr"
+                            icon:
+                              - color: "#00b4ab"
+                              - width: "20px"
+                              - margin-right: "10px"
+                            name:
+                              - font-size: "10px"
+                              - color: "var(--secondary-text-color)"
+                              - text-align: left
+                              - justify-self: start
+                              - text-transform: lowercase
+                              - letter-spacing: "1px"
+                            state:
+                              - font-size: "20px"
+                              - font-weight: "700"
+                              - color: "#00b4ab"
+                              - justify-self: start
 
           # ══════════════════════════════════════════════════════
           #  SECTION HEADER — usage
@@ -1062,15 +1273,13 @@ views:
                 - justify-self: end
 
           # ══════════════════════════════════════════════════════
-          #  USAGE: Monthly chart — apexcharts (same engine as the
-          #  working power-draw charts). _this_month_s_consumption
-          #  + max-per-month gives correct historical totals.
+          #  USAGE: Monthly chart
           # ══════════════════════════════════════════════════════
           - type: custom:auto-entities
             card:
               type: custom:apexcharts-card
               graph_span: 180d
-              update_interval: 10m
+              update_interval: 30m
               header:
                 title: "Monthly Energy by Device (kWh)"
                 show: true
@@ -1117,7 +1326,7 @@ views:
                 {%- endfor -%}
 
   # ═══════════════════════════════════════════════════════════
-  #  VIEW 2: DEVICES — manage tracked devices
+  #  VIEW 2: DEVICES
   # ═══════════════════════════════════════════════════════════
   - title: Devices
     path: devices
