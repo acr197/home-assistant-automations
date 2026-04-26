@@ -35,6 +35,12 @@ group:
 
 input_boolean:
   guest_mode:
+  power_draw_7d_view:
+    name: "Power Draw: 7-Day View"
+    icon: mdi:calendar-week
+  cost_view_today:
+    name: "Cost View: Today"
+    icon: mdi:calendar-today
 
 input_button:
   push_to_github:
@@ -43,6 +49,17 @@ input_button:
   pull_from_github:
     name: Pull from GitHub
     icon: mdi:cloud-download
+
+# ═══════════════════════════════════════════════════════════
+#  Single source of truth for hidden devices.
+#  max: 255 is HA's hard upper limit. Six device slugs
+#  averaging ~30 chars each fits comfortably.
+# ═══════════════════════════════════════════════════════════
+input_text:
+  energy_hidden_devices:
+    name: "Hidden Energy Devices"
+    max: 255
+    icon: mdi:eye-off
 
 template:
   - sensor:
@@ -103,7 +120,7 @@ template:
         state: >
           {% set cw = state_attr('sensor.openmeteo_raw','current') %}
           {{ cw['relative_humidity_2m'] if cw else None }}
-      # ── PECO combined variable rate sensor ──
+
       - name: "PECO Variable Rate"
         unique_id: peco_variable_rate
         unit_of_measurement: "$/kWh"
@@ -111,230 +128,116 @@ template:
           {{ (states('input_number.peco_delivery_rate') | float(0) +
               states('input_number.peco_supply_rate') | float(0) +
               states('input_number.peco_transmission_rate') | float(0)) | round(5) }}
-      # ── Energy cost sensors (using input_number rates) ──
-      - name: "Desktop Desk Plug Energy Cost Today"
-        unique_id: desktop_desk_plug_energy_cost_today
-        unit_of_measurement: "$"
-        state_class: measurement
-        state: >
-          {% set rate = states('sensor.peco_variable_rate') | float(0) %}
-          {{ (states('sensor.tapo_p110m_1_today_s_consumption') | float(0) * rate) | round(2) }}
-      - name: "Nursery Heater Plug Energy Cost Today"
-        unique_id: nursery_heater_plug_energy_cost_today
-        unit_of_measurement: "$"
-        state_class: measurement
-        state: >
-          {% set rate = states('sensor.peco_variable_rate') | float(0) %}
-          {{ (states('sensor.tapo_p110m_2_nursery_heater_today_s_consumption') | float(0) * rate) | round(2) }}
-      - name: "Dyson Heater Plug Energy Cost Today"
-        unique_id: dyson_heater_plug_energy_cost_today
-        unit_of_measurement: "$"
-        state_class: measurement
-        state: >
-          {% set rate = states('sensor.peco_variable_rate') | float(0) %}
-          {{ (states('sensor.tapo_p110m_3_today_s_consumption') | float(0) * rate) | round(2) }}
-      - name: "Basement Heater Plug Energy Cost Today"
-        unique_id: basement_heater_plug_energy_cost_today
-        unit_of_measurement: "$"
-        state_class: measurement
-        state: >
-          {% set rate = states('sensor.peco_variable_rate') | float(0) %}
-          {{ (states('sensor.tapo_p110m_4_basement_heater_today_s_consumption') | float(0) * rate) | round(2) }}
-      - name: "Desktop Desk Plug Energy Cost Monthly"
-        unique_id: desktop_desk_plug_energy_cost_monthly
-        unit_of_measurement: "$"
-        state_class: measurement
-        state: >
-          {% set rate = states('sensor.peco_variable_rate') | float(0) %}
-          {{ (states('sensor.tapo_p110m_1_this_month_s_consumption') | float(0) * rate) | round(2) }}
-      - name: "Nursery Heater Plug Energy Cost Monthly"
-        unique_id: nursery_heater_plug_energy_cost_monthly
-        unit_of_measurement: "$"
-        state_class: measurement
-        state: >
-          {% set rate = states('sensor.peco_variable_rate') | float(0) %}
-          {{ (states('sensor.tapo_p110m_2_nursery_heater_this_month_s_consumption') | float(0) * rate) | round(2) }}
-      - name: "Dyson Heater Plug Energy Cost Monthly"
-        unique_id: dyson_heater_plug_energy_cost_monthly
-        unit_of_measurement: "$"
-        state_class: measurement
-        state: >
-          {% set rate = states('sensor.peco_variable_rate') | float(0) %}
-          {{ (states('sensor.tapo_p110m_3_this_month_s_consumption') | float(0) * rate) | round(2) }}
-      - name: "Basement Heater Plug Energy Cost Monthly"
-        unique_id: basement_heater_plug_energy_cost_monthly
-        unit_of_measurement: "$"
-        state_class: measurement
-        state: >
-          {% set rate = states('sensor.peco_variable_rate') | float(0) %}
-          {{ (states('sensor.tapo_p110m_4_basement_heater_this_month_s_consumption') | float(0) * rate) | round(2) }}
-      - name: "Tumble Dryer Energy Cost Today"
-        unique_id: tumble_dryer_energy_cost_today
-        unit_of_measurement: "$"
-        state_class: measurement
-        state: >
-          {% set rate = states('sensor.peco_variable_rate') | float(0) %}
-          {{ (states('sensor.tumble_dryer_energy_daily') | float(0) * rate) | round(2) }}
-      - name: "Tumble Dryer Energy Cost Monthly"
-        unique_id: tumble_dryer_energy_cost_monthly
-        unit_of_measurement: "$"
-        state_class: measurement
-        state: >
-          {% set rate = states('sensor.peco_variable_rate') | float(0) %}
-          {{ (states('sensor.tumble_dryer_energy_monthly') | float(0) * rate) | round(2) }}
-      - name: "Guest Bedroom Desk Plug Energy Cost Today"
-        unique_id: guest_bedroom_desk_plug_energy_cost_today
-        unit_of_measurement: "$"
-        state_class: measurement
-        state: >
-          {% set rate = states('sensor.peco_variable_rate') | float(0) %}
-          {{ (states('sensor.guest_bedroom_desk_plug_today_s_consumption') | float(0) * rate) | round(2) }}
-      - name: "Guest Bedroom Desk Plug Energy Cost Monthly"
-        unique_id: guest_bedroom_desk_plug_energy_cost_monthly
-        unit_of_measurement: "$"
-        state_class: measurement
-        state: >
-          {% set rate = states('sensor.peco_variable_rate') | float(0) %}
-          {{ (states('sensor.guest_bedroom_desk_plug_this_month_s_consumption') | float(0) * rate) | round(2) }}
-      - name: "Total Energy Cost Today"
-        unique_id: total_energy_cost_today
-        unit_of_measurement: "$"
-        state: >
-          {% set rate = states('sensor.peco_variable_rate') | float(0) %}
-          {{ ((
-            states('sensor.tapo_p110m_1_today_s_consumption') | float(0) +
-            states('sensor.tapo_p110m_2_nursery_heater_today_s_consumption') | float(0) +
-            states('sensor.tapo_p110m_3_today_s_consumption') | float(0) +
-            states('sensor.tapo_p110m_4_basement_heater_today_s_consumption') | float(0) +
-            states('sensor.tumble_dryer_energy_daily') | float(0) +
-            states('sensor.guest_bedroom_desk_plug_today_s_consumption') | float(0)
-          ) * rate) | round(2) }}
-      - name: "Total Energy Cost Monthly"
-        unique_id: total_energy_cost_monthly
-        unit_of_measurement: "$"
-        state: >
-          {% set rate = states('sensor.peco_variable_rate') | float(0) %}
-          {% set cust = states('input_number.peco_customer_charge') | float(0) %}
-          {{ ((
-            states('sensor.tapo_p110m_1_this_month_s_consumption') | float(0) +
-            states('sensor.tapo_p110m_2_nursery_heater_this_month_s_consumption') | float(0) +
-            states('sensor.tapo_p110m_3_this_month_s_consumption') | float(0) +
-            states('sensor.tapo_p110m_4_basement_heater_this_month_s_consumption') | float(0) +
-            states('sensor.tumble_dryer_energy_monthly') | float(0) +
-            states('sensor.guest_bedroom_desk_plug_this_month_s_consumption') | float(0)
-          ) * rate + cust) | round(2) }}
+
       - name: "Total Power Draw Now"
         unique_id: total_power_draw_now
         unit_of_measurement: "W"
         device_class: power
         state_class: measurement
         state: >
-          {{ (
-            states('sensor.tapo_p110m_1_current_consumption') | float(0) +
-            states('sensor.tapo_p110m_2_nursery_heater_current_consumption') | float(0) +
-            states('sensor.tapo_p110m_3_current_consumption') | float(0) +
-            states('sensor.tapo_p110m_4_basement_heater_current_consumption') | float(0) +
-            states('sensor.guest_bedroom_desk_plug_current_consumption') | float(0)
-          ) | round(1) }}
+          {% set raw = states('input_text.energy_hidden_devices') %}
+          {% set hidden = (raw if raw not in [none,'unknown','unavailable'] else '').split(',') | reject('eq','') | list %}
+          {% set ns = namespace(total=0) %}
+          {% for s in states.sensor
+              if s.attributes.get('device_class') == 'power'
+              and s.attributes.get('unit_of_measurement') == 'W'
+              and 'total_' not in s.entity_id
+              and s.state not in ['unavailable','unknown'] %}
+            {% set slug = s.entity_id | replace('sensor.','') | replace('_current_consumption','') | replace('_power','') %}
+            {% if slug not in hidden %}
+              {% set ns.total = ns.total + (s.state | float(0)) %}
+            {% endif %}
+          {% endfor %}
+          {{ ns.total | round(1) }}
+
       - name: "Total Energy Today"
         unique_id: total_energy_today
         unit_of_measurement: "kWh"
         device_class: energy
         state: >
-          {{ (
-            states('sensor.tapo_p110m_1_today_s_consumption') | float(0) +
-            states('sensor.tapo_p110m_2_nursery_heater_today_s_consumption') | float(0) +
-            states('sensor.tapo_p110m_3_today_s_consumption') | float(0) +
-            states('sensor.tapo_p110m_4_basement_heater_today_s_consumption') | float(0) +
-            states('sensor.tumble_dryer_energy_daily') | float(0) +
-            states('sensor.guest_bedroom_desk_plug_today_s_consumption') | float(0)
-          ) | round(2) }}
+          {% set raw = states('input_text.energy_hidden_devices') %}
+          {% set hidden = (raw if raw not in [none,'unknown','unavailable'] else '').split(',') | reject('eq','') | list %}
+          {% set ns = namespace(total=0) %}
+          {% for s in states.sensor
+              if s.entity_id.endswith('_today_s_consumption')
+              and 'total_' not in s.entity_id
+              and s.state not in ['unavailable','unknown'] %}
+            {% set slug = s.entity_id | replace('sensor.','') | replace('_today_s_consumption','') %}
+            {% if slug not in hidden %}
+              {% set ns.total = ns.total + (s.state | float(0)) %}
+            {% endif %}
+          {% endfor %}
+          {{ ns.total | round(2) }}
+
       - name: "Total Energy This Month"
         unique_id: total_energy_this_month
         unit_of_measurement: "kWh"
         device_class: energy
         state: >
-          {{ (
-            states('sensor.tapo_p110m_1_this_month_s_consumption') | float(0) +
-            states('sensor.tapo_p110m_2_nursery_heater_this_month_s_consumption') | float(0) +
-            states('sensor.tapo_p110m_3_this_month_s_consumption') | float(0) +
-            states('sensor.tapo_p110m_4_basement_heater_this_month_s_consumption') | float(0) +
-            states('sensor.tumble_dryer_energy_monthly') | float(0) +
-            states('sensor.guest_bedroom_desk_plug_this_month_s_consumption') | float(0)
-          ) | round(2) }}
+          {% set raw = states('input_text.energy_hidden_devices') %}
+          {% set hidden = (raw if raw not in [none,'unknown','unavailable'] else '').split(',') | reject('eq','') | list %}
+          {% set ns = namespace(total=0) %}
+          {% for s in states.sensor
+              if s.entity_id.endswith('_this_month_s_consumption')
+              and 'total_' not in s.entity_id
+              and s.state not in ['unavailable','unknown'] %}
+            {% set slug = s.entity_id | replace('sensor.','') | replace('_this_month_s_consumption','') %}
+            {% if slug not in hidden %}
+              {% set ns.total = ns.total + (s.state | float(0)) %}
+            {% endif %}
+          {% endfor %}
+          {{ ns.total | round(2) }}
+
+      - name: "Total Energy Cost Today"
+        unique_id: total_energy_cost_today
+        unit_of_measurement: "$"
+        state: >
+          {% set rate = states('sensor.peco_variable_rate') | float(0) %}
+          {% set kwh = states('sensor.total_energy_today') | float(0) %}
+          {{ (kwh * rate) | round(2) }}
+
+      - name: "Total Energy Cost Monthly"
+        unique_id: total_energy_cost_monthly
+        unit_of_measurement: "$"
+        state: >
+          {% set rate = states('sensor.peco_variable_rate') | float(0) %}
+          {% set cust = states('input_number.peco_customer_charge') | float(0) %}
+          {% set kwh = states('sensor.total_energy_this_month') | float(0) %}
+          {{ (kwh * rate + cust) | round(2) }}
+
+      - name: "Daily Average Energy This Month"
+        unique_id: daily_average_energy_this_month
+        unit_of_measurement: "kWh"
+        device_class: energy
+        state: >
+          {% set day = now().day %}
+          {% set kwh = states('sensor.total_energy_this_month') | float(0) %}
+          {{ (kwh / day) | round(2) if day > 0 else 0 }}
+
+      - name: "Daily Average Energy Cost This Month"
+        unique_id: daily_average_energy_cost_this_month
+        unit_of_measurement: "$"
+        state: >
+          {% set rate = states('sensor.peco_variable_rate') | float(0) %}
+          {% set day = now().day %}
+          {% set kwh = states('sensor.total_energy_this_month') | float(0) %}
+          {{ ((kwh / day) * rate) | round(2) if day > 0 else 0 }}
+
       - name: "Projected Monthly Energy Cost"
         unique_id: projected_monthly_energy_cost
         unit_of_measurement: "$"
         state: >
           {% set rate = states('sensor.peco_variable_rate') | float(0) %}
           {% set cust = states('input_number.peco_customer_charge') | float(0) %}
-          {% set day_of_month = now().day %}
+          {% set day = now().day %}
           {% set days_in_month = (now().replace(month=now().month % 12 + 1, day=1) - timedelta(days=1)).day if now().month < 12 else 31 %}
-          {% set monthly_kwh = states('sensor.total_energy_this_month') | float(0) %}
-          {% if day_of_month > 0 and monthly_kwh > 0 %}
-            {{ ((monthly_kwh / day_of_month) * days_in_month * rate + cust) | round(2) }}
+          {% set kwh = states('sensor.total_energy_this_month') | float(0) %}
+          {% if day > 0 and kwh > 0 %}
+            {{ ((kwh / day) * days_in_month * rate + cust) | round(2) }}
           {% else %}
             {{ cust | round(2) }}
           {% endif %}
-      - name: "Daily Average Energy This Month"
-        unique_id: daily_average_energy_this_month
-        unit_of_measurement: "kWh"
-        device_class: energy
-        state: >
-          {% set day_of_month = now().day %}
-          {% set monthly_kwh = states('sensor.total_energy_this_month') | float(0) %}
-          {% if day_of_month > 0 %}
-            {{ (monthly_kwh / day_of_month) | round(2) }}
-          {% else %}
-            0
-          {% endif %}
-      - name: "Daily Average Energy Cost This Month"
-        unique_id: daily_average_energy_cost_this_month
-        unit_of_measurement: "$"
-        state: >
-          {% set rate = states('sensor.peco_variable_rate') | float(0) %}
-          {% set day_of_month = now().day %}
-          {% set monthly_kwh = states('sensor.total_energy_this_month') | float(0) %}
-          {% if day_of_month > 0 %}
-            {{ ((monthly_kwh / day_of_month) * rate) | round(2) }}
-          {% else %}
-            0
-          {% endif %}
-      - name: "Desktop Desk Plug Share of Total"
-        unique_id: desktop_desk_plug_share_pct
-        unit_of_measurement: "%"
-        state: >
-          {% set total = states('sensor.total_energy_this_month') | float(0) %}
-          {% set device = states('sensor.tapo_p110m_1_this_month_s_consumption') | float(0) %}
-          {{ ((device / total) * 100) | round(1) if total > 0 else 0 }}
-      - name: "Nursery Heater Plug Share of Total"
-        unique_id: nursery_heater_plug_share_pct
-        unit_of_measurement: "%"
-        state: >
-          {% set total = states('sensor.total_energy_this_month') | float(0) %}
-          {% set device = states('sensor.tapo_p110m_2_nursery_heater_this_month_s_consumption') | float(0) %}
-          {{ ((device / total) * 100) | round(1) if total > 0 else 0 }}
-      - name: "Dyson Heater Plug Share of Total"
-        unique_id: dyson_heater_plug_share_pct
-        unit_of_measurement: "%"
-        state: >
-          {% set total = states('sensor.total_energy_this_month') | float(0) %}
-          {% set device = states('sensor.tapo_p110m_3_this_month_s_consumption') | float(0) %}
-          {{ ((device / total) * 100) | round(1) if total > 0 else 0 }}
-      - name: "Basement Heater Plug Share of Total"
-        unique_id: basement_heater_plug_share_pct
-        unit_of_measurement: "%"
-        state: >
-          {% set total = states('sensor.total_energy_this_month') | float(0) %}
-          {% set device = states('sensor.tapo_p110m_4_basement_heater_this_month_s_consumption') | float(0) %}
-          {{ ((device / total) * 100) | round(1) if total > 0 else 0 }}
-      - name: "Guest Bedroom Desk Plug Share of Total"
-        unique_id: guest_bedroom_desk_plug_share_pct
-        unit_of_measurement: "%"
-        state: >
-          {% set total = states('sensor.total_energy_this_month') | float(0) %}
-          {% set device = states('sensor.guest_bedroom_desk_plug_this_month_s_consumption') | float(0) %}
-          {{ ((device / total) * 100) | round(1) if total > 0 else 0 }}
+
       - name: "Estimated Annual Energy Cost"
         unique_id: estimated_annual_energy_cost
         unit_of_measurement: "$"
@@ -469,14 +372,6 @@ input_number:
     mode: box
     icon: mdi:calendar-start
     initial: 1
-  placeholder_gauge:
-    name: Placeholder Gauge
-    unit_of_measurement: "W"
-    min: 0
-    max: 1500
-    step: 1
-    icon: mdi:help-circle-outline
-    initial: 0
 
 input_select:
   energy_chart_period:
@@ -488,44 +383,12 @@ input_select:
     initial: 14d
     icon: mdi:calendar-range
 
-input_boolean:
-  show_device_desktop:
-    name: "Show: Desktop"
-    icon: mdi:desktop-tower-monitor
-    initial: true
-  show_device_nursery:
-    name: "Show: Nursery Heater"
-    icon: mdi:radiator
-    initial: true
-  show_device_dyson:
-    name: "Show: Dyson Heater"
-    icon: mdi:fan
-    initial: true
-  show_device_basement:
-    name: "Show: Basement Heater"
-    icon: mdi:radiator
-    initial: true
-  show_device_guest_bedroom:
-    name: "Show: Guest Bedroom Desk"
-    icon: mdi:desk
-    initial: true
-  power_draw_7d_view:
-    name: "Power Draw: 7-Day View"
-    icon: mdi:calendar-week
-    initial: false
-  cost_view_today:
-    name: Cost View Today
-    icon: mdi:calendar-today
-
-# ── Utility meters: create daily/monthly resets from cumulative Miele sensor ──
-# sensor.tumble_dryer_energy_consumption is a total_increasing lifetime counter.
-# These meters slice it into day/month windows matching the Tapo plug pattern.
 utility_meter:
-  tumble_dryer_energy_daily:
+  tumble_dryer_today:
     source: sensor.tumble_dryer_energy_consumption
     cycle: daily
     name: "Tumble Dryer Today's Consumption"
-  tumble_dryer_energy_monthly:
+  tumble_dryer_month:
     source: sensor.tumble_dryer_energy_consumption
     cycle: monthly
     name: "Tumble Dryer This Month's Consumption"
@@ -533,7 +396,6 @@ utility_meter:
 shell_command:
   git_push: "sh /config/git_push.sh"
   git_pull: "sh /config/git_pull.sh"
-
 
 lovelace:
   mode: storage

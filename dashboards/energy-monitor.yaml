@@ -1,24 +1,19 @@
 title: Energy Monitor
 views:
   # ═══════════════════════════════════════════════════════════
-  #  VIEW 1: OVERVIEW — at-a-glance energy summary
+  #  VIEW 1: OVERVIEW
   # ═══════════════════════════════════════════════════════════
   - title: Overview
     path: overview
     icon: mdi:lightning-bolt
     type: panel
-    # Background: the teal gradient is the fallback — it shows immediately.
-    # Once you upload the power-towers photo to /config/www/energy-bg.jpg
-    # the image overlays the gradient. Hard-refresh (Ctrl+Shift+R) after upload.
     background: "url('/local/energy-bg.jpg') center/cover no-repeat, linear-gradient(160deg, #071a28 0%, #030d10 60%, #0a1a10 100%)"
     cards:
-      # Panel view: one top-level vertical-stack, full width.
-      # horizontal-stacks inside become proper 3-column rows.
       - type: vertical-stack
         cards:
 
           # ══════════════════════════════════════════════════════
-          #  SECTION HEADER — energy monitor
+          #  SECTION HEADER
           # ══════════════════════════════════════════════════════
           - type: custom:button-card
             show_name: true
@@ -55,12 +50,94 @@ views:
                 - justify-self: start
 
           # ══════════════════════════════════════════════════════
-          #  TOP ROW: PECO Rate | Energy Distribution | Costs
+          #  CHIP ROW
+          # ══════════════════════════════════════════════════════
+          - type: custom:auto-entities
+            card:
+              type: horizontal-stack
+            card_param: cards
+            sort:
+              method: friendly_name
+            filter:
+              include:
+                - entity_id: "sensor.*_today_s_consumption"
+                  attributes:
+                    device_class: energy
+                  options:
+                    type: custom:button-card
+                    entity: this.entity_id
+                    show_state: false
+                    show_name: true
+                    show_icon: false
+                    name: |
+                      [[[
+                        return (entity.attributes.friendly_name || '')
+                          .replace("Today's Consumption","")
+                          .replace("Today's consumption","")
+                          .replace("Plug","")
+                          .replace(/\s+/g," ")
+                          .trim();
+                      ]]]
+                    tap_action:
+                      action: call-service
+                      service: input_text.set_value
+                      service_data:
+                        entity_id: input_text.energy_hidden_devices
+                        value: |
+                          [[[
+                            const slug = entity.entity_id.replace('sensor.','').replace('_today_s_consumption','');
+                            const obj = states['input_text.energy_hidden_devices'];
+                            const cur = (obj && obj.state) ? obj.state : '';
+                            const list = cur.split(',').filter(x => x.length > 0);
+                            const idx = list.indexOf(slug);
+                            if (idx >= 0) list.splice(idx, 1);
+                            else list.push(slug);
+                            return list.join(',');
+                          ]]]
+                    state:
+                      - operator: template
+                        value: |
+                          [[[
+                            const slug = entity.entity_id.replace('sensor.','').replace('_today_s_consumption','');
+                            const obj = states['input_text.energy_hidden_devices'];
+                            const cur = (obj && obj.state) ? obj.state : '';
+                            return cur.split(',').filter(x => x.length > 0).includes(slug);
+                          ]]]
+                        styles:
+                          card:
+                            - background: "var(--ha-card-background, var(--card-background-color))"
+                            - opacity: "0.45"
+                          name:
+                            - color: "var(--secondary-text-color)"
+                      - operator: default
+                        styles:
+                          card:
+                            - background: "linear-gradient(135deg, #00b4ab, #6b2fa0)"
+                            - opacity: "1"
+                          name:
+                            - color: "white"
+                    styles:
+                      card:
+                        - border-radius: "20px"
+                        - padding: "10px 18px"
+                        - box-shadow: "none"
+                        - margin: "3px"
+                        - height: "auto"
+                      name:
+                        - font-size: "12px"
+                        - font-weight: "600"
+                        - text-transform: "lowercase"
+                        - letter-spacing: "1px"
+              exclude:
+                - entity_id: "sensor.total_*"
+                - state: "unavailable"
+                - state: "unknown"
+
+          # ══════════════════════════════════════════════════════
+          #  TOP ROW: PECO | Totals | Cost summary
           # ══════════════════════════════════════════════════════
           - type: horizontal-stack
             cards:
-
-              # ── Top Left: PECO Rate — editable inputs with gradient header ──
               - type: entities
                 title: peco
                 show_header_toggle: false
@@ -72,7 +149,6 @@ views:
                       box-shadow: none;
                       height: 100%;
                     }
-
                     .card-header {
                       background: linear-gradient(135deg, #00b4ab, #6b2fa0) !important;
                       border-radius: 16px 16px 0 0 !important;
@@ -83,9 +159,7 @@ views:
                       text-transform: lowercase !important;
                       padding: 10px 16px !important;
                     }
-                    .card-content {
-                      padding-top: 16px !important;
-                    }
+                    .card-content { padding-top: 16px !important; }
                 entities:
                   - entity: sensor.peco_variable_rate
                     name: Combined Rate ($/kWh)
@@ -102,41 +176,6 @@ views:
                   - type: divider
                   - entity: input_number.billing_cycle_start_day
                     name: Billing Cycle Start Day
-
-                content: |
-
-                  **PECO Rate: ${{ states('sensor.peco_variable_rate') }}/kWh**
-
-                  Last bill: **${{ states('input_number.peco_last_bill_amount') }}** for **{{ states('input_number.peco_last_bill_kwh') | int }} kWh** ({{ states('input_number.peco_last_bill_days') | int }} days)
-
-                  <table style="width:100%;border-collapse:collapse;margin-top:8px;font-size:0.88em;">
-                    <thead>
-                      <tr style="background:linear-gradient(90deg,#00b4ab,#6b2fa0);">
-                        <th style="color:white;padding:6px 8px;text-align:left;font-weight:600;">Component</th>
-                        <th style="color:white;padding:6px 8px;text-align:right;font-weight:600;">Rate</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr>
-                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);">Delivery</td>
-                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;color:var(--primary-color);">${{ states('input_number.peco_delivery_rate') }}/kWh</td>
-                      </tr>
-                      <tr>
-                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);">Supply</td>
-                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;color:var(--primary-color);">${{ states('input_number.peco_supply_rate') }}/kWh</td>
-                      </tr>
-                      <tr>
-                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);">Transmission</td>
-                        <td style="padding:5px 8px;border-bottom:1px solid var(--divider-color);text-align:right;color:var(--primary-color);">${{ states('input_number.peco_transmission_rate') }}/kWh</td>
-                      </tr>
-                      <tr>
-                        <td style="padding:5px 8px;">Customer charge</td>
-                        <td style="padding:5px 8px;text-align:right;color:var(--primary-color);">${{ states('input_number.peco_customer_charge') }}/mo fixed</td>
-                      </tr>
-                    </tbody>
-                  </table>
-
-              # ── Top Middle: Energy Distribution + usage totals ──
               - type: vertical-stack
                 cards:
                   - type: entity
@@ -145,24 +184,14 @@ views:
                     icon: mdi:lightning-bolt
                     card_mod:
                       style: |
-                        ha-card {
-                          background: var(--ha-card-background, var(--card-background-color));
-                          border-radius: 16px;
-                          box-shadow: none;
-                        }
+                        ha-card { background: var(--ha-card-background, var(--card-background-color)); border-radius: 16px; box-shadow: none; }
                   - type: entity
                     entity: sensor.total_energy_this_month
                     name: Total This Month
                     icon: mdi:lightning-bolt-circle
                     card_mod:
                       style: |
-                        ha-card {
-                          background: var(--ha-card-background, var(--card-background-color));
-                          border-radius: 16px;
-                          box-shadow: none;
-                        }
-
-              # ── Top Right: 6-block cost summary ──
+                        ha-card { background: var(--ha-card-background, var(--card-background-color)); border-radius: 16px; box-shadow: none; }
               - type: vertical-stack
                 cards:
                   - type: horizontal-stack
@@ -173,36 +202,21 @@ views:
                         icon: mdi:flash
                         card_mod:
                           style: |
-                            ha-card {
-                              background: var(--ha-card-background, var(--card-background-color));
-                              border-radius: 16px;
-                              box-shadow: none;
-                              min-height: 120px;
-                            }
+                            ha-card { background: var(--ha-card-background, var(--card-background-color)); border-radius: 16px; box-shadow: none; min-height: 120px; }
                       - type: entity
                         entity: sensor.total_energy_cost_today
                         name: Cost Today
                         icon: mdi:currency-usd
                         card_mod:
                           style: |
-                            ha-card {
-                              background: var(--ha-card-background, var(--card-background-color));
-                              border-radius: 16px;
-                              box-shadow: none;
-                              min-height: 120px;
-                            }
+                            ha-card { background: var(--ha-card-background, var(--card-background-color)); border-radius: 16px; box-shadow: none; min-height: 120px; }
                       - type: entity
                         entity: sensor.total_energy_cost_monthly
                         name: Cost This Month
                         icon: mdi:calendar-month
                         card_mod:
                           style: |
-                            ha-card {
-                              background: var(--ha-card-background, var(--card-background-color));
-                              border-radius: 16px;
-                              box-shadow: none;
-                              min-height: 120px;
-                            }
+                            ha-card { background: var(--ha-card-background, var(--card-background-color)); border-radius: 16px; box-shadow: none; min-height: 120px; }
                   - type: horizontal-stack
                     cards:
                       - type: entity
@@ -211,50 +225,31 @@ views:
                         icon: mdi:chart-line-variant
                         card_mod:
                           style: |
-                            ha-card {
-                              background: var(--ha-card-background, var(--card-background-color));
-                              border-radius: 16px;
-                              box-shadow: none;
-                              min-height: 120px;
-                            }
+                            ha-card { background: var(--ha-card-background, var(--card-background-color)); border-radius: 16px; box-shadow: none; min-height: 120px; }
                       - type: entity
                         entity: sensor.daily_average_energy_cost_this_month
                         name: Daily Avg Cost
                         icon: mdi:chart-bar
                         card_mod:
                           style: |
-                            ha-card {
-                              background: var(--ha-card-background, var(--card-background-color));
-                              border-radius: 16px;
-                              box-shadow: none;
-                              min-height: 120px;
-                            }
+                            ha-card { background: var(--ha-card-background, var(--card-background-color)); border-radius: 16px; box-shadow: none; min-height: 120px; }
                       - type: entity
                         entity: sensor.estimated_annual_energy_cost
                         name: Est. Annual
                         icon: mdi:calendar-clock
                         card_mod:
                           style: |
-                            ha-card {
-                              background: var(--ha-card-background, var(--card-background-color));
-                              border-radius: 16px;
-                              box-shadow: none;
-                              min-height: 120px;
-                            }
+                            ha-card { background: var(--ha-card-background, var(--card-background-color)); border-radius: 16px; box-shadow: none; min-height: 120px; }
                   - type: entity
                     entity: sensor.daily_average_energy_this_month
                     name: Daily Avg kWh
                     icon: mdi:chart-line
                     card_mod:
                       style: |
-                        ha-card {
-                          background: var(--ha-card-background, var(--card-background-color));
-                          border-radius: 16px;
-                          box-shadow: none;
-                        }
+                        ha-card { background: var(--ha-card-background, var(--card-background-color)); border-radius: 16px; box-shadow: none; }
 
           # ══════════════════════════════════════════════════════
-          #  SECTION HEADER — power (live wattage)
+          #  SECTION HEADER — power
           # ══════════════════════════════════════════════════════
           - type: custom:button-card
             entity: sensor.total_power_draw_now
@@ -297,275 +292,118 @@ views:
                 - justify-self: end
 
           # ══════════════════════════════════════════════════════
-          #  BOTTOM ROW: Gauges | Power Graph | Device Charts
+          #  BOTTOM ROW: gradient meter bars | Daily Energy chart
           # ══════════════════════════════════════════════════════
           - type: horizontal-stack
             cards:
 
-              # ── Bottom Left: "Current Usage" title + 6 real-time gauges ──
-              - type: vertical-stack
+              # ── Left: Current Usage as gradient-filled bar rows ──
+              # Each device row IS the bar. Card background uses
+              # a CSS gradient that fills based on current W,
+              # snapping to the new value on each state update.
+              # No extra HACS install required.
+              - type: custom:vertical-stack-in-card
+                card_mod:
+                  style: |
+                    ha-card {
+                      background: var(--ha-card-background, var(--card-background-color));
+                      border-radius: 16px;
+                      box-shadow: none;
+                      padding: 14px 14px 10px;
+                    }
                 cards:
                   - type: markdown
-                    content: "## Current Usage"
+                    content: "### Current Usage"
                     card_mod:
                       style: |
-                        ha-card {
-                          background: var(--ha-card-background, var(--card-background-color));
-                          border-radius: 16px;
-                          box-shadow: none;
-                        }
-                        ha-markdown {
-                          padding: 12px 16px 16px !important;
-                        }
-                        ha-markdown h2 {
-                          font-size: 24px !important;
-                          font-weight: 400 !important;
+                        ha-card { background: transparent; box-shadow: none; }
+                        ha-markdown { padding: 0 4px 10px !important; }
+                        ha-markdown h3 {
                           margin: 0 !important;
-                          color: var(--primary-text-color);
+                          font-size: 0.95em !important;
+                          color: var(--secondary-text-color) !important;
+                          font-weight: 600 !important;
+                          text-transform: lowercase;
+                          letter-spacing: 2px;
                         }
-                  - type: horizontal-stack
-                    cards:
-                      - type: conditional
-                        conditions:
-                          - condition: state
-                            entity: input_boolean.show_device_desktop
-                            state: "on"
-                          - condition: state
-                            entity: sensor.tapo_p110m_1_current_consumption
-                            state_not: unavailable
-                        card:
-                          type: vertical-stack
-                          cards:
-                            - type: gauge
-                              entity: sensor.tapo_p110m_1_current_consumption
-                              name: Desktop
-                              unit: W
-                              min: 0
-                              max: 500
-                              needle: true
-                              severity:
-                                green: 0
-                                yellow: 150
-                                red: 350
-                              card_mod:
-                                style: |
-                                  ha-card {
-                                    background: var(--ha-card-background, var(--card-background-color));
-                                    border-radius: 16px 16px 0 0;
-                                    box-shadow: none;
-                                    min-height: 140px;
-                                  }
-                            - type: markdown
-                              content: >
-                                {%- set w = states('sensor.tapo_p110m_1_current_consumption')|float(0) -%}
-                                {%- set r = states('sensor.peco_variable_rate')|float(0) -%}
-                                ~${{ "%.2f" % (w * 24 / 1000 * r) }}/day
-                              card_mod:
-                                style: |
-                                  ha-card {
-                                    background: var(--ha-card-background, var(--card-background-color));
-                                    border-radius: 0 0 16px 16px;
-                                    box-shadow: none;
-                                    margin-top: -1px;
-                                    overflow: hidden;
-                                  }
-                                  ha-markdown { padding: 2px 8px 10px !important; overflow: hidden !important; }
-                                  ha-markdown p { text-align: center; font-size: 0.74em; color: var(--secondary-text-color); margin: 0 !important; }
-                      - type: conditional
-                        conditions:
-                          - condition: state
-                            entity: input_boolean.show_device_nursery
-                            state: "on"
-                          - condition: state
-                            entity: sensor.tapo_p110m_2_nursery_heater_current_consumption
-                            state_not: unavailable
-                        card:
-                          type: vertical-stack
-                          cards:
-                            - type: gauge
-                              entity: sensor.tapo_p110m_2_nursery_heater_current_consumption
-                              name: Nursery Heater
-                              unit: W
-                              min: 0
-                              max: 1500
-                              needle: true
-                              severity:
-                                green: 0
-                                yellow: 500
-                                red: 1000
-                              card_mod:
-                                style: |
-                                  ha-card {
-                                    background: var(--ha-card-background, var(--card-background-color));
-                                    border-radius: 16px 16px 0 0;
-                                    box-shadow: none;
-                                    min-height: 140px;
-                                  }
-                            - type: markdown
-                              content: >
-                                {%- set w = states('sensor.tapo_p110m_2_nursery_heater_current_consumption')|float(0) -%}
-                                {%- set r = states('sensor.peco_variable_rate')|float(0) -%}
-                                ~${{ "%.2f" % (w * 24 / 1000 * r) }}/day
-                              card_mod:
-                                style: |
-                                  ha-card {
-                                    background: var(--ha-card-background, var(--card-background-color));
-                                    border-radius: 0 0 16px 16px;
-                                    box-shadow: none;
-                                    margin-top: -1px;
-                                    overflow: hidden;
-                                  }
-                                  ha-markdown { padding: 2px 8px 10px !important; overflow: hidden !important; }
-                                  ha-markdown p { text-align: center; font-size: 0.74em; color: var(--secondary-text-color); margin: 0 !important; }
-                  - type: horizontal-stack
-                    cards:
-                      - type: conditional
-                        conditions:
-                          - condition: state
-                            entity: input_boolean.show_device_dyson
-                            state: "on"
-                          - condition: state
-                            entity: sensor.tapo_p110m_3_current_consumption
-                            state_not: unavailable
-                        card:
-                          type: vertical-stack
-                          cards:
-                            - type: gauge
-                              entity: sensor.tapo_p110m_3_current_consumption
-                              name: Dyson Heater
-                              unit: W
-                              min: 0
-                              max: 2000
-                              needle: true
-                              severity:
-                                green: 0
-                                yellow: 500
-                                red: 1200
-                              card_mod:
-                                style: |
-                                  ha-card {
-                                    background: var(--ha-card-background, var(--card-background-color));
-                                    border-radius: 16px 16px 0 0;
-                                    box-shadow: none;
-                                    min-height: 140px;
-                                  }
-                            - type: markdown
-                              content: >
-                                {%- set w = states('sensor.tapo_p110m_3_current_consumption')|float(0) -%}
-                                {%- set r = states('sensor.peco_variable_rate')|float(0) -%}
-                                ~${{ "%.2f" % (w * 24 / 1000 * r) }}/day
-                              card_mod:
-                                style: |
-                                  ha-card {
-                                    background: var(--ha-card-background, var(--card-background-color));
-                                    border-radius: 0 0 16px 16px;
-                                    box-shadow: none;
-                                    margin-top: -1px;
-                                    overflow: hidden;
-                                  }
-                                  ha-markdown { padding: 2px 8px 10px !important; overflow: hidden !important; }
-                                  ha-markdown p { text-align: center; font-size: 0.74em; color: var(--secondary-text-color); margin: 0 !important; }
-                      - type: conditional
-                        conditions:
-                          - condition: state
-                            entity: input_boolean.show_device_basement
-                            state: "on"
-                          - condition: state
-                            entity: sensor.tapo_p110m_4_basement_heater_current_consumption
-                            state_not: unavailable
-                        card:
-                          type: vertical-stack
-                          cards:
-                            - type: gauge
-                              entity: sensor.tapo_p110m_4_basement_heater_current_consumption
-                              name: Basement Heater
-                              unit: W
-                              min: 0
-                              max: 1500
-                              needle: true
-                              severity:
-                                green: 0
-                                yellow: 500
-                                red: 1000
-                              card_mod:
-                                style: |
-                                  ha-card {
-                                    background: var(--ha-card-background, var(--card-background-color));
-                                    border-radius: 16px 16px 0 0;
-                                    box-shadow: none;
-                                    min-height: 140px;
-                                  }
-                            - type: markdown
-                              content: >
-                                {%- set w = states('sensor.tapo_p110m_4_basement_heater_current_consumption')|float(0) -%}
-                                {%- set r = states('sensor.peco_variable_rate')|float(0) -%}
-                                ~${{ "%.2f" % (w * 24 / 1000 * r) }}/day
-                              card_mod:
-                                style: |
-                                  ha-card {
-                                    background: var(--ha-card-background, var(--card-background-color));
-                                    border-radius: 0 0 16px 16px;
-                                    box-shadow: none;
-                                    margin-top: -1px;
-                                    overflow: hidden;
-                                  }
-                                  ha-markdown { padding: 2px 8px 10px !important; overflow: hidden !important; }
-                                  ha-markdown p { text-align: center; font-size: 0.74em; color: var(--secondary-text-color); margin: 0 !important; }
-                  - type: horizontal-stack
-                    cards:
-                      - type: conditional
-                        conditions:
-                          - condition: state
-                            entity: input_boolean.show_device_guest_bedroom
-                            state: "on"
-                          - condition: state
-                            entity: sensor.guest_bedroom_desk_plug_current_consumption
-                            state_not: unavailable
-                        card:
-                          type: vertical-stack
-                          cards:
-                            - type: gauge
-                              entity: sensor.guest_bedroom_desk_plug_current_consumption
-                              name: Guest Bedroom
-                              unit: W
-                              min: 0
-                              max: 1500
-                              needle: true
-                              severity:
-                                green: 0
-                                yellow: 200
-                                red: 800
-                              card_mod:
-                                style: |
-                                  ha-card {
-                                    background: var(--ha-card-background, var(--card-background-color));
-                                    border-radius: 16px 16px 0 0;
-                                    box-shadow: none;
-                                    min-height: 140px;
-                                  }
-                            - type: markdown
-                              content: >
-                                {%- set w = states('sensor.guest_bedroom_desk_plug_current_consumption')|float(0) -%}
-                                {%- set r = states('sensor.peco_variable_rate')|float(0) -%}
-                                ~${{ "%.2f" % (w * 24 / 1000 * r) }}/day
-                              card_mod:
-                                style: |
-                                  ha-card {
-                                    background: var(--ha-card-background, var(--card-background-color));
-                                    border-radius: 0 0 16px 16px;
-                                    box-shadow: none;
-                                    margin-top: -1px;
-                                    overflow: hidden;
-                                  }
-                                  ha-markdown { padding: 2px 8px 10px !important; overflow: hidden !important; }
-                                  ha-markdown p { text-align: center; font-size: 0.74em; color: var(--secondary-text-color); margin: 0 !important; }
+                  - type: custom:auto-entities
+                    card:
+                      type: vertical-stack
+                    card_param: cards
+                    sort:
+                      method: state
+                      reverse: true
+                      numeric: true
+                    filter:
+                      include:
+                        - entity_id: "sensor.*_current_consumption"
+                          attributes:
+                            device_class: power
+                          options:
+                            type: custom:button-card
+                            entity: this.entity_id
+                            show_state: true
+                            show_name: true
+                            show_icon: true
+                            tap_action:
+                              action: more-info
+                            name: |
+                              [[[
+                                return (entity.attributes.friendly_name || '')
+                                  .replace(' Current consumption','')
+                                  .replace(' Current Consumption','')
+                                  .replace(' Plug','')
+                                  .trim();
+                              ]]]
+                            state_display: |
+                              [[[ return Math.round(parseFloat(entity.state) || 0) + ' W'; ]]]
+                            styles:
+                              card:
+                                - background: |
+                                    [[[
+                                      const w = parseFloat(entity.state) || 0;
+                                      const max = 1500;
+                                      const pct = Math.min((w / max) * 100, 100);
+                                      if (pct <= 0.5) {
+                                        return 'var(--divider-color)';
+                                      }
+                                      return `linear-gradient(90deg, #00b4ab 0%, #6b2fa0 ${pct}%, var(--divider-color) ${pct}%, var(--divider-color) 100%)`;
+                                    ]]]
+                                - border-radius: "8px"
+                                - padding: "10px 14px"
+                                - margin: "4px 0"
+                                - box-shadow: "none"
+                                - height: "auto"
+                                - min-height: "0"
+                                - transition: "background 0.4s ease"
+                              grid:
+                                - grid-template-areas: '"i n s"'
+                                - grid-template-columns: "24px 1fr min-content"
+                                - grid-template-rows: "min-content"
+                              icon:
+                                - color: "white"
+                                - width: "18px"
+                              name:
+                                - color: "white"
+                                - text-align: "left"
+                                - justify-self: "start"
+                                - font-size: "0.88em"
+                                - font-weight: "500"
+                                - text-shadow: "0 1px 2px rgba(0,0,0,0.4)"
+                              state:
+                                - color: "white"
+                                - font-weight: "700"
+                                - font-size: "0.88em"
+                                - justify-self: "end"
+                                - text-shadow: "0 1px 2px rgba(0,0,0,0.4)"
+                      exclude:
+                        - entity_id: "sensor.total_*"
+                        - state: "unavailable"
+                        - state: "unknown"
 
-              # ── Bottom Right: Daily energy by device with 7d / 14d / 30d toggle ──
-              # Tabs set input_select.energy_chart_period; three conditional
-              # apexcharts-cards (hardcoded graph_span each) gate on the value.
+              # ── Right: Daily energy 7d/14d/30d toggle ──
               - type: vertical-stack
                 cards:
-                  # Tab bar: 7d / 14d / 30d
                   - type: horizontal-stack
                     cards:
                       - type: custom:button-card
@@ -664,330 +502,180 @@ views:
                             - letter-spacing: "2px"
                             - color: "var(--secondary-text-color)"
                             - text-transform: uppercase
-                  # Stacked daily-energy bar chart — three hardcoded-span cards
-                  # gated by input_select.energy_chart_period (templated
-                  # graph_span is not supported by apexcharts-card).
-                  # ── 7d view ──
                   - type: conditional
                     conditions:
                       - condition: state
                         entity: input_select.energy_chart_period
                         state: "7d"
                     card:
-                      type: custom:apexcharts-card
-                      graph_span: 7d
-                      span:
-                        end: day
-                      update_interval: 30s
-                      header:
-                        title: "Daily Energy by Device (kWh)"
-                        show: true
-                        show_states: false
-                      card_mod:
-                        style: |
-                          ha-card {
-                            background: var(--ha-card-background, var(--card-background-color));
-                            border-radius: 0 0 16px 16px;
-                            box-shadow: none;
-                            margin-top: -1px;
-                            min-height: 290px;
-                          }
-                      apex_config:
-                        chart:
-                          type: bar
-                          stacked: true
-                        plotOptions:
-                          bar:
-                            columnWidth: "70%"
-                        legend:
+                      type: custom:auto-entities
+                      card:
+                        type: custom:apexcharts-card
+                        graph_span: 7d
+                        span:
+                          end: day
+                        update_interval: 30s
+                        header:
+                          title: "Daily Energy by Device (kWh)"
                           show: true
-                          position: bottom
-                          horizontalAlign: center
-                          fontSize: "11px"
-                          itemMargin:
-                            horizontal: 8
-                            vertical: 3
-                          markers:
-                            width: 8
-                            height: 8
-                      series:
-                        - entity: sensor.tapo_p110m_1_today_s_consumption
-                          name: Desktop
-                          type: column
-                          color: "#f39c12"
-                          statistics:
-                            type: change
-                            period: day
-                          group_by:
-                            func: max
-                            duration: 1d
-                        - entity: sensor.tapo_p110m_2_nursery_heater_today_s_consumption
-                          name: Nursery Heater
-                          type: column
-                          color: "#3498db"
-                          statistics:
-                            type: change
-                            period: day
-                          group_by:
-                            func: max
-                            duration: 1d
-                        - entity: sensor.tapo_p110m_3_today_s_consumption
-                          name: Dyson Heater
-                          type: column
-                          color: "#2ecc71"
-                          statistics:
-                            type: change
-                            period: day
-                          group_by:
-                            func: max
-                            duration: 1d
-                        - entity: sensor.tapo_p110m_4_basement_heater_today_s_consumption
-                          name: Basement Heater
-                          type: column
-                          color: "#e74c3c"
-                          statistics:
-                            type: change
-                            period: day
-                          group_by:
-                            func: max
-                            duration: 1d
-                        - entity: sensor.tumble_dryer_energy_daily
-                          name: Tumble Dryer
-                          type: column
-                          color: "#9b59b6"
-                          statistics:
-                            type: change
-                            period: day
-                          group_by:
-                            func: max
-                            duration: 1d
-                        - entity: sensor.guest_bedroom_desk_plug_today_s_consumption
-                          name: Guest Bedroom
-                          type: column
-                          color: "#1abc9c"
-                          statistics:
-                            type: change
-                            period: day
-                          group_by:
-                            func: max
-                            duration: 1d
-                  # ── 14d view ──
+                          show_states: false
+                        card_mod:
+                          style: |
+                            ha-card { background: var(--ha-card-background, var(--card-background-color)); border-radius: 0 0 16px 16px; box-shadow: none; margin-top: -1px; }
+                        apex_config:
+                          chart:
+                            type: bar
+                            stacked: true
+                            height: 280
+                          plotOptions:
+                            bar:
+                              columnWidth: "70%"
+                          legend:
+                            show: true
+                            position: bottom
+                            horizontalAlign: center
+                            fontSize: "11px"
+                          yaxis:
+                            forceNiceScale: true
+                            tickAmount: 5
+                            decimalsInFloat: 1
+                      card_param: series
+                      filter:
+                        template: |
+                          {%- set raw = states('input_text.energy_hidden_devices') -%}
+                          {%- set hidden = (raw if raw not in [none,'unknown','unavailable'] else '').split(',') | reject('eq','') | list -%}
+                          {%- set colors = ['#f39c12','#3498db','#2ecc71','#e74c3c','#9b59b6','#1abc9c','#e67e22','#8e44ad'] -%}
+                          {%- set ns = namespace(idx=0) -%}
+                          {%- for s in states.sensor
+                              if s.entity_id.endswith('_today_s_consumption')
+                              and 'total_' not in s.entity_id
+                              and s.state not in ['unavailable','unknown'] -%}
+                            {%- set slug = s.entity_id | replace('sensor.','') | replace('_today_s_consumption','') -%}
+                            {%- if slug not in hidden -%}
+                              {%- set color = colors[ns.idx % (colors | length)] -%}
+                              {%- set ns.idx = ns.idx + 1 -%}
+                              {%- set name = s.attributes.get('friendly_name', slug) | replace(" Today's Consumption",'') | replace(" Today's consumption",'') | replace(' Plug','') | trim -%}
+                              {{ {'entity': s.entity_id, 'name': name, 'color': color, 'type': 'column', 'statistics': {'type': 'change', 'period': 'day'}, 'group_by': {'func': 'max', 'duration': '1d'}} }},
+                            {%- endif -%}
+                          {%- endfor -%}
                   - type: conditional
                     conditions:
                       - condition: state
                         entity: input_select.energy_chart_period
                         state: "14d"
                     card:
-                      type: custom:apexcharts-card
-                      graph_span: 14d
-                      span:
-                        end: day
-                      update_interval: 30s
-                      header:
-                        title: "Daily Energy by Device (kWh)"
-                        show: true
-                        show_states: false
-                      card_mod:
-                        style: |
-                          ha-card {
-                            background: var(--ha-card-background, var(--card-background-color));
-                            border-radius: 0 0 16px 16px;
-                            box-shadow: none;
-                            margin-top: -1px;
-                            min-height: 290px;
-                          }
-                      apex_config:
-                        chart:
-                          type: bar
-                          stacked: true
-                        plotOptions:
-                          bar:
-                            columnWidth: "70%"
-                        legend:
+                      type: custom:auto-entities
+                      card:
+                        type: custom:apexcharts-card
+                        graph_span: 14d
+                        span:
+                          end: day
+                        update_interval: 30s
+                        header:
+                          title: "Daily Energy by Device (kWh)"
                           show: true
-                          position: bottom
-                          horizontalAlign: center
-                          fontSize: "11px"
-                          itemMargin:
-                            horizontal: 8
-                            vertical: 3
-                          markers:
-                            width: 8
-                            height: 8
-                      series:
-                        - entity: sensor.tapo_p110m_1_today_s_consumption
-                          name: Desktop
-                          type: column
-                          color: "#f39c12"
-                          statistics:
-                            type: change
-                            period: day
-                          group_by:
-                            func: max
-                            duration: 1d
-                        - entity: sensor.tapo_p110m_2_nursery_heater_today_s_consumption
-                          name: Nursery Heater
-                          type: column
-                          color: "#3498db"
-                          statistics:
-                            type: change
-                            period: day
-                          group_by:
-                            func: max
-                            duration: 1d
-                        - entity: sensor.tapo_p110m_3_today_s_consumption
-                          name: Dyson Heater
-                          type: column
-                          color: "#2ecc71"
-                          statistics:
-                            type: change
-                            period: day
-                          group_by:
-                            func: max
-                            duration: 1d
-                        - entity: sensor.tapo_p110m_4_basement_heater_today_s_consumption
-                          name: Basement Heater
-                          type: column
-                          color: "#e74c3c"
-                          statistics:
-                            type: change
-                            period: day
-                          group_by:
-                            func: max
-                            duration: 1d
-                        - entity: sensor.tumble_dryer_energy_daily
-                          name: Tumble Dryer
-                          type: column
-                          color: "#9b59b6"
-                          statistics:
-                            type: change
-                            period: day
-                          group_by:
-                            func: max
-                            duration: 1d
-                        - entity: sensor.guest_bedroom_desk_plug_today_s_consumption
-                          name: Guest Bedroom
-                          type: column
-                          color: "#1abc9c"
-                          statistics:
-                            type: change
-                            period: day
-                          group_by:
-                            func: max
-                            duration: 1d
-                  # ── 30d view ──
+                          show_states: false
+                        card_mod:
+                          style: |
+                            ha-card { background: var(--ha-card-background, var(--card-background-color)); border-radius: 0 0 16px 16px; box-shadow: none; margin-top: -1px; }
+                        apex_config:
+                          chart:
+                            type: bar
+                            stacked: true
+                            height: 280
+                          plotOptions:
+                            bar:
+                              columnWidth: "70%"
+                          legend:
+                            show: true
+                            position: bottom
+                            horizontalAlign: center
+                            fontSize: "11px"
+                          yaxis:
+                            forceNiceScale: true
+                            tickAmount: 5
+                            decimalsInFloat: 1
+                      card_param: series
+                      filter:
+                        template: |
+                          {%- set raw = states('input_text.energy_hidden_devices') -%}
+                          {%- set hidden = (raw if raw not in [none,'unknown','unavailable'] else '').split(',') | reject('eq','') | list -%}
+                          {%- set colors = ['#f39c12','#3498db','#2ecc71','#e74c3c','#9b59b6','#1abc9c','#e67e22','#8e44ad'] -%}
+                          {%- set ns = namespace(idx=0) -%}
+                          {%- for s in states.sensor
+                              if s.entity_id.endswith('_today_s_consumption')
+                              and 'total_' not in s.entity_id
+                              and s.state not in ['unavailable','unknown'] -%}
+                            {%- set slug = s.entity_id | replace('sensor.','') | replace('_today_s_consumption','') -%}
+                            {%- if slug not in hidden -%}
+                              {%- set color = colors[ns.idx % (colors | length)] -%}
+                              {%- set ns.idx = ns.idx + 1 -%}
+                              {%- set name = s.attributes.get('friendly_name', slug) | replace(" Today's Consumption",'') | replace(" Today's consumption",'') | replace(' Plug','') | trim -%}
+                              {{ {'entity': s.entity_id, 'name': name, 'color': color, 'type': 'column', 'statistics': {'type': 'change', 'period': 'day'}, 'group_by': {'func': 'max', 'duration': '1d'}} }},
+                            {%- endif -%}
+                          {%- endfor -%}
                   - type: conditional
                     conditions:
                       - condition: state
                         entity: input_select.energy_chart_period
                         state: "30d"
                     card:
-                      type: custom:apexcharts-card
-                      graph_span: 30d
-                      span:
-                        end: day
-                      update_interval: 30s
-                      header:
-                        title: "Daily Energy by Device (kWh)"
-                        show: true
-                        show_states: false
-                      card_mod:
-                        style: |
-                          ha-card {
-                            background: var(--ha-card-background, var(--card-background-color));
-                            border-radius: 0 0 16px 16px;
-                            box-shadow: none;
-                            margin-top: -1px;
-                            min-height: 290px;
-                          }
-                      apex_config:
-                        chart:
-                          type: bar
-                          stacked: true
-                        plotOptions:
-                          bar:
-                            columnWidth: "70%"
-                        legend:
+                      type: custom:auto-entities
+                      card:
+                        type: custom:apexcharts-card
+                        graph_span: 30d
+                        span:
+                          end: day
+                        update_interval: 30s
+                        header:
+                          title: "Daily Energy by Device (kWh)"
                           show: true
-                          position: bottom
-                          horizontalAlign: center
-                          fontSize: "11px"
-                          itemMargin:
-                            horizontal: 8
-                            vertical: 3
-                          markers:
-                            width: 8
-                            height: 8
-                      series:
-                        - entity: sensor.tapo_p110m_1_today_s_consumption
-                          name: Desktop
-                          type: column
-                          color: "#f39c12"
-                          statistics:
-                            type: change
-                            period: day
-                          group_by:
-                            func: max
-                            duration: 1d
-                        - entity: sensor.tapo_p110m_2_nursery_heater_today_s_consumption
-                          name: Nursery Heater
-                          type: column
-                          color: "#3498db"
-                          statistics:
-                            type: change
-                            period: day
-                          group_by:
-                            func: max
-                            duration: 1d
-                        - entity: sensor.tapo_p110m_3_today_s_consumption
-                          name: Dyson Heater
-                          type: column
-                          color: "#2ecc71"
-                          statistics:
-                            type: change
-                            period: day
-                          group_by:
-                            func: max
-                            duration: 1d
-                        - entity: sensor.tapo_p110m_4_basement_heater_today_s_consumption
-                          name: Basement Heater
-                          type: column
-                          color: "#e74c3c"
-                          statistics:
-                            type: change
-                            period: day
-                          group_by:
-                            func: max
-                            duration: 1d
-                        - entity: sensor.tumble_dryer_energy_daily
-                          name: Tumble Dryer
-                          type: column
-                          color: "#9b59b6"
-                          statistics:
-                            type: change
-                            period: day
-                          group_by:
-                            func: max
-                            duration: 1d
-                        - entity: sensor.guest_bedroom_desk_plug_today_s_consumption
-                          name: Guest Bedroom
-                          type: column
-                          color: "#1abc9c"
-                          statistics:
-                            type: change
-                            period: day
-                          group_by:
-                            func: max
-                            duration: 1d
+                          show_states: false
+                        card_mod:
+                          style: |
+                            ha-card { background: var(--ha-card-background, var(--card-background-color)); border-radius: 0 0 16px 16px; box-shadow: none; margin-top: -1px; }
+                        apex_config:
+                          chart:
+                            type: bar
+                            stacked: true
+                            height: 280
+                          plotOptions:
+                            bar:
+                              columnWidth: "70%"
+                          legend:
+                            show: true
+                            position: bottom
+                            horizontalAlign: center
+                            fontSize: "11px"
+                          yaxis:
+                            forceNiceScale: true
+                            tickAmount: 5
+                            decimalsInFloat: 1
+                      card_param: series
+                      filter:
+                        template: |
+                          {%- set raw = states('input_text.energy_hidden_devices') -%}
+                          {%- set hidden = (raw if raw not in [none,'unknown','unavailable'] else '').split(',') | reject('eq','') | list -%}
+                          {%- set colors = ['#f39c12','#3498db','#2ecc71','#e74c3c','#9b59b6','#1abc9c','#e67e22','#8e44ad'] -%}
+                          {%- set ns = namespace(idx=0) -%}
+                          {%- for s in states.sensor
+                              if s.entity_id.endswith('_today_s_consumption')
+                              and 'total_' not in s.entity_id
+                              and s.state not in ['unavailable','unknown'] -%}
+                            {%- set slug = s.entity_id | replace('sensor.','') | replace('_today_s_consumption','') -%}
+                            {%- if slug not in hidden -%}
+                              {%- set color = colors[ns.idx % (colors | length)] -%}
+                              {%- set ns.idx = ns.idx + 1 -%}
+                              {%- set name = s.attributes.get('friendly_name', slug) | replace(" Today's Consumption",'') | replace(" Today's consumption",'') | replace(' Plug','') | trim -%}
+                              {{ {'entity': s.entity_id, 'name': name, 'color': color, 'type': 'column', 'statistics': {'type': 'change', 'period': 'day'}, 'group_by': {'func': 'max', 'duration': '1d'}} }},
+                            {%- endif -%}
+                          {%- endfor -%}
 
           # ══════════════════════════════════════════════════════
-          #  POWER ROW 2: Per-device power history (24h / 7d toggle)
-          # Tap the 24h or 7d tab to switch views.
-          # input_boolean.power_draw_7d_view: off = 24h, on = 7d
+          #  POWER ROW 2: Avg power draw 24h/7d
           # ══════════════════════════════════════════════════════
           - type: vertical-stack
             cards:
-              # ── Tab bar: 24h / 7d toggle ──
               - type: horizontal-stack
                 cards:
                   - type: custom:button-card
@@ -1052,201 +740,129 @@ views:
                         - letter-spacing: "2px"
                         - color: "var(--secondary-text-color)"
                         - text-transform: uppercase
-              # ── 24h view (shown when power_draw_7d_view = off) ──
               - type: conditional
                 conditions:
                   - condition: state
                     entity: input_boolean.power_draw_7d_view
                     state: "off"
                 card:
-                  type: custom:apexcharts-card
-                  graph_span: 24h
-                  span:
-                    end: day
-                  update_interval: 5m
-                  header:
-                    title: "Avg Power Draw by Device (W) — 24h"
-                    show: true
-                    show_states: false
-                  card_mod:
-                    style: |
-                      ha-card {
-                        background: var(--ha-card-background, var(--card-background-color));
-                        border-radius: 0 0 16px 16px;
-                        box-shadow: none;
-                        margin-top: -1px;
-                        min-height: 290px;
-                      }
-                  apex_config:
-                    chart:
-                      stacked: true
-                    stroke:
-                      curve: smooth
-                      width: 2
-                    fill:
-                      type: solid
-                      opacity: 0.75
-                    legend:
+                  type: custom:auto-entities
+                  card:
+                    type: custom:apexcharts-card
+                    graph_span: 24h
+                    span:
+                      end: day
+                    update_interval: 60s
+                    header:
+                      title: "Avg Power Draw by Device (W) — 24h"
                       show: true
-                      position: bottom
-                      horizontalAlign: center
-                      fontSize: "11px"
-                      itemMargin:
-                        horizontal: 8
-                        vertical: 3
-                      markers:
-                        width: 8
-                        height: 8
-                  series:
-                    - entity: sensor.tapo_p110m_1_current_consumption
-                      name: Desktop
-                      type: area
-                      color: "#f39c12"
-                      statistics:
-                        type: mean
-                        period: hour
-                      group_by:
-                        func: avg
-                        duration: 1h
-                    - entity: sensor.tapo_p110m_2_nursery_heater_current_consumption
-                      name: Nursery Heater
-                      type: area
-                      color: "#3498db"
-                      statistics:
-                        type: mean
-                        period: hour
-                      group_by:
-                        func: avg
-                        duration: 1h
-                    - entity: sensor.tapo_p110m_3_current_consumption
-                      name: Dyson Heater
-                      type: area
-                      color: "#2ecc71"
-                      statistics:
-                        type: mean
-                        period: hour
-                      group_by:
-                        func: avg
-                        duration: 1h
-                    - entity: sensor.tapo_p110m_4_basement_heater_current_consumption
-                      name: Basement Heater
-                      type: area
-                      color: "#e74c3c"
-                      statistics:
-                        type: mean
-                        period: hour
-                      group_by:
-                        func: avg
-                        duration: 1h
-                    - entity: sensor.guest_bedroom_desk_plug_current_consumption
-                      name: Guest Bedroom
-                      type: area
-                      color: "#1abc9c"
-                      statistics:
-                        type: mean
-                        period: hour
-                      group_by:
-                        func: avg
-                        duration: 1h
-              # ── 7d view (shown when power_draw_7d_view = on) ──
+                      show_states: false
+                    card_mod:
+                      style: |
+                        ha-card { background: var(--ha-card-background, var(--card-background-color)); border-radius: 0 0 16px 16px; box-shadow: none; margin-top: -1px; }
+                    apex_config:
+                      chart:
+                        stacked: true
+                        height: 280
+                      stroke:
+                        curve: smooth
+                        width: 2
+                      fill:
+                        type: solid
+                        opacity: 0.75
+                      legend:
+                        show: true
+                        position: bottom
+                        horizontalAlign: center
+                        fontSize: "11px"
+                      yaxis:
+                        forceNiceScale: true
+                        tickAmount: 5
+                        min: 0
+                        decimalsInFloat: 0
+                  card_param: series
+                  filter:
+                    template: |
+                      {%- set raw = states('input_text.energy_hidden_devices') -%}
+                      {%- set hidden = (raw if raw not in [none,'unknown','unavailable'] else '').split(',') | reject('eq','') | list -%}
+                      {%- set colors = ['#f39c12','#3498db','#2ecc71','#e74c3c','#9b59b6','#1abc9c','#e67e22','#8e44ad'] -%}
+                      {%- set ns = namespace(idx=0) -%}
+                      {%- for s in states.sensor
+                          if s.attributes.get('device_class') == 'power'
+                          and s.attributes.get('unit_of_measurement') == 'W'
+                          and 'total_' not in s.entity_id
+                          and s.state not in ['unavailable','unknown'] -%}
+                        {%- set slug = s.entity_id | replace('sensor.','') | replace('_current_consumption','') | replace('_power','') -%}
+                        {%- if slug not in hidden -%}
+                          {%- set color = colors[ns.idx % (colors | length)] -%}
+                          {%- set ns.idx = ns.idx + 1 -%}
+                          {%- set name = s.attributes.get('friendly_name', slug) | replace(' Current consumption','') | replace(' Current Consumption','') | replace(' Plug','') | trim -%}
+                          {{ {'entity': s.entity_id, 'name': name, 'color': color, 'type': 'area', 'statistics': {'type': 'mean', 'period': 'hour'}, 'group_by': {'func': 'avg', 'duration': '1h'}} }},
+                        {%- endif -%}
+                      {%- endfor -%}
               - type: conditional
                 conditions:
                   - condition: state
                     entity: input_boolean.power_draw_7d_view
                     state: "on"
                 card:
-                  type: custom:apexcharts-card
-                  graph_span: 7d
-                  span:
-                    end: day
-                  update_interval: 5m
-                  header:
-                    title: "Avg Power Draw by Device (W) — 7d"
-                    show: true
-                    show_states: false
-                  card_mod:
-                    style: |
-                      ha-card {
-                        background: var(--ha-card-background, var(--card-background-color));
-                        border-radius: 0 0 16px 16px;
-                        box-shadow: none;
-                        margin-top: -1px;
-                        min-height: 290px;
-                      }
-                  apex_config:
-                    chart:
-                      stacked: true
-                    stroke:
-                      curve: smooth
-                      width: 2
-                    fill:
-                      type: solid
-                      opacity: 0.75
-                    legend:
+                  type: custom:auto-entities
+                  card:
+                    type: custom:apexcharts-card
+                    graph_span: 7d
+                    span:
+                      end: day
+                    update_interval: 60s
+                    header:
+                      title: "Avg Power Draw by Device (W) — 7d"
                       show: true
-                      position: bottom
-                      horizontalAlign: center
-                      fontSize: "11px"
-                      itemMargin:
-                        horizontal: 8
-                        vertical: 3
-                      markers:
-                        width: 8
-                        height: 8
-                  series:
-                    - entity: sensor.tapo_p110m_1_current_consumption
-                      name: Desktop
-                      type: area
-                      color: "#f39c12"
-                      statistics:
-                        type: mean
-                        period: day
-                      group_by:
-                        func: avg
-                        duration: 1d
-                    - entity: sensor.tapo_p110m_2_nursery_heater_current_consumption
-                      name: Nursery Heater
-                      type: area
-                      color: "#3498db"
-                      statistics:
-                        type: mean
-                        period: day
-                      group_by:
-                        func: avg
-                        duration: 1d
-                    - entity: sensor.tapo_p110m_3_current_consumption
-                      name: Dyson Heater
-                      type: area
-                      color: "#2ecc71"
-                      statistics:
-                        type: mean
-                        period: day
-                      group_by:
-                        func: avg
-                        duration: 1d
-                    - entity: sensor.tapo_p110m_4_basement_heater_current_consumption
-                      name: Basement Heater
-                      type: area
-                      color: "#e74c3c"
-                      statistics:
-                        type: mean
-                        period: day
-                      group_by:
-                        func: avg
-                        duration: 1d
-                    - entity: sensor.guest_bedroom_desk_plug_current_consumption
-                      name: Guest Bedroom
-                      type: area
-                      color: "#1abc9c"
-                      statistics:
-                        type: mean
-                        period: day
-                      group_by:
-                        func: avg
-                        duration: 1d
+                      show_states: false
+                    card_mod:
+                      style: |
+                        ha-card { background: var(--ha-card-background, var(--card-background-color)); border-radius: 0 0 16px 16px; box-shadow: none; margin-top: -1px; }
+                    apex_config:
+                      chart:
+                        stacked: true
+                        height: 280
+                      stroke:
+                        curve: smooth
+                        width: 2
+                      fill:
+                        type: solid
+                        opacity: 0.75
+                      legend:
+                        show: true
+                        position: bottom
+                        horizontalAlign: center
+                        fontSize: "11px"
+                      yaxis:
+                        forceNiceScale: true
+                        tickAmount: 5
+                        min: 0
+                        decimalsInFloat: 0
+                  card_param: series
+                  filter:
+                    template: |
+                      {%- set raw = states('input_text.energy_hidden_devices') -%}
+                      {%- set hidden = (raw if raw not in [none,'unknown','unavailable'] else '').split(',') | reject('eq','') | list -%}
+                      {%- set colors = ['#f39c12','#3498db','#2ecc71','#e74c3c','#9b59b6','#1abc9c','#e67e22','#8e44ad'] -%}
+                      {%- set ns = namespace(idx=0) -%}
+                      {%- for s in states.sensor
+                          if s.attributes.get('device_class') == 'power'
+                          and s.attributes.get('unit_of_measurement') == 'W'
+                          and 'total_' not in s.entity_id
+                          and s.state not in ['unavailable','unknown'] -%}
+                        {%- set slug = s.entity_id | replace('sensor.','') | replace('_current_consumption','') | replace('_power','') -%}
+                        {%- if slug not in hidden -%}
+                          {%- set color = colors[ns.idx % (colors | length)] -%}
+                          {%- set ns.idx = ns.idx + 1 -%}
+                          {%- set name = s.attributes.get('friendly_name', slug) | replace(' Current consumption','') | replace(' Current Consumption','') | replace(' Plug','') | trim -%}
+                          {{ {'entity': s.entity_id, 'name': name, 'color': color, 'type': 'area', 'statistics': {'type': 'mean', 'period': 'day'}, 'group_by': {'func': 'avg', 'duration': '1d'}} }},
+                        {%- endif -%}
+                      {%- endfor -%}
 
           # ══════════════════════════════════════════════════════
-          #  SECTION HEADER — cost (purple)
+          #  SECTION HEADER — cost
           # ══════════════════════════════════════════════════════
           - type: custom:button-card
             entity: sensor.total_energy_cost_monthly
@@ -1289,211 +905,10 @@ views:
                 - justify-self: end
 
           # ══════════════════════════════════════════════════════
-          #  COST ROW 1: Daily cost + avg power draw — 30-Day
-          # Stacked bars (left axis)  = per-device daily cost ($)
-          # Dashed lines (right axis) = per-device daily avg power (W)
-          # Cost uses max of the accumulating *_energy_cost_today sensor
-          # (daily max = end-of-day total).  Tumble Dryer has no power
-          # sensor so it only contributes a cost bar.
-          # ══════════════════════════════════════════════════════
-          - type: custom:apexcharts-card
-            graph_span: 30d
-            span:
-              end: day
-            header:
-              title: "Daily Cost & Avg Power Draw - 30 Days"
-              show: true
-              show_states: false
-            card_mod:
-              style: |
-                ha-card {
-                  background: var(--ha-card-background, var(--card-background-color));
-                  border-radius: 16px;
-                  box-shadow: none;
-                }
-            apex_config:
-              chart:
-                stacked: true
-              subtitle:
-                text: "bars = daily cost ($)  ·  dotted lines = avg power (W)"
-                align: center
-                style:
-                  fontSize: "10px"
-                  color: "var(--secondary-text-color)"
-              legend:
-                show: true
-                position: bottom
-                horizontalAlign: center
-                fontSize: "11px"
-                itemMargin:
-                  horizontal: 8
-                  vertical: 3
-                markers:
-                  width: 8
-                  height: 8
-              yaxis:
-                - id: cost
-                  title:
-                    text: "Daily Cost ($)"
-                  min: 0
-                  labels:
-                    formatter: |
-                      EVAL:function(val) { return '$' + val.toFixed(2); }
-                - id: power
-                  opposite: true
-                  title:
-                    text: "Avg Power (W)"
-                  min: 0
-                  labels:
-                    formatter: |
-                      EVAL:function(val) { return Math.round(val) + ' W'; }
-            series:
-              # ── Cost bars (left axis, stacked) ──
-              - entity: sensor.desktop_desk_plug_energy_cost_today
-                name: "Desktop $"
-                yaxis_id: cost
-                type: column
-                color: "#f39c12"
-                statistics:
-                  type: max
-                  period: day
-                group_by:
-                  func: max
-                  duration: 1d
-              - entity: sensor.nursery_heater_plug_energy_cost_today
-                name: "Nursery Heater $"
-                yaxis_id: cost
-                type: column
-                color: "#3498db"
-                statistics:
-                  type: max
-                  period: day
-                group_by:
-                  func: max
-                  duration: 1d
-              - entity: sensor.dyson_heater_plug_energy_cost_today
-                name: "Dyson Heater $"
-                yaxis_id: cost
-                type: column
-                color: "#2ecc71"
-                statistics:
-                  type: max
-                  period: day
-                group_by:
-                  func: max
-                  duration: 1d
-              - entity: sensor.basement_heater_plug_energy_cost_today
-                name: "Basement Heater $"
-                yaxis_id: cost
-                type: column
-                color: "#e74c3c"
-                statistics:
-                  type: max
-                  period: day
-                group_by:
-                  func: max
-                  duration: 1d
-              - entity: sensor.tumble_dryer_energy_cost_today
-                name: "Tumble Dryer $"
-                yaxis_id: cost
-                type: column
-                color: "#9b59b6"
-                statistics:
-                  type: max
-                  period: day
-                group_by:
-                  func: max
-                  duration: 1d
-              - entity: sensor.guest_bedroom_desk_plug_energy_cost_today
-                name: "Guest Bedroom $"
-                yaxis_id: cost
-                type: column
-                color: "#1abc9c"
-                statistics:
-                  type: max
-                  period: day
-                group_by:
-                  func: max
-                  duration: 1d
-              # ── Avg power draw lines (right axis, dashed) ──
-              - entity: sensor.tapo_p110m_1_current_consumption
-                name: "Desktop W"
-                yaxis_id: power
-                type: line
-                color: "#f39c12"
-                opacity: 0.7
-                stroke_width: 2
-                stroke_dash: 4
-                statistics:
-                  type: mean
-                  period: day
-                group_by:
-                  func: avg
-                  duration: 1d
-              - entity: sensor.tapo_p110m_2_nursery_heater_current_consumption
-                name: "Nursery Heater W"
-                yaxis_id: power
-                type: line
-                color: "#3498db"
-                opacity: 0.7
-                stroke_width: 2
-                stroke_dash: 4
-                statistics:
-                  type: mean
-                  period: day
-                group_by:
-                  func: avg
-                  duration: 1d
-              - entity: sensor.tapo_p110m_3_current_consumption
-                name: "Dyson Heater W"
-                yaxis_id: power
-                type: line
-                color: "#2ecc71"
-                opacity: 0.7
-                stroke_width: 2
-                stroke_dash: 4
-                statistics:
-                  type: mean
-                  period: day
-                group_by:
-                  func: avg
-                  duration: 1d
-              - entity: sensor.tapo_p110m_4_basement_heater_current_consumption
-                name: "Basement Heater W"
-                yaxis_id: power
-                type: line
-                color: "#e74c3c"
-                opacity: 0.7
-                stroke_width: 2
-                stroke_dash: 4
-                statistics:
-                  type: mean
-                  period: day
-                group_by:
-                  func: avg
-                  duration: 1d
-              - entity: sensor.guest_bedroom_desk_plug_current_consumption
-                name: "Guest Bedroom W"
-                yaxis_id: power
-                type: line
-                color: "#1abc9c"
-                opacity: 0.7
-                stroke_width: 2
-                stroke_dash: 4
-                statistics:
-                  type: mean
-                  period: day
-                group_by:
-                  func: avg
-                  duration: 1d
-
-          # ══════════════════════════════════════════════════════
-          #  COST ROW 2: Today / Billing Cycle toggle + entity list
-          # input_boolean.cost_view_today: on = Today, off = Billing Cycle
+          #  COST ROW: Today / Billing Cycle toggle
           # ══════════════════════════════════════════════════════
           - type: vertical-stack
             cards:
-              # Tab bar: Today / Billing Cycle
               - type: horizontal-stack
                 cards:
                   - type: custom:button-card
@@ -1558,93 +973,53 @@ views:
                         - letter-spacing: "2px"
                         - color: "var(--secondary-text-color)"
                         - text-transform: uppercase
+              - type: markdown
+                card_mod:
+                  style: |
+                    ha-card {
+                      background: var(--ha-card-background, var(--card-background-color));
+                      border-radius: 0 0 16px 16px;
+                      box-shadow: none;
+                      margin-top: -1px;
+                    }
+                    ha-markdown { padding: 12px 16px 16px !important; }
+                    ha-markdown h3 { margin: 0 0 8px !important; font-size: 0.95em !important; color: var(--secondary-text-color) !important; font-weight: 600 !important; }
+                    ha-markdown table { width: 100%; border-collapse: collapse; font-size: 0.88em; }
+                    ha-markdown th { color: var(--secondary-text-color); font-weight: 600; padding: 6px 8px; text-align: left; border-bottom: 1px solid var(--divider-color); }
+                    ha-markdown td { padding: 5px 8px; border-bottom: 1px solid var(--divider-color); }
+                    ha-markdown td:not(:first-child) { text-align: right; }
+                    ha-markdown td:last-child { color: var(--primary-color); }
+                    ha-markdown tr:last-child td { font-weight: 700; border-bottom: none; }
+                content: |
+                  {%- set today = is_state('input_boolean.cost_view_today', 'on') -%}
+                  {%- set suffix = '_today_s_consumption' if today else '_this_month_s_consumption' -%}
+                  {%- set strip1 = " Today's Consumption" if today else " This Month's Consumption" -%}
+                  {%- set strip2 = " Today's consumption" if today else " This Month's consumption" -%}
+                  {%- set raw = states('input_text.energy_hidden_devices') -%}
+                  {%- set hidden = (raw if raw not in [none,'unknown','unavailable'] else '').split(',') | reject('eq','') | list -%}
+                  {%- set rate = states('sensor.peco_variable_rate')|float(0) -%}
+                  {%- set cust = states('input_number.peco_customer_charge')|float(0) -%}
+                  {%- set rows = namespace(out='') -%}
+                  {%- for s in states.sensor
+                      if s.entity_id.endswith(suffix)
+                      and 'total_' not in s.entity_id
+                      and s.state not in ['unavailable','unknown'] -%}
+                    {%- set slug = s.entity_id | replace('sensor.','') | replace(suffix,'') -%}
+                    {%- if slug not in hidden -%}
+                      {%- set kwh = s.state|float(0) -%}
+                      {%- set name = s.attributes.get('friendly_name', slug) | replace(strip1,'') | replace(strip2,'') | replace(' Plug','') | trim -%}
+                      {%- set rows.out = rows.out + '| ' + name + ' | ' + ('%.2f' % kwh) + ' | $' + ('%.2f' % (kwh * rate)) + ' |\n' -%}
+                    {%- endif -%}
+                  {%- endfor -%}
+                  ### {{ "Today's Energy Costs" if today else "This Billing Cycle's Energy Costs" }}
 
-              # ── Today's breakdown (shown when cost_view_today = on) ──
-              - type: conditional
-                conditions:
-                  - condition: state
-                    entity: input_boolean.cost_view_today
-                    state: "on"
-                card:
-                  type: entities
-                  title: Today's Energy Costs
-                  show_header_toggle: false
-                  card_mod:
-                    style: |
-                      ha-card {
-                        background: var(--ha-card-background, var(--card-background-color));
-                        border-radius: 0 0 16px 16px;
-                        box-shadow: none;
-                        margin-top: -1px;
-                      }
-                  entities:
-                    - entity: sensor.desktop_desk_plug_energy_cost_today
-                      name: Desktop Desk
-                      icon: mdi:desktop-tower-monitor
-                    - entity: sensor.nursery_heater_plug_energy_cost_today
-                      name: Nursery Heater
-                      icon: mdi:radiator
-                    - entity: sensor.dyson_heater_plug_energy_cost_today
-                      name: Dyson Heater
-                      icon: mdi:fan
-                    - entity: sensor.basement_heater_plug_energy_cost_today
-                      name: Basement Heater
-                      icon: mdi:radiator
-                    - entity: sensor.tumble_dryer_energy_cost_today
-                      name: Tumble Dryer
-                      icon: mdi:tumble-dryer
-                    - entity: sensor.guest_bedroom_desk_plug_energy_cost_today
-                      name: Guest Bedroom
-                      icon: mdi:desk
-                    - type: divider
-                    - entity: sensor.total_energy_cost_today
-                      name: Total Today
-                      icon: mdi:sigma
-
-              # ── Billing cycle breakdown (shown when cost_view_today = off) ──
-              - type: conditional
-                conditions:
-                  - condition: state
-                    entity: input_boolean.cost_view_today
-                    state: "off"
-                card:
-                  type: entities
-                  title: This Billing Cycle's Energy Costs
-                  show_header_toggle: false
-                  card_mod:
-                    style: |
-                      ha-card {
-                        background: var(--ha-card-background, var(--card-background-color));
-                        border-radius: 0 0 16px 16px;
-                        box-shadow: none;
-                        margin-top: -1px;
-                      }
-                  entities:
-                    - entity: sensor.desktop_desk_plug_energy_cost_monthly
-                      name: Desktop Desk
-                      icon: mdi:desktop-tower-monitor
-                    - entity: sensor.nursery_heater_plug_energy_cost_monthly
-                      name: Nursery Heater
-                      icon: mdi:radiator
-                    - entity: sensor.dyson_heater_plug_energy_cost_monthly
-                      name: Dyson Heater
-                      icon: mdi:fan
-                    - entity: sensor.basement_heater_plug_energy_cost_monthly
-                      name: Basement Heater
-                      icon: mdi:radiator
-                    - entity: sensor.tumble_dryer_energy_cost_monthly
-                      name: Tumble Dryer
-                      icon: mdi:tumble-dryer
-                    - entity: sensor.guest_bedroom_desk_plug_energy_cost_monthly
-                      name: Guest Bedroom
-                      icon: mdi:desk
-                    - type: divider
-                    - entity: sensor.total_energy_cost_monthly
-                      name: Total This Month
-                      icon: mdi:sigma
+                  | Device | kWh | Cost |
+                  |:---|---:|---:|
+                  {{ rows.out }}{% if not today %}| Customer charge |  | ${{ '%.2f' % cust }} |
+                  {% endif %}| **Total** | **{{ '%.2f' % (states(('sensor.total_energy_today' if today else 'sensor.total_energy_this_month'))|float(0)) }}** | **${{ '%.2f' % (states(('sensor.total_energy_cost_today' if today else 'sensor.total_energy_cost_monthly'))|float(0)) }}** |
 
           # ══════════════════════════════════════════════════════
-          #  SECTION HEADER — usage (green)
+          #  SECTION HEADER — usage
           # ══════════════════════════════════════════════════════
           - type: custom:button-card
             entity: sensor.total_energy_this_month
@@ -1687,311 +1062,190 @@ views:
                 - justify-self: end
 
           # ══════════════════════════════════════════════════════
-          #  USAGE ROW: Monthly energy bar chart (full width)
+          #  USAGE: Monthly chart — apexcharts (same engine as the
+          #  working power-draw charts). _this_month_s_consumption
+          #  + max-per-month gives correct historical totals.
           # ══════════════════════════════════════════════════════
-          - type: statistics-graph
-            title: Monthly Energy by Device (kWh)
-            period: month
-            stat_types:
-              - sum
-            chart_type: bar
-            max_y_axis: 300
-            entities:
-              - entity: sensor.tapo_p110m_1_this_month_s_consumption
-                name: Desktop
-                color: "#f39c12"
-              - entity: sensor.tapo_p110m_2_nursery_heater_this_month_s_consumption
-                name: Nursery Heater
-                color: "#3498db"
-              - entity: sensor.tapo_p110m_3_this_month_s_consumption
-                name: Dyson Heater
-                color: "#2ecc71"
-              - entity: sensor.tapo_p110m_4_basement_heater_this_month_s_consumption
-                name: Basement Heater
-                color: "#e74c3c"
-              - entity: sensor.guest_bedroom_desk_plug_this_month_s_consumption
-                name: Guest Bedroom
-                color: "#1abc9c"
+          - type: custom:auto-entities
+            card:
+              type: custom:apexcharts-card
+              graph_span: 180d
+              update_interval: 10m
+              header:
+                title: "Monthly Energy by Device (kWh)"
+                show: true
+                show_states: false
+              card_mod:
+                style: |
+                  ha-card { background: var(--ha-card-background, var(--card-background-color)); border-radius: 16px; box-shadow: none; }
+              apex_config:
+                chart:
+                  type: bar
+                  stacked: true
+                  height: 320
+                plotOptions:
+                  bar:
+                    columnWidth: "55%"
+                legend:
+                  show: true
+                  position: bottom
+                  horizontalAlign: center
+                  fontSize: "11px"
+                yaxis:
+                  forceNiceScale: true
+                  tickAmount: 6
+                  min: 0
+                  decimalsInFloat: 0
+            card_param: series
+            filter:
+              template: |
+                {%- set raw = states('input_text.energy_hidden_devices') -%}
+                {%- set hidden = (raw if raw not in [none,'unknown','unavailable'] else '').split(',') | reject('eq','') | list -%}
+                {%- set colors = ['#f39c12','#3498db','#2ecc71','#e74c3c','#9b59b6','#1abc9c','#e67e22','#8e44ad'] -%}
+                {%- set ns = namespace(idx=0) -%}
+                {%- for s in states.sensor
+                    if s.entity_id.endswith('_this_month_s_consumption')
+                    and 'total_' not in s.entity_id
+                    and s.state not in ['unavailable','unknown'] -%}
+                  {%- set slug = s.entity_id | replace('sensor.','') | replace('_this_month_s_consumption','') -%}
+                  {%- if slug not in hidden -%}
+                    {%- set color = colors[ns.idx % (colors | length)] -%}
+                    {%- set ns.idx = ns.idx + 1 -%}
+                    {%- set name = s.attributes.get('friendly_name', slug) | replace(" This Month's Consumption",'') | replace(" This Month's consumption",'') | replace(' Plug','') | trim -%}
+                    {{ {'entity': s.entity_id, 'name': name, 'color': color, 'type': 'column', 'statistics': {'type': 'max', 'period': 'month'}} }},
+                  {%- endif -%}
+                {%- endfor -%}
+
   # ═══════════════════════════════════════════════════════════
-  #  VIEW 5: DEVICES — detailed per-device drill-down
+  #  VIEW 2: DEVICES — manage tracked devices
   # ═══════════════════════════════════════════════════════════
   - title: Devices
     path: devices
-    icon: mdi:power-plug
+    icon: mdi:tune
     cards:
-      # ── Desktop Desk Plug ──
-      - type: vertical-stack
-        cards:
-          - type: markdown
-            content: "## Desktop Desk Plug"
-          - type: horizontal-stack
-            cards:
-              - type: entity
-                entity: sensor.tapo_p110m_1_current_consumption
-                name: Power Now
-                icon: mdi:flash
-              - type: entity
-                entity: sensor.tapo_p110m_1_today_s_consumption
-                name: Today (kWh)
-                icon: mdi:lightning-bolt
-              - type: entity
-                entity: sensor.desktop_desk_plug_energy_cost_today
-                name: Cost Today
-                icon: mdi:cash
-          - type: horizontal-stack
-            cards:
-              - type: entity
-                entity: sensor.tapo_p110m_1_this_month_s_consumption
-                name: Month (kWh)
-                icon: mdi:calendar
-              - type: entity
-                entity: sensor.desktop_desk_plug_energy_cost_monthly
-                name: Cost Month
-                icon: mdi:cash-multiple
-              - type: entity
-                entity: sensor.desktop_desk_plug_share_of_total
-                name: Share
-                icon: mdi:percent
-          - type: history-graph
-            hours_to_show: 48
-            entities:
-              - entity: sensor.tapo_p110m_1_current_consumption
-                name: Power (W)
+      - type: markdown
+        content: |
+          ## Manage tracked devices
 
-      # ── Nursery Heater Plug ──
-      - type: vertical-stack
-        cards:
-          - type: markdown
-            content: "## Nursery Heater Plug"
-          - type: horizontal-stack
-            cards:
-              - type: entity
-                entity: sensor.tapo_p110m_2_nursery_heater_current_consumption
-                name: Power Now
-                icon: mdi:flash
-              - type: entity
-                entity: sensor.tapo_p110m_2_nursery_heater_today_s_consumption
-                name: Today (kWh)
-                icon: mdi:lightning-bolt
-              - type: entity
-                entity: sensor.nursery_heater_plug_energy_cost_today
-                name: Cost Today
-                icon: mdi:cash
-          - type: horizontal-stack
-            cards:
-              - type: entity
-                entity: sensor.tapo_p110m_2_nursery_heater_this_month_s_consumption
-                name: Month (kWh)
-                icon: mdi:calendar
-              - type: entity
-                entity: sensor.nursery_heater_plug_energy_cost_monthly
-                name: Cost Month
-                icon: mdi:cash-multiple
-              - type: entity
-                entity: sensor.nursery_heater_plug_share_of_total
-                name: Share
-                icon: mdi:percent
-          - type: history-graph
-            hours_to_show: 48
-            entities:
-              - entity: sensor.tapo_p110m_2_nursery_heater_current_consumption
-                name: Power (W)
+          Tap any row to toggle visibility on the Overview dashboard.
+          Hidden devices still record data — they're just suppressed from charts and totals.
 
-      # ── Dyson Heater Plug ──
-      - type: vertical-stack
-        cards:
-          - type: markdown
-            content: "## Dyson Heater Plug"
-          - type: horizontal-stack
-            cards:
-              - type: entity
-                entity: sensor.tapo_p110m_3_current_consumption
-                name: Power Now
-                icon: mdi:flash
-              - type: entity
-                entity: sensor.tapo_p110m_3_today_s_consumption
-                name: Today (kWh)
-                icon: mdi:lightning-bolt
-              - type: entity
-                entity: sensor.dyson_heater_plug_energy_cost_today
-                name: Cost Today
-                icon: mdi:cash
-          - type: horizontal-stack
-            cards:
-              - type: entity
-                entity: sensor.tapo_p110m_3_this_month_s_consumption
-                name: Month (kWh)
-                icon: mdi:calendar
-              - type: entity
-                entity: sensor.dyson_heater_plug_energy_cost_monthly
-                name: Cost Month
-                icon: mdi:cash-multiple
-              - type: entity
-                entity: sensor.dyson_heater_plug_share_of_total
-                name: Share
-                icon: mdi:percent
-          - type: history-graph
-            hours_to_show: 48
-            entities:
-              - entity: sensor.tapo_p110m_3_current_consumption
-                name: Power (W)
+      - type: entities
+        title: Hidden Devices Storage
+        show_header_toggle: false
+        entities:
+          - entity: input_text.energy_hidden_devices
+            name: Hidden slug list
+            icon: mdi:eye-off
+          - type: call-service
+            name: Reset — show all devices
+            icon: mdi:eye
+            service: input_text.set_value
+            service_data:
+              entity_id: input_text.energy_hidden_devices
+              value: ""
 
-      # ── Basement Heater Plug ──
-      - type: vertical-stack
-        cards:
-          - type: markdown
-            content: "## Basement Heater Plug"
-          - type: horizontal-stack
-            cards:
-              - type: entity
-                entity: sensor.tapo_p110m_4_basement_heater_current_consumption
-                name: Power Now
-                icon: mdi:flash
-              - type: entity
-                entity: sensor.tapo_p110m_4_basement_heater_today_s_consumption
-                name: Today (kWh)
-                icon: mdi:lightning-bolt
-              - type: entity
-                entity: sensor.basement_heater_plug_energy_cost_today
-                name: Cost Today
-                icon: mdi:cash
-          - type: horizontal-stack
-            cards:
-              - type: entity
-                entity: sensor.tapo_p110m_4_basement_heater_this_month_s_consumption
-                name: Month (kWh)
-                icon: mdi:calendar
-              - type: entity
-                entity: sensor.basement_heater_plug_energy_cost_monthly
-                name: Cost Month
-                icon: mdi:cash-multiple
-              - type: entity
-                entity: sensor.basement_heater_plug_share_of_total
-                name: Share
-                icon: mdi:percent
-          - type: history-graph
-            hours_to_show: 48
-            entities:
-              - entity: sensor.tapo_p110m_4_basement_heater_current_consumption
-                name: Power (W)
-
-      # ── Guest Bedroom Desk Plug ──
-      - type: vertical-stack
-        cards:
-          - type: markdown
-            content: "## Guest Bedroom Desk Plug"
-          - type: horizontal-stack
-            cards:
-              - type: entity
-                entity: sensor.guest_bedroom_desk_plug_current_consumption
-                name: Power Now
-                icon: mdi:flash
-              - type: entity
-                entity: sensor.guest_bedroom_desk_plug_today_s_consumption
-                name: Today (kWh)
-                icon: mdi:lightning-bolt
-              - type: entity
-                entity: sensor.guest_bedroom_desk_plug_energy_cost_today
-                name: Cost Today
-                icon: mdi:cash
-          - type: horizontal-stack
-            cards:
-              - type: entity
-                entity: sensor.guest_bedroom_desk_plug_this_month_s_consumption
-                name: Month (kWh)
-                icon: mdi:calendar
-              - type: entity
-                entity: sensor.guest_bedroom_desk_plug_energy_cost_monthly
-                name: Cost Month
-                icon: mdi:cash-multiple
-              - type: entity
-                entity: sensor.guest_bedroom_desk_plug_share_of_total
-                name: Share
-                icon: mdi:percent
-          - type: history-graph
-            hours_to_show: 48
-            entities:
-              - entity: sensor.guest_bedroom_desk_plug_current_consumption
-                name: Power (W)
+      - type: custom:auto-entities
+        card:
+          type: entities
+          title: All Discovered Energy Devices
+          show_header_toggle: false
+        card_param: entities
+        sort:
+          method: friendly_name
+        filter:
+          include:
+            - entity_id: "sensor.*_today_s_consumption"
+              attributes:
+                device_class: energy
+              options:
+                type: custom:button-card
+                entity: this.entity_id
+                show_state: true
+                show_name: true
+                show_icon: true
+                name: |
+                  [[[
+                    return (entity.attributes.friendly_name || '')
+                      .replace("Today's Consumption","")
+                      .replace("Today's consumption","")
+                      .replace("Plug","")
+                      .replace(/\s+/g," ")
+                      .trim();
+                  ]]]
+                tap_action:
+                  action: call-service
+                  service: input_text.set_value
+                  service_data:
+                    entity_id: input_text.energy_hidden_devices
+                    value: |
+                      [[[
+                        const slug = entity.entity_id.replace('sensor.','').replace('_today_s_consumption','');
+                        const obj = states['input_text.energy_hidden_devices'];
+                        const cur = (obj && obj.state) ? obj.state : '';
+                        const list = cur.split(',').filter(x => x.length > 0);
+                        const idx = list.indexOf(slug);
+                        if (idx >= 0) list.splice(idx, 1);
+                        else list.push(slug);
+                        return list.join(',');
+                      ]]]
+                state:
+                  - operator: template
+                    value: |
+                      [[[
+                        const slug = entity.entity_id.replace('sensor.','').replace('_today_s_consumption','');
+                        const obj = states['input_text.energy_hidden_devices'];
+                        const cur = (obj && obj.state) ? obj.state : '';
+                        return cur.split(',').filter(x => x.length > 0).includes(slug);
+                      ]]]
+                    styles:
+                      card:
+                        - opacity: "0.5"
+                      name:
+                        - color: "var(--secondary-text-color)"
+                      state:
+                        - color: "var(--secondary-text-color)"
+                styles:
+                  card:
+                    - background: "transparent"
+                    - box-shadow: "none"
+                    - padding: "10px 0"
+                    - border-bottom: "1px solid var(--divider-color)"
+                  grid:
+                    - grid-template-areas: '"i n s"'
+                    - grid-template-columns: "min-content 1fr min-content"
+                  icon:
+                    - color: "var(--primary-color)"
+                    - width: "20px"
+                    - margin-right: "10px"
+                  name:
+                    - text-align: "left"
+                    - justify-self: "start"
+                    - font-weight: "500"
+                  state:
+                    - font-size: "0.85em"
+                    - color: "var(--secondary-text-color)"
+                    - justify-self: "end"
+          exclude:
+            - entity_id: "sensor.total_*"
 
   # ═══════════════════════════════════════════════════════════
-  #  VIEW 3: SETTINGS — device toggles, billing, PECO rates
+  #  VIEW 3: SETTINGS
   # ═══════════════════════════════════════════════════════════
   - title: Settings
     path: settings
     icon: mdi:cog
     cards:
-
-      # ══════════════════════════════════════════════════════
-      #  DEVICE REGISTRY — toggle show/hide in Overview
-      # ══════════════════════════════════════════════════════
       - type: markdown
         content: |
-          <small style="color: var(--secondary-text-color);">
-          The <strong>Individual Devices Total Usage</strong> chart on the Overview tab auto-syncs with HA Energy settings.
-          To add or remove devices from that chart, go to
-          <a href="/config/energy" style="color:var(--primary-color);">Settings → Energy → Individual <strong>Devices</strong></a>.
-          Gauge cards and cost tables below require a separate YAML update — just tell Claude Code "Add [device name]."
-          </small>
+          ### How it works
 
-      # AUTO-SYNC NOTE:
-      #   • The "Individual Devices Total Usage" bar chart (Overview → power
-      #     section, right column) ALREADY auto-syncs with HA Energy settings.
-      #     Add a device there → it appears in that chart automatically.
-      #   • The gauge cards, cost table, and statistics graphs need manual
-      #     YAML updates because they use different sensor types (live watts
-      #     vs. monthly kWh). Just tell Claude "Add [device name]" and it
-      #     wires everything in one commit.
-      # TO HIDE a device gauge from Overview: flip its toggle to off.
-      # TO ADD a new device: tell Claude Code "Add [device name] with
-      #   entity prefix sensor.tapo_p110mX_* to the dashboard."
-      - type: entities
-        title: Device Registry — Active Smart Plugs
-        show_header_toggle: false
-        entities:
-          - entity: sensor.tapo_p110m_1_current_consumption
-            name: "1 · Desktop Desk Plug"
-            icon: mdi:desktop-tower-monitor
-            secondary_info: last-changed
-          - entity: input_boolean.show_device_desktop
-            name: "  Show in Overview"
-          - type: divider
-          - entity: sensor.tapo_p110m_2_nursery_heater_current_consumption
-            name: "2 · Nursery Heater Plug"
-            icon: mdi:radiator
-            secondary_info: last-changed
-          - entity: input_boolean.show_device_nursery
-            name: "  Show in Overview"
-          - type: divider
-          - entity: sensor.tapo_p110m_3_current_consumption
-            name: "3 · Dyson Heater Plug"
-            icon: mdi:fan
-            secondary_info: last-changed
-          - entity: input_boolean.show_device_dyson
-            name: "  Show in Overview"
-          - type: divider
-          - entity: sensor.tapo_p110m_4_basement_heater_current_consumption
-            name: "4 · Basement Heater Plug"
-            icon: mdi:radiator
-            secondary_info: last-changed
-          - entity: input_boolean.show_device_basement
-            name: "  Show in Overview"
-          - type: divider
-          - entity: sensor.tumble_dryer_energy_consumption
-            name: "5 · Miele Tumble Dryer"
-            icon: mdi:tumble-dryer
-            secondary_info: last-changed
-          - type: divider
-          - entity: sensor.guest_bedroom_desk_plug_current_consumption
-            name: "6 · Guest Bedroom Desk Plug"
-            icon: mdi:desk
-            secondary_info: last-changed
-          - entity: input_boolean.show_device_guest_bedroom
-            name: "  Show in Overview"
+          The dashboard is fully dynamic. Every chart and total filters live from `states.sensor` and respects `input_text.energy_hidden_devices`.
 
-      # ══════════════════════════════════════════════════════
-      #  PECO BILL — manual entry + future AI upload
-      # ══════════════════════════════════════════════════════
+          **Add a device:** plug it in. HA discovers its sensors. Charts include it automatically.
+          **Hide/show:** tap chip on Overview, or use the Devices tab.
+          **Non-conforming brands:** add a `utility_meter` block to `configuration.yaml` (see existing Tumble Dryer).
+
       - type: entities
         title: Last Bill Info
         show_header_toggle: false
@@ -2005,35 +1259,3 @@ views:
           - entity: input_number.peco_last_bill_days
             name: Billing Period (days)
             icon: mdi:calendar-range
-
-      - type: markdown
-        card_mod:
-          style: |
-            ha-card {
-              background: var(--ha-card-background, var(--card-background-color));
-              border-radius: 16px;
-              box-shadow: none;
-            }
-        content: |
-          #### PECO Bill Auto-Import
-
-          **You have a ChatGPT API key — here's the fastest path to AI bill parsing:**
-
-          **Step 1 — Upload your bill PDF**
-          Open [Studio Code Server](http://homeassistant.local:8443) → navigate to `/config/bills/` → drag and drop your PECO PDF there.
-
-          **Step 2 — Ask Claude Code to wire it up**
-          Tell Claude Code: *"I've put a PECO bill PDF in `/config/bills/`. Use my OpenAI API key to parse it and update the input_number helpers for rates, bill amount, kWh, and days."*
-          Claude will write a script that calls GPT-4o vision on the PDF page image and posts the extracted values back to HA via the REST API.
-
-          **For now**, enter values manually from your bill:
-          - **Delivery Rate** → "Distribution Charges" per-kWh line
-          - **Supply Rate** → "Generation Charges" per-kWh line
-          - **Transmission Rate** → "Transmission Charges" per-kWh line
-          - **Customer Charge** → fixed monthly fee
-          - **Billing Period** → number of days printed on the bill
-
-      # ══════════════════════════════════════════════════════
-      #  PECO RATE COMPONENTS — now editable in Overview top-left
-      # ══════════════════════════════════════════════════════
-      # (Rate inputs moved to Overview → PECO card — edit them there)
