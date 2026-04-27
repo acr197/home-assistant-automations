@@ -1,6 +1,9 @@
 # Smart Home Automation System
 
-A production Home Assistant configuration managing 29 automations across lighting, climate, audio, presence detection, and nursery monitoring — built for a two-person household in Philadelphia.
+A production Home Assistant configuration managing 29 automations across lighting, climate, audio, presence detection, and nursery monitoring.
+
+Energy Dashboard Preview:
+![Energy Monitor Dashboard](Home%20Assistant%20Energy%20Monitoring%20Dashboard.png)
 
 ## Why This Project
 
