@@ -1442,6 +1442,9 @@ views:
           exclude:
             - entity_id: "sensor.total_*"
 
+      - type: custom:energy-bill-drop-card
+        title: Upload Energy Bill
+
   # ═══════════════════════════════════════════════════════════
   #  VIEW 3: SETTINGS
   # ═══════════════════════════════════════════════════════════
