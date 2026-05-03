@@ -776,8 +776,8 @@
   id: e489e17d0d1743568cdf4fc3215d90de
 - id: '1761095702248'
   alias: 'Printer: Print Test Page Twice A Week'
-  description: Prevent ink drying by printing a test page on Monday and Thursday at 1:15
-    PM. Event is handled by AppDaemon (hello.py) which submits the PDF to CUPS.
+  description: Prevent ink drying by printing a test page on Monday and Thursday at
+    1:15 PM. Event is handled by AppDaemon (hello.py) which submits the PDF to CUPS.
   triggers:
   - at: '13:15:00'
     trigger: time
@@ -828,9 +828,11 @@
   mode: single
 - id: '1761698231251'
   alias: 'Nursery: Heater on/off 69/71 degrees with Hatch'
-  description: 'Turns heater ON only when Hatch is ON and room is below 69. Turns
-    heater OFF when room is above 71 or whenever Hatch is OFF. Re-checks every 10
-    minutes to self-correct.
+  description: 'Turns heater ON when room is below 69 and thermostat is not actively
+    heating. Turns heater OFF when room is above 71 or when thermostat is heating.
+    Heater turns on immediately when AC kicks in regardless of temp. Only runs 8pm–7am
+    when Andrew or Amy are home, or when guest mode is on. Re-checks every 5 minutes
+    to self-correct.
 
     '
   triggers:
@@ -852,31 +854,51 @@
     attribute: hvac_action
     to:
     - heating
+  - id: cooling_starts
+    trigger: state
+    entity_id:
+    - climate.thermostat
+    attribute: hvac_action
+    to:
+    - cooling
   - device_id: 54376091c5980b4a3ea7b981389db0df
     domain: media_player
     entity_id: b08609d1c4a650ea08bb26c14de1564b
     type: playing
     trigger: device
+    enabled: false
   - id: periodic
-    minutes: /10
+    minutes: /5
     trigger: time_pattern
   - id: ha_start
     event: start
     trigger: homeassistant
-  conditions: []
+  conditions:
+  - condition: time
+    after: '20:00:00'
+    before: 07:00:00
+  - condition: or
+    conditions:
+    - condition: state
+      entity_id: input_boolean.guest_mode
+      state: 'on'
+    - condition: state
+      entity_id: person.andrew
+      state: home
+    - condition: state
+      entity_id: person.amy
+      state: home
   actions:
   - choose:
     - conditions:
-      - condition: device
-        device_id: 54376091c5980b4a3ea7b981389db0df
-        domain: media_player
-        entity_id: b08609d1c4a650ea08bb26c14de1564b
-        type: is_idle
+      - condition: trigger
+        id: cooling_starts
       sequence:
-      - type: turn_off
-        device_id: 929a2d48c4e5b587eb4bcfea32e2d1f1
-        entity_id: 1a0d5dafedfba7b5ddab267238620d5b
-        domain: switch
+      - target:
+          entity_id:
+          - switch.tapo_p110m_2_nursery_heater
+        action: switch.turn_on
+        data: {}
     - conditions:
       - condition: state
         entity_id: climate.thermostat
@@ -888,6 +910,7 @@
         domain: media_player
         entity_id: b08609d1c4a650ea08bb26c14de1564b
         type: is_playing
+        enabled: false
       sequence:
       - type: turn_off
         device_id: 929a2d48c4e5b587eb4bcfea32e2d1f1
@@ -902,6 +925,7 @@
         domain: media_player
         entity_id: b08609d1c4a650ea08bb26c14de1564b
         type: is_playing
+        enabled: false
       sequence:
       - target:
           entity_id:
@@ -917,12 +941,14 @@
         state:
         - idle
         - 'off'
+        - cooling
         attribute: hvac_action
       - condition: device
         device_id: 54376091c5980b4a3ea7b981389db0df
         domain: media_player
         entity_id: b08609d1c4a650ea08bb26c14de1564b
         type: is_playing
+        enabled: false
       sequence:
       - target:
           entity_id:
@@ -1506,8 +1532,8 @@
   - action: shell_command.git_pull
     response_variable: pull_result
   - condition: template
-    value_template: "{{ pull_result['returncode'] == 0 and 'changed' in pull_result.get('stdout',
-      '') }}"
+    value_template: '{{ pull_result[''returncode''] == 0 and ''changed'' in pull_result.get(''stdout'',
+      '''') }}'
   - delay:
       seconds: 3
   - action: homeassistant.restart
@@ -1520,7 +1546,7 @@
   - trigger: webhook
     webhook_id: 4a115006f7f0a2bce53cb35881d54f5ca93c337c08da7888ce7d9842b5a1b5eb
     allowed_methods:
-      - POST
+    - POST
     local_only: false
   conditions: []
   actions:
