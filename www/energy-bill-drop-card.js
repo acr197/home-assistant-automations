@@ -429,3 +429,11 @@ class EnergyBillDropCard extends HTMLElement {
 
 // Register the element so Lovelace can use type: energy-bill-drop-card
 customElements.define('energy-bill-drop-card', EnergyBillDropCard);
+
+// Announce this card to HA's custom card registry so it shows in the card picker
+window.customCards = window.customCards || [];
+window.customCards.push({
+  type: 'energy-bill-drop-card',
+  name: 'Energy Bill Drop Card',
+  description: 'Drag-and-drop zone for uploading energy bill images and PDFs',
+});
