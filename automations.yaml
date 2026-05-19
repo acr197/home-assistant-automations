@@ -827,99 +827,100 @@
       message: Eco Mode turned off — fast approach detected (≥40 mph for 10 min)
   mode: single
 - id: '1761698231251'
-  alias: 'Nursery: Heater on/off 69/71 degrees with Hatch'
-  description: 'Turns heater ON when room is below 69 and thermostat is not actively
-    heating. Turns heater OFF when room is above 71 or when thermostat is heating.
-    Heater turns on immediately when AC kicks in regardless of temp. Only runs 8pm–7am
-    when Andrew or Amy are home, or when guest mode is on. Re-checks every 5 minutes
-    to self-correct.
+  alias: 'Nursery: Heater on/off 69/72 degrees with Hatch'
+  description: 'Heater turns on below 69, stays on until 72. Turns off when thermostat
+    heats, temp exceeds 72, or sensor goes unavailable. Turns on immediately when
+    AC kicks in. Only runs 8pm–7am when Andrew or Amy are home, or guest mode is on.
+    Re-checks every 5 minutes. Hard shutoff at 7:01am no matter what.
 
     '
   triggers:
+  - id: morning_off
+    trigger: time
+    at: 07:01:00
   - id: temp_low
-    entity_id:
-    - sensor.govee_thermometer_nursery_h5075_temperature
+    trigger: numeric_state
+    entity_id: sensor.govee_thermometer_nursery_h5075_temperature
     below: 69
-    trigger: numeric_state
-    enabled: true
   - id: temp_high
-    entity_id:
-    - sensor.govee_thermometer_nursery_h5075_temperature
-    above: 71
     trigger: numeric_state
-    enabled: true
-  - trigger: state
-    entity_id:
-    - climate.thermostat
+    entity_id: sensor.govee_thermometer_nursery_h5075_temperature
+    above: 72
+  - id: thermostat_heating
+    trigger: state
+    entity_id: climate.thermostat
     attribute: hvac_action
-    to:
-    - heating
+    to: heating
   - id: cooling_starts
     trigger: state
-    entity_id:
-    - climate.thermostat
+    entity_id: climate.thermostat
     attribute: hvac_action
-    to:
-    - cooling
-  - device_id: 54376091c5980b4a3ea7b981389db0df
+    to: cooling
+  - id: sensor_unavailable
+    trigger: state
+    entity_id: sensor.govee_thermometer_nursery_h5075_temperature
+    to: unavailable
+  - id: hatch_playing
+    device_id: 54376091c5980b4a3ea7b981389db0df
     domain: media_player
     entity_id: b08609d1c4a650ea08bb26c14de1564b
     type: playing
     trigger: device
     enabled: false
   - id: periodic
-    minutes: /5
     trigger: time_pattern
+    minutes: /5
   - id: ha_start
-    event: start
     trigger: homeassistant
+    event: start
   conditions:
-  - condition: time
-    after: '20:00:00'
-    before: 07:00:00
   - condition: or
     conditions:
-    - condition: state
-      entity_id: input_boolean.guest_mode
-      state: 'on'
-    - condition: state
-      entity_id: person.andrew
-      state: home
-    - condition: state
-      entity_id: person.amy
-      state: home
+    - condition: trigger
+      id:
+      - morning_off
+      - sensor_unavailable
+    - condition: and
+      conditions:
+      - condition: time
+        after: '19:00:00'
+        before: 07:00:00
+      - condition: or
+        conditions:
+        - condition: state
+          entity_id: input_boolean.guest_mode
+          state: 'on'
+        - condition: state
+          entity_id: person.andrew
+          state: home
+        - condition: state
+          entity_id: person.amy
+          state: home
   actions:
   - choose:
+    - conditions:
+      - condition: trigger
+        id:
+        - morning_off
+        - sensor_unavailable
+      sequence:
+      - target:
+          entity_id: switch.tapo_p110m_2_nursery_heater
+        action: switch.turn_off
+        data: {}
     - conditions:
       - condition: trigger
         id: cooling_starts
       sequence:
       - target:
-          entity_id:
-          - switch.tapo_p110m_2_nursery_heater
+          entity_id: switch.tapo_p110m_2_nursery_heater
         action: switch.turn_on
         data: {}
     - conditions:
       - condition: state
         entity_id: climate.thermostat
-        state:
-        - heating
         attribute: hvac_action
-      - condition: device
-        device_id: 54376091c5980b4a3ea7b981389db0df
-        domain: media_player
-        entity_id: b08609d1c4a650ea08bb26c14de1564b
-        type: is_playing
-        enabled: false
-      sequence:
-      - type: turn_off
-        device_id: 929a2d48c4e5b587eb4bcfea32e2d1f1
-        entity_id: 1a0d5dafedfba7b5ddab267238620d5b
-        domain: switch
-    - conditions:
-      - condition: numeric_state
-        entity_id: sensor.govee_thermometer_nursery_h5075_temperature
-        above: 71
+        state: heating
       - condition: device
         device_id: 54376091c5980b4a3ea7b981389db0df
         domain: media_player
@@ -928,21 +929,39 @@
         enabled: false
       sequence:
       - target:
-          entity_id:
-          - switch.tapo_p110m_2_nursery_heater
+          entity_id: switch.tapo_p110m_2_nursery_heater
+        action: switch.turn_off
+        data: {}
+    - conditions:
+      - condition: numeric_state
+        entity_id: sensor.govee_thermometer_nursery_h5075_temperature
+        above: 72
+      - condition: device
+        device_id: 54376091c5980b4a3ea7b981389db0df
+        domain: media_player
+        entity_id: b08609d1c4a650ea08bb26c14de1564b
+        type: is_playing
+        enabled: false
+      sequence:
+      - target:
+          entity_id: switch.tapo_p110m_2_nursery_heater
         action: switch.turn_off
         data: {}
     - conditions:
       - condition: numeric_state
         entity_id: sensor.govee_thermometer_nursery_h5075_temperature
         below: 69
-      - condition: state
-        entity_id: climate.thermostat
-        state:
-        - idle
-        - 'off'
-        - cooling
-        attribute: hvac_action
+      - condition: not
+        conditions:
+        - condition: state
+          entity_id: climate.thermostat
+          attribute: hvac_action
+          state: heating
+      - condition: not
+        conditions:
+        - condition: state
+          entity_id: sensor.govee_thermometer_nursery_h5075_temperature
+          state: unavailable
       - condition: device
         device_id: 54376091c5980b4a3ea7b981389db0df
         domain: media_player
@@ -951,15 +970,28 @@
         enabled: false
       sequence:
       - target:
-          entity_id:
-          - switch.tapo_p110m_2_nursery_heater
+          entity_id: switch.tapo_p110m_2_nursery_heater
         action: switch.turn_on
         data: {}
     default:
-    - type: turn_off
-      device_id: 929a2d48c4e5b587eb4bcfea32e2d1f1
-      entity_id: 1a0d5dafedfba7b5ddab267238620d5b
-      domain: switch
+    - if:
+      - condition: or
+        conditions:
+        - condition: numeric_state
+          entity_id: sensor.govee_thermometer_nursery_h5075_temperature
+          above: 72
+        - condition: state
+          entity_id: climate.thermostat
+          attribute: hvac_action
+          state: heating
+        - condition: state
+          entity_id: sensor.govee_thermometer_nursery_h5075_temperature
+          state: unavailable
+      then:
+      - target:
+          entity_id: switch.tapo_p110m_2_nursery_heater
+        action: switch.turn_off
+        data: {}
   mode: single
 - id: '1761791366230'
   alias: 'Nursery: Temperature Alerts (66/76 for 5m)'
@@ -1175,10 +1207,6 @@
   - target:
       entity_id: remote.bedroom_tv
     action: remote.turn_off
-  - type: turn_off
-    device_id: eb723052d686772cbb03644acf154c78
-    entity_id: 5ba8366816b23d49c73bf2781e09616f
-    domain: switch
   - delay:
       seconds: 1
   - target:

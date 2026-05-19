@@ -11,7 +11,8 @@
       }
     },
     "error": {
-      "auth": "Login failed into Hatch. Please use official Hatch app to logout and log back in and try again."
+      "auth": "Login failed into Hatch. Please use official Hatch app to logout and log back in and try again.",
+      "rate_limited": "Hatch rate-limited this account. Wait for the cooldown to clear before trying again."
     }
   },
   "options": {
@@ -19,7 +20,8 @@
       "init": {
         "data": {
           "turn_on_media": "Auto turn on Rest+ when media play starts",
-          "turn_on_light": "Auto turn on Rest+ when light turns on"
+          "turn_on_light": "Auto turn on Rest+ when light turns on",
+          "numbered_preset_scenes": "Show preset numbers in favorite scene names"
         }
       }
     }

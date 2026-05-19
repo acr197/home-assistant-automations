@@ -1,9 +1,9 @@
 import logging
 from typing import Any
 
+from hatch_rest_api.errors import AuthError, RateError
 import voluptuous as vol
 import homeassistant.helpers.config_validation as cv
-from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant import config_entries
 from homeassistant.core import callback
 from homeassistant.const import (
@@ -17,6 +17,8 @@ from .const import (
     CONFIG_TURN_ON_MEDIA,
     CONFIG_TURN_ON_LIGHT,
     CONFIG_TURN_ON_DEFAULT,
+    CONFIG_NUMBERED_PRESET_SCENES,
+    CONFIG_NUMBERED_PRESET_SCENES_DEFAULT,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -36,6 +38,13 @@ class HatchOptionFlowHandler(config_entries.OptionsFlow):
                     CONFIG_TURN_ON_MEDIA,
                     default=config_entry.options.get(
                         CONFIG_TURN_ON_MEDIA, CONFIG_TURN_ON_DEFAULT
+                    ),
+                ): bool,
+                vol.Required(
+                    CONFIG_NUMBERED_PRESET_SCENES,
+                    default=config_entry.options.get(
+                        CONFIG_NUMBERED_PRESET_SCENES,
+                        CONFIG_NUMBERED_PRESET_SCENES_DEFAULT,
                     ),
                 ): bool,
             }
@@ -87,8 +96,10 @@ class ConfigFlowHandler(config_entries.ConfigFlow):
                     title=email,
                     data=self.data,
                 )
-            except ConfigEntryAuthFailed:
+            except AuthError:
                 errors["base"] = "auth"
+            except RateError:
+                errors["base"] = "rate_limited"
             finally:
                 if api_cloud is not None:
                     await api_cloud.cleanup_client_session()
