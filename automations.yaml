@@ -1473,11 +1473,7 @@
   - trigger: state
     entity_id: light.living_room
     to: 'on'
-  conditions:
-  - condition: template
-    value_template: >
-      {{ (now() - state_attr('automation.hue_switches_button_4_hold_entire_home_off_stair_path',
-      'last_triggered')).total_seconds() > 15 }}
+  conditions: []
   actions:
   - choose:
     - conditions:
