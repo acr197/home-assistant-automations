@@ -525,13 +525,9 @@
     trigger: zone
   conditions: []
   actions:
-  - data:
-      title: Location
+  - action: notify.mobile_app_pixel_10
+    data:
       message: Amy Leaving Work
-      data:
-        ttl: 0
-        priority: high
-    action: notify.mobile_app_andrews_s24
   mode: single
 - id: '05000002'
   alias: 'Geolocation: Notify Amy When Andrew Leaves Work'
