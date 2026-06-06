@@ -1,6 +1,17 @@
 cloud:
 default_config:
 
+wake_on_lan:
+  # for PC Wake button on Dashboard - lights yellow if PC is on by responding to packets sent
+binary_sensor:
+  - platform: trend
+    sensors:
+      andrew_towards_home_slow:
+        entity_id: sensor.andrew_distance_to_home_mi
+        invert: true
+        sample_duration: 600
+        min_gradient: 0.0001
+
 homeassistant:
   external_url: "https://virusdistributioncenter.duckdns.org"
   internal_url: "http://192.168.0.100:8123"
@@ -352,15 +363,6 @@ sensor:
     unit_time: h
     time_window: "00:05:00"
     round: 1
-
-binary_sensor:
-  - platform: trend
-    sensors:
-      andrew_towards_home_slow:
-        entity_id: sensor.andrew_distance_to_home_mi
-        invert: true
-        sample_duration: 600
-        min_gradient: 0.0001
 
 zone:
   - name: Andrew-Work

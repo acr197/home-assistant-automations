@@ -544,15 +544,18 @@
   mode: single
 - id: '06000001'
   alias: 'System: Auto Update All'
-  description: Nightly at 2am, install all available updates (no backups).
+  description: Sundays at 2am, install all available updates and restart if needed.
   triggers:
   - trigger: time
     at: 02:00:00
-  conditions: []
+  conditions:
+  - condition: time
+    weekday:
+    - sun
   actions:
   - variables:
-      to_update: "{{ states.update\n   | selectattr('state','eq','on')\n   | map(attribute='entity_id')
-        | list }}"
+      to_update: "{{ states.update\n   | selectattr('state','eq','on')\n   | rejectattr('entity_id','match','.*_firmware')\n
+        \  | map(attribute='entity_id') | list }}"
   - repeat:
       for_each: '{{ to_update }}'
       sequence:
@@ -563,6 +566,10 @@
           entity_id: '{{ repeat.item }}'
         data:
           backup: false
+  - condition: template
+    value_template: '{{ to_update | length > 0 }}'
+  - delay: 00:02:00
+  - action: homeassistant.restart
   mode: single
 - id: '07010101'
   alias: 'Basement Hue Tap Dial: Rotary — Sonos Volume Control'
