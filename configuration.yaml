@@ -3,14 +3,6 @@ default_config:
 
 wake_on_lan:
   # for PC Wake button on Dashboard - lights yellow if PC is on by responding to packets sent
-binary_sensor:
-  - platform: trend
-    sensors:
-      andrew_towards_home_slow:
-        entity_id: sensor.andrew_distance_to_home_mi
-        invert: true
-        sample_duration: 600
-        min_gradient: 0.0001
 
 homeassistant:
   external_url: "https://virusdistributioncenter.duckdns.org"
@@ -86,19 +78,10 @@ template:
         state: "{{ 'Active' if is_state('input_boolean.guest_mode','on') else 'Inactive' }}"
       - name: "Thermostat Heating State"
         unique_id: thermostat_heating_state
-        state: "{{ is_state_attr('climate.hallway', 'hvac_action', 'heating') }}"
+        state: "{{ is_state_attr('climate.thermostat', 'hvac_action', 'heating') }}"
       - name: "Thermostat Cooling State"
         unique_id: thermostat_cooling_state
-        state: "{{ is_state_attr('climate.hallway', 'hvac_action', 'cooling') }}"
-      - name: "Andrew Distance To Home (mi)"
-        unique_id: andrew_distance_home_mi
-        unit_of_measurement: "mi"
-        availability: >
-          {{ states('person.andrew') not in ['unknown', 'unavailable']
-             and state_attr('zone.home', 'latitude') is not none }}
-        state: >
-          {% set d = distance('person.andrew', state_attr('zone.home','latitude'), state_attr('zone.home','longitude')) %}
-          {{ (d | float(0) * 0.621371) | round(2) }}
+        state: "{{ is_state_attr('climate.thermostat', 'hvac_action', 'cooling') }}"
       - name: "Amy Distance To Home (mi)"
         unique_id: amy_distance_home_mi
         unit_of_measurement: "mi"
@@ -147,18 +130,12 @@ template:
               states('input_number.peco_supply_rate') | float(0) +
               states('input_number.peco_transmission_rate') | float(0)) | round(5) }}
 
+  # Live whole-home power: refreshed every 60s for the dashboard tile
   - trigger:
       - platform: time_pattern
-        seconds: "/30"
+        seconds: "/60"
       - platform: homeassistant
         event: start
-      - platform: state
-        entity_id:
-          - input_text.energy_hidden_devices
-          - input_number.peco_delivery_rate
-          - input_number.peco_supply_rate
-          - input_number.peco_transmission_rate
-          - input_number.peco_customer_charge
     sensor:
       - name: "Total Power Draw Now"
         unique_id: total_power_draw_now
@@ -181,6 +158,20 @@ template:
           {% endfor %}
           {{ ns.total | round(1) }}
 
+  # Slow totals and costs: recomputed every 5 min (and on rate / hidden-list changes)
+  - trigger:
+      - platform: time_pattern
+        minutes: "/5"
+      - platform: homeassistant
+        event: start
+      - platform: state
+        entity_id:
+          - input_text.energy_hidden_devices
+          - input_number.peco_delivery_rate
+          - input_number.peco_supply_rate
+          - input_number.peco_transmission_rate
+          - input_number.peco_customer_charge
+    sensor:
       - name: "Total Energy Today"
         unique_id: total_energy_today
         unit_of_measurement: "kWh"
@@ -349,20 +340,12 @@ template:
 sensor:
   - platform: rest
     name: OpenMeteo Raw
-    resource: "https://api.open-meteo.com/v1/forecast?latitude=39.9354267&longitude=-75.15329726862069&current=temperature_2m,apparent_temperature,relative_humidity_2m&hourly=apparent_temperature,relative_humidity_2m&timezone=auto&temperature_unit=fahrenheit"
+    resource: "https://api.open-meteo.com/v1/forecast?latitude=39.9354267&longitude=-75.15329726862069&current=temperature_2m,apparent_temperature,relative_humidity_2m&timezone=auto&temperature_unit=fahrenheit"
     json_attributes:
       - current
-      - hourly
     value_template: "{{ value_json.current.temperature_2m if value_json.current is defined else 'unavailable' }}"
     unit_of_measurement: "°F"
     scan_interval: 600
-
-  - platform: derivative
-    source: sensor.andrew_distance_to_home_mi
-    name: Andrew Approach Speed (mph)
-    unit_time: h
-    time_window: "00:05:00"
-    round: 1
 
 zone:
   - name: Andrew-Work

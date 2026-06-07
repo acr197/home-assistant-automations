@@ -1,13 +1,12 @@
 # Home Assistant Energy Monitor
 
-A production Home Assistant configuration running 29 automations across lighting, climate, audio, presence detection, and nursery monitoring for a two-person household.
+A production Home Assistant configuration running 31 automations across lighting, climate, audio, presence detection, and nursery monitoring for a two-person household.
 
 [Screenshot](https://raw.githubusercontent.com/acr197/home-assistant-automations/main/Home%20Assistant%20Energy%20Monitoring%20Dashboard.png)
 
 ## Features
 
 - Presence-based climate control that switches to eco mode when everyone leaves and exits based on outdoor temperature thresholds
-- Approach speed detection using a derivative sensor on GPS distance, so the house warms up faster when you're driving home quickly
 - Nursery heater that holds a 69 to 71 F range, synced to the Hatch sound machine state, with alerts and a cooldown to prevent notification spam
 - Guest mode toggle that disables all presence-based thermostat automations with one switch
 - Time-aware lighting with brightness caps, room syncing, and nightlight behavior that adjusts by time of day
@@ -28,5 +27,5 @@ A production Home Assistant configuration running 29 automations across lighting
 ## Privacy
 
 - Runs entirely on local hardware. No cloud dependency for automations.
-- Remote access is through Nabu Casa with encrypted tunneling.
+- Remote access uses DuckDNS dynamic DNS with SSL/TLS.
 - Weather data is the only external API call. No telemetry or third-party analytics.

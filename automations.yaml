@@ -175,7 +175,7 @@
           device_id: 0bd4a90c86eae6fe3052348e14462756
   mode: single
 - id: '02030201'
-  alias: 'Stairwell: Keep Lower Wall Light On'
+  alias: 'Staircase: Keep Lower Wall Light On'
   description: Maintain a nightlight on the lower stairwell wall (1% after 8pm, 20%
     during day) when anyone is home.
   triggers:
@@ -211,7 +211,7 @@
     action: light.turn_on
   mode: single
 - id: '02030301'
-  alias: 'Stairwell: Sync Top Stairwell Light to Middle Hallway Light'
+  alias: 'Staircase: Sync Upper Light to Middle'
   description: Keep the top stairwell light matched to the middle hallway; uses warm
     1% when turning on.
   trigger:
@@ -239,7 +239,7 @@
         transition: 1
   mode: single
 - id: '02040101'
-  alias: 'Stairwell: Turn Off Top Stairwell Light in 30s if Bedroom Light Is Off'
+  alias: 'Staircase: Turn Off Upper Light in 30s if Bedroom Light Is Off'
   description: Small pathlight after bedroom lights go off late at night; top stairwell
     warm 1% for 30s.
   triggers:
@@ -435,7 +435,7 @@
           volume_level: 0.18
   mode: parallel
 - id: '04030001'
-  alias: 'Stairwell/Nursery: Middle Hue & Sonos Roam follow Hatch'
+  alias: 'Staircase/Nursery: Middle Light & Sonos Roam follow Hatch'
   description: Turn off middle stairwell light and lower Sonos Roam when Hatch plays;
     restore when it stops. If Hatch stops between 6:00–9:00 AM, turn on first-floor
     lights.
@@ -726,21 +726,6 @@
       - action: switch.turn_off
         target:
           device_id: 788c5fd6f09f75f04e76cb3a805de6aa
-    - conditions:
-      - condition: trigger
-        id:
-        - andrew_away
-        - amy_away
-      - condition: state
-        entity_id: person.andrew
-        state: not_home
-      - condition: state
-        entity_id: person.amy
-        state: not_home
-      sequence:
-      - action: switch.turn_off
-        target:
-          device_id: 788c5fd6f09f75f04e76cb3a805de6aa
   mode: single
 - alias: 'Guest Mode: Sync Thermostat Automations'
   mode: single
@@ -790,44 +775,6 @@
   actions:
   - event: plz_print_purge
     event_data: {}
-  mode: single
-- id: '1761615054765'
-  alias: 'Geolocation: Turn Off Thermostat Eco on Fast Approach Home ≥30mph'
-  description: Exit Eco when both are away and Andrew is headed home ≥30 mph for 10
-    minutes.
-  triggers:
-  - trigger: template
-    value_template: '{{ states(''sensor.andrew_approach_speed_mph'')|float(0) <= -30
-      }}'
-    for:
-      minutes: 10
-  - trigger: time_pattern
-    minutes: /2
-  conditions:
-  - condition: state
-    entity_id: input_boolean.guest_mode
-    state: 'off'
-  - condition: state
-    entity_id: person.andrew
-    state: not_home
-  - condition: state
-    entity_id: person.amy
-    state: not_home
-  - condition: numeric_state
-    entity_id: sensor.andrew_distance_to_home_mi
-    above: 10
-  - condition: template
-    value_template: "{{ is_state_attr('climate.thermostat','preset_mode','eco')\n
-      \  and states('sensor.andrew_approach_speed_mph')|float(0) <= -30 }}\n"
-  actions:
-  - action: climate.set_preset_mode
-    target:
-      entity_id: climate.thermostat
-    data:
-      preset_mode: none
-  - action: notify.mobile_app_andrews_s24
-    data:
-      message: Eco Mode turned off — fast approach detected (≥40 mph for 10 min)
   mode: single
 - id: '1761698231251'
   alias: 'Nursery: Heater on/off 69/72 degrees with Hatch'
@@ -1032,7 +979,7 @@
         entity_id: sensor.govee_thermometer_nursery_h5075_temperature
         above: 76
       sequence:
-      - action: notify.mobile_app_andrews_s24
+      - action: notify.mobile_app_pixel_10
         data:
           title: Nursery Alert
           message: 'Nursery temperature is above 74°F (current: {{ states(''sensor.govee_thermometer_nursery_h5075_temperature'')
@@ -1042,20 +989,14 @@
           data:
             ttl: 0
             priority: high
-      - action: input_boolean.turn_on
-        target:
-          entity_id: input_boolean.nursery_alert_cooldown
       - delay:
           minutes: 30
-      - action: input_boolean.turn_off
-        target:
-          entity_id: input_boolean.nursery_alert_cooldown
     - conditions:
       - condition: numeric_state
         entity_id: sensor.govee_thermometer_nursery_h5075_temperature
         below: 66
       sequence:
-      - action: notify.mobile_app_andrews_s24
+      - action: notify.mobile_app_pixel_10
         data:
           title: Nursery Alert
           message: 'Nursery temperature is below 66°F (current: {{ states(''sensor.govee_thermometer_nursery_h5075_temperature'')
@@ -1065,14 +1006,8 @@
           data:
             ttl: 0
             priority: high
-      - action: input_boolean.turn_on
-        target:
-          entity_id: input_boolean.nursery_alert_cooldown
       - delay:
           minutes: 30
-      - action: input_boolean.turn_off
-        target:
-          entity_id: input_boolean.nursery_alert_cooldown
   mode: single
 - id: '1762715716399'
   alias: 'Living Room: TV Play Lights Brightness Follow Room Brightness'
@@ -1359,7 +1294,7 @@
         action: light.turn_off
   mode: single
 - id: '1762737154334'
-  alias: 'Stairwell: Follow Middle + Smart Nightlight'
+  alias: 'Staircase: Follow Middle + Smart Nightlight'
   description: 'Upper stair follows middle hallway; lower is a nightlight at 1% only
     when the middle is off. If middle is on at ≥30% both stair lights go 100%; if
     middle is on between 1–29% both go 30%.
@@ -1442,7 +1377,7 @@
             brightness_pct: 1
             color_temp_kelvin: 2222
             transition: 1
-  mode: single
+  mode: restart
 - id: '1764032637877'
   alias: 'Living Room: Dim Lights to 80% After Sunset'
   description: Slowly dim Main Level lights to 65% over 1 hour after sunset if they
@@ -1530,7 +1465,7 @@
 
             '
       sequence:
-      - action: notify.mobile_app_andrews_s24
+      - action: notify.mobile_app_pixel_10
         data:
           title: Nursery Sensor Alert
           message: 'Govee nursery battery is low or missing (current: {{ states(''sensor.govee_thermometer_nursery_h5104_battery'')
