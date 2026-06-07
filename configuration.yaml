@@ -133,7 +133,7 @@ template:
   # Live whole-home power: refreshed every 60s for the dashboard tile
   - trigger:
       - platform: time_pattern
-        seconds: "/60"
+        minutes: "/1"
       - platform: homeassistant
         event: start
     sensor:
