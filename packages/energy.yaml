@@ -1,0 +1,331 @@
+# ========================================================
+#  ENERGY & COST MONITORING  (package)
+#
+#  Self-contained package for the Energy dashboard: input helpers, PECO
+#  utility rates, energy meters, and computed power/cost sensors. Split out
+#  of configuration.yaml so this project can grow without bloating the core
+#  config. Loaded via: homeassistant > packages > !include_dir_named packages
+# ========================================================
+
+# Comma-separated entity slugs the dashboard hides from whole-home totals
+input_text:
+  energy_hidden_devices:
+    name: "Hidden Energy Devices"
+    max: 255
+    icon: mdi:eye-off
+
+# PECO utility rates (feed the cost templates) + last-bill reference values (manual entry)
+input_number:
+  peco_delivery_rate:
+    name: PECO Delivery Rate
+    unit_of_measurement: "$/kWh"
+    min: 0
+    max: 1
+    step: 0.00001
+    mode: box
+    icon: mdi:transmission-tower
+    initial: 0.10276
+  peco_supply_rate:
+    name: PECO Supply Rate
+    unit_of_measurement: "$/kWh"
+    min: 0
+    max: 1
+    step: 0.00001
+    mode: box
+    icon: mdi:flash
+    initial: 0.10237
+  peco_transmission_rate:
+    name: PECO Transmission Rate
+    unit_of_measurement: "$/kWh"
+    min: 0
+    max: 1
+    step: 0.00001
+    mode: box
+    icon: mdi:lightning-bolt
+    initial: 0.00787
+  peco_customer_charge:
+    name: PECO Customer Charge
+    unit_of_measurement: "$/mo"
+    min: 0
+    max: 100
+    step: 0.01
+    mode: box
+    icon: mdi:account-cash
+    initial: 11.30
+  peco_last_bill_amount:
+    name: PECO Last Bill Amount
+    unit_of_measurement: "$"
+    min: 0
+    max: 10000
+    step: 0.01
+    mode: box
+    icon: mdi:receipt-text
+    initial: 103.73
+  peco_last_bill_kwh:
+    name: PECO Last Bill kWh
+    unit_of_measurement: "kWh"
+    min: 0
+    max: 100000
+    step: 1
+    mode: box
+    icon: mdi:counter
+    initial: 434
+  peco_last_bill_days:
+    name: PECO Last Bill Days
+    unit_of_measurement: "days"
+    min: 1
+    max: 365
+    step: 1
+    mode: box
+    icon: mdi:calendar-range
+    initial: 29
+  billing_cycle_start_day:
+    name: Billing Cycle Start Day
+    unit_of_measurement: "day"
+    min: 1
+    max: 28
+    step: 1
+    mode: box
+    icon: mdi:calendar-start
+    initial: 1
+
+# Time-range selector for the energy charts
+input_select:
+  energy_chart_period:
+    name: Energy Chart Period
+    options:
+      - 7d
+      - 14d
+      - 30d
+    initial: 14d
+    icon: mdi:calendar-range
+
+# Tumble dryer energy meters - daily/monthly cycles off the Miele consumption sensor
+utility_meter:
+  tumble_dryer_today:
+    source: sensor.tumble_dryer_energy_consumption
+    cycle: daily
+    name: "Tumble Dryer Today's Consumption"
+  tumble_dryer_month:
+    source: sensor.tumble_dryer_energy_consumption
+    cycle: monthly
+    name: "Tumble Dryer This Month's Consumption"
+
+# ---- Computed energy & cost sensors ----
+template:
+  # Blended PECO rate: delivery + supply + transmission ($/kWh)
+  - sensor:
+      - name: "PECO Variable Rate"
+        unique_id: peco_variable_rate
+        unit_of_measurement: "$/kWh"
+        state: >
+          {{ (states('input_number.peco_delivery_rate') | float(0) +
+              states('input_number.peco_supply_rate') | float(0) +
+              states('input_number.peco_transmission_rate') | float(0)) | round(5) }}
+
+  # Live whole-home power: refreshed every 60s for the dashboard tile
+  - trigger:
+      - platform: time_pattern
+        minutes: "/1"
+      - platform: homeassistant
+        event: start
+    sensor:
+      - name: "Total Power Draw Now"
+        unique_id: total_power_draw_now
+        unit_of_measurement: "W"
+        device_class: power
+        state_class: measurement
+        state: >
+          {% set raw = states('input_text.energy_hidden_devices') %}
+          {% set hidden = (raw if raw not in [none,'unknown','unavailable'] else '').split(',') | reject('eq','') | list %}
+          {% set ns = namespace(total=0) %}
+          {% for s in states.sensor
+              if s.attributes.get('device_class') == 'power'
+              and s.attributes.get('unit_of_measurement') == 'W'
+              and 'total_' not in s.entity_id
+              and s.state not in ['unavailable','unknown'] %}
+            {% set slug = s.entity_id | replace('sensor.','') | replace('_current_consumption','') | replace('_power','') %}
+            {% if slug not in hidden %}
+              {% set ns.total = ns.total + (s.state | float(0)) %}
+            {% endif %}
+          {% endfor %}
+          {{ ns.total | round(1) }}
+
+  # Slow totals and costs: recomputed every 5 min (and on rate / hidden-list changes)
+  - trigger:
+      - platform: time_pattern
+        minutes: "/5"
+      - platform: homeassistant
+        event: start
+      - platform: state
+        entity_id:
+          - input_text.energy_hidden_devices
+          - input_number.peco_delivery_rate
+          - input_number.peco_supply_rate
+          - input_number.peco_transmission_rate
+          - input_number.peco_customer_charge
+    sensor:
+      - name: "Total Energy Today"
+        unique_id: total_energy_today
+        unit_of_measurement: "kWh"
+        device_class: energy
+        state: >
+          {% set raw = states('input_text.energy_hidden_devices') %}
+          {% set hidden = (raw if raw not in [none,'unknown','unavailable'] else '').split(',') | reject('eq','') | list %}
+          {% set ns = namespace(total=0) %}
+          {% for s in states.sensor
+              if s.entity_id.endswith('_today_s_consumption')
+              and 'total_' not in s.entity_id
+              and s.state not in ['unavailable','unknown'] %}
+            {% set slug = s.entity_id | replace('sensor.','') | replace('_today_s_consumption','') %}
+            {% if slug not in hidden %}
+              {% set ns.total = ns.total + (s.state | float(0)) %}
+            {% endif %}
+          {% endfor %}
+          {{ ns.total | round(2) }}
+
+      - name: "Total Energy This Month"
+        unique_id: total_energy_this_month
+        unit_of_measurement: "kWh"
+        device_class: energy
+        state: >
+          {% set raw = states('input_text.energy_hidden_devices') %}
+          {% set hidden = (raw if raw not in [none,'unknown','unavailable'] else '').split(',') | reject('eq','') | list %}
+          {% set ns = namespace(total=0) %}
+          {% for s in states.sensor
+              if s.entity_id.endswith('_this_month_s_consumption')
+              and 'total_' not in s.entity_id
+              and s.state not in ['unavailable','unknown'] %}
+            {% set slug = s.entity_id | replace('sensor.','') | replace('_this_month_s_consumption','') %}
+            {% if slug not in hidden %}
+              {% set ns.total = ns.total + (s.state | float(0)) %}
+            {% endif %}
+          {% endfor %}
+          {{ ns.total | round(2) }}
+
+      - name: "Total Energy Cost Today"
+        unique_id: total_energy_cost_today
+        unit_of_measurement: "$"
+        state: >
+          {% set rate = states('sensor.peco_variable_rate') | float(0) %}
+          {% set raw = states('input_text.energy_hidden_devices') %}
+          {% set hidden = (raw if raw not in [none,'unknown','unavailable'] else '').split(',') | reject('eq','') | list %}
+          {% set ns = namespace(total=0) %}
+          {% for s in states.sensor
+              if s.entity_id.endswith('_today_s_consumption')
+              and 'total_' not in s.entity_id
+              and s.state not in ['unavailable','unknown'] %}
+            {% set slug = s.entity_id | replace('sensor.','') | replace('_today_s_consumption','') %}
+            {% if slug not in hidden %}
+              {% set ns.total = ns.total + (s.state | float(0)) %}
+            {% endif %}
+          {% endfor %}
+          {{ (ns.total * rate) | round(2) }}
+
+      - name: "Total Energy Cost Monthly"
+        unique_id: total_energy_cost_monthly
+        unit_of_measurement: "$"
+        state: >
+          {% set rate = states('sensor.peco_variable_rate') | float(0) %}
+          {% set cust = states('input_number.peco_customer_charge') | float(0) %}
+          {% set raw = states('input_text.energy_hidden_devices') %}
+          {% set hidden = (raw if raw not in [none,'unknown','unavailable'] else '').split(',') | reject('eq','') | list %}
+          {% set ns = namespace(total=0) %}
+          {% for s in states.sensor
+              if s.entity_id.endswith('_this_month_s_consumption')
+              and 'total_' not in s.entity_id
+              and s.state not in ['unavailable','unknown'] %}
+            {% set slug = s.entity_id | replace('sensor.','') | replace('_this_month_s_consumption','') %}
+            {% if slug not in hidden %}
+              {% set ns.total = ns.total + (s.state | float(0)) %}
+            {% endif %}
+          {% endfor %}
+          {{ (ns.total * rate + cust) | round(2) }}
+
+      - name: "Daily Average Energy This Month"
+        unique_id: daily_average_energy_this_month
+        unit_of_measurement: "kWh"
+        device_class: energy
+        state: >
+          {% set day = now().day %}
+          {% set raw = states('input_text.energy_hidden_devices') %}
+          {% set hidden = (raw if raw not in [none,'unknown','unavailable'] else '').split(',') | reject('eq','') | list %}
+          {% set ns = namespace(total=0) %}
+          {% for s in states.sensor
+              if s.entity_id.endswith('_this_month_s_consumption')
+              and 'total_' not in s.entity_id
+              and s.state not in ['unavailable','unknown'] %}
+            {% set slug = s.entity_id | replace('sensor.','') | replace('_this_month_s_consumption','') %}
+            {% if slug not in hidden %}
+              {% set ns.total = ns.total + (s.state | float(0)) %}
+            {% endif %}
+          {% endfor %}
+          {{ (ns.total / day) | round(2) if day > 0 else 0 }}
+
+      - name: "Daily Average Energy Cost This Month"
+        unique_id: daily_average_energy_cost_this_month
+        unit_of_measurement: "$"
+        state: >
+          {% set rate = states('sensor.peco_variable_rate') | float(0) %}
+          {% set day = now().day %}
+          {% set raw = states('input_text.energy_hidden_devices') %}
+          {% set hidden = (raw if raw not in [none,'unknown','unavailable'] else '').split(',') | reject('eq','') | list %}
+          {% set ns = namespace(total=0) %}
+          {% for s in states.sensor
+              if s.entity_id.endswith('_this_month_s_consumption')
+              and 'total_' not in s.entity_id
+              and s.state not in ['unavailable','unknown'] %}
+            {% set slug = s.entity_id | replace('sensor.','') | replace('_this_month_s_consumption','') %}
+            {% if slug not in hidden %}
+              {% set ns.total = ns.total + (s.state | float(0)) %}
+            {% endif %}
+          {% endfor %}
+          {{ ((ns.total / day) * rate) | round(2) if day > 0 else 0 }}
+
+      - name: "Projected Monthly Energy Cost"
+        unique_id: projected_monthly_energy_cost
+        unit_of_measurement: "$"
+        state: >
+          {% set rate = states('sensor.peco_variable_rate') | float(0) %}
+          {% set cust = states('input_number.peco_customer_charge') | float(0) %}
+          {% set day = now().day %}
+          {% set days_in_month = (now().replace(month=now().month % 12 + 1, day=1) - timedelta(days=1)).day if now().month < 12 else 31 %}
+          {% set raw = states('input_text.energy_hidden_devices') %}
+          {% set hidden = (raw if raw not in [none,'unknown','unavailable'] else '').split(',') | reject('eq','') | list %}
+          {% set ns = namespace(total=0) %}
+          {% for s in states.sensor
+              if s.entity_id.endswith('_this_month_s_consumption')
+              and 'total_' not in s.entity_id
+              and s.state not in ['unavailable','unknown'] %}
+            {% set slug = s.entity_id | replace('sensor.','') | replace('_this_month_s_consumption','') %}
+            {% if slug not in hidden %}
+              {% set ns.total = ns.total + (s.state | float(0)) %}
+            {% endif %}
+          {% endfor %}
+          {% if day > 0 and ns.total > 0 %}
+            {{ ((ns.total / day) * days_in_month * rate + cust) | round(2) }}
+          {% else %}
+            {{ cust | round(2) }}
+          {% endif %}
+
+      - name: "Estimated Annual Energy Cost"
+        unique_id: estimated_annual_energy_cost
+        unit_of_measurement: "$"
+        state: >
+          {% set rate = states('sensor.peco_variable_rate') | float(0) %}
+          {% set cust = states('input_number.peco_customer_charge') | float(0) %}
+          {% set day = now().day %}
+          {% set raw = states('input_text.energy_hidden_devices') %}
+          {% set hidden = (raw if raw not in [none,'unknown','unavailable'] else '').split(',') | reject('eq','') | list %}
+          {% set ns = namespace(total=0) %}
+          {% for s in states.sensor
+              if s.entity_id.endswith('_this_month_s_consumption')
+              and 'total_' not in s.entity_id
+              and s.state not in ['unavailable','unknown'] %}
+            {% set slug = s.entity_id | replace('sensor.','') | replace('_this_month_s_consumption','') %}
+            {% if slug not in hidden %}
+              {% set ns.total = ns.total + (s.state | float(0)) %}
+            {% endif %}
+          {% endfor %}
+          {% set daily_avg = (ns.total / day) if day > 0 else 0 %}
+          {{ (daily_avg * 365 * rate + cust * 12) | round(2) }}

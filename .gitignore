@@ -18,3 +18,6 @@ __pycache__/
 .cache/
 
 .ha_run.lock
+
+# project instructions (kept on the Pi, not published)
+CLAUDE.md

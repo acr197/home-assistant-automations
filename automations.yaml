@@ -35,7 +35,7 @@
           brightness_pct: 100
         action: light.turn_on
       - target:
-          entity_id: light.hue_white_lamp_hallway_middle
+          entity_id: light.staircase_hue_lights_hue_white_lamp_middle_staircase
         data:
           brightness_pct: 1
         action: light.turn_on
@@ -60,7 +60,7 @@
           brightness_pct: 100
         action: light.turn_on
       - target:
-          entity_id: light.hue_white_lamp_hallway_middle
+          entity_id: light.staircase_hue_lights_hue_white_lamp_middle_staircase
         data:
           brightness_pct: 1
         action: light.turn_on
@@ -96,11 +96,10 @@
       area_id:
       - basement_hue_lights
       - crawl_space_hue_lights
-      - kitchen_deck
+      - kitchen_deck_hue_light
       - tv_play_lights
       - crawl_space
-      - hallways_lights
-      - living_room_hue_lights
+      - hallway
       - main_level_lights
       - master_bedroom_lights
       - office_lights
@@ -209,34 +208,6 @@
       brightness_pct: '{{ pct }}'
       color_temp_kelvin: 2222
     action: light.turn_on
-  mode: single
-- id: '02030301'
-  alias: 'Staircase: Sync Upper Light to Middle'
-  description: Keep the top stairwell light matched to the middle hallway; uses warm
-    1% when turning on.
-  trigger:
-  - platform: state
-    entity_id: light.hue_white_lamp_hallway_middle
-  action:
-  - choose:
-    - conditions:
-      - condition: state
-        entity_id: light.hue_white_lamp_hallway_middle
-        state: 'on'
-      sequence:
-      - service: light.turn_on
-        target:
-          entity_id: light.stairwell_upper_wall_light
-        data:
-          brightness_pct: 1
-          color_temp_kelvin: 2222
-          transition: 1
-    default:
-    - service: light.turn_off
-      target:
-        entity_id: light.stairwell_upper_wall_light
-      data:
-        transition: 1
   mode: single
 - id: '02040101'
   alias: 'Staircase: Turn Off Upper Light in 30s if Bedroom Light Is Off'
@@ -458,7 +429,7 @@
       sequence:
       - action: light.turn_off
         target:
-          entity_id: light.hue_white_lamp_hallway_middle
+          entity_id: light.staircase_hue_lights_hue_white_lamp_middle_staircase
       - action: media_player.volume_set
         data:
           volume_level: 0.04
@@ -506,7 +477,7 @@
     default:
     - action: light.turn_on
       target:
-        entity_id: light.hue_white_lamp_hallway_middle
+        entity_id: light.staircase_hue_lights_hue_white_lamp_middle_staircase
       data:
         brightness_pct: 1
     - action: media_player.volume_set
@@ -679,7 +650,7 @@
     at: 05:30:00
     id: off_530am
   - trigger: numeric_state
-    entity_id: sensor.master_bedroom_humidity
+    entity_id: sensor.master_bedroom_govee_thermometer_master_bedroom_h5075_humidity
     below: 40
     id: humidity_low
   actions:
@@ -692,7 +663,7 @@
         - on_3am
         - on_5am
       - condition: numeric_state
-        entity_id: sensor.master_bedroom_humidity
+        entity_id: sensor.master_bedroom_govee_thermometer_master_bedroom_h5075_humidity
         below: 50
         above: 39.9
       - condition: or
@@ -762,20 +733,6 @@
     target:
       entity_id: sensor.guest_mode_status
   id: e489e17d0d1743568cdf4fc3215d90de
-- id: '1761095702248'
-  alias: 'Printer: Print Test Page Twice A Week'
-  description: Prevent ink drying by printing a test page on Monday and Thursday at
-    1:15 PM. Event is handled by AppDaemon (hello.py) which submits the PDF to CUPS.
-  triggers:
-  - at: '13:15:00'
-    trigger: time
-  conditions:
-  - condition: template
-    value_template: '{{ now().isoweekday() in [1, 4] }}'
-  actions:
-  - event: plz_print_purge
-    event_data: {}
-  mode: single
 - id: '1761698231251'
   alias: 'Nursery: Heater on/off 69/72 degrees with Hatch'
   description: 'Heater turns on below 69, stays on until 72. Turns off when thermostat
@@ -790,11 +747,11 @@
     at: 07:01:00
   - id: temp_low
     trigger: numeric_state
-    entity_id: sensor.govee_thermometer_nursery_h5075_temperature
+    entity_id: sensor.govee_thermometer_nursery_h5104_temperature
     below: 69
   - id: temp_high
     trigger: numeric_state
-    entity_id: sensor.govee_thermometer_nursery_h5075_temperature
+    entity_id: sensor.govee_thermometer_nursery_h5104_temperature
     above: 72
   - id: thermostat_heating
     trigger: state
@@ -808,7 +765,7 @@
     to: cooling
   - id: sensor_unavailable
     trigger: state
-    entity_id: sensor.govee_thermometer_nursery_h5075_temperature
+    entity_id: sensor.govee_thermometer_nursery_h5104_temperature
     to: unavailable
   - id: hatch_playing
     device_id: 54376091c5980b4a3ea7b981389db0df
@@ -884,7 +841,7 @@
         data: {}
     - conditions:
       - condition: numeric_state
-        entity_id: sensor.govee_thermometer_nursery_h5075_temperature
+        entity_id: sensor.govee_thermometer_nursery_h5104_temperature
         above: 72
       - condition: device
         device_id: 54376091c5980b4a3ea7b981389db0df
@@ -899,7 +856,7 @@
         data: {}
     - conditions:
       - condition: numeric_state
-        entity_id: sensor.govee_thermometer_nursery_h5075_temperature
+        entity_id: sensor.govee_thermometer_nursery_h5104_temperature
         below: 69
       - condition: not
         conditions:
@@ -910,7 +867,7 @@
       - condition: not
         conditions:
         - condition: state
-          entity_id: sensor.govee_thermometer_nursery_h5075_temperature
+          entity_id: sensor.govee_thermometer_nursery_h5104_temperature
           state: unavailable
       - condition: device
         device_id: 54376091c5980b4a3ea7b981389db0df
@@ -928,14 +885,14 @@
       - condition: or
         conditions:
         - condition: numeric_state
-          entity_id: sensor.govee_thermometer_nursery_h5075_temperature
+          entity_id: sensor.govee_thermometer_nursery_h5104_temperature
           above: 72
         - condition: state
           entity_id: climate.thermostat
           attribute: hvac_action
           state: heating
         - condition: state
-          entity_id: sensor.govee_thermometer_nursery_h5075_temperature
+          entity_id: sensor.govee_thermometer_nursery_h5104_temperature
           state: unavailable
       then:
       - target:
@@ -950,13 +907,13 @@
   triggers:
   - trigger: numeric_state
     id: too_cold
-    entity_id: sensor.govee_thermometer_nursery_h5075_temperature
+    entity_id: sensor.govee_thermometer_nursery_h5104_temperature
     below: 66
     for:
       minutes: 5
   - trigger: numeric_state
     id: too_hot
-    entity_id: sensor.govee_thermometer_nursery_h5075_temperature
+    entity_id: sensor.govee_thermometer_nursery_h5104_temperature
     above: 74
     for:
       minutes: 5
@@ -976,13 +933,13 @@
   - choose:
     - conditions:
       - condition: numeric_state
-        entity_id: sensor.govee_thermometer_nursery_h5075_temperature
+        entity_id: sensor.govee_thermometer_nursery_h5104_temperature
         above: 76
       sequence:
       - action: notify.mobile_app_pixel_10
         data:
           title: Nursery Alert
-          message: 'Nursery temperature is above 74°F (current: {{ states(''sensor.govee_thermometer_nursery_h5075_temperature'')
+          message: 'Nursery temperature is above 74°F (current: {{ states(''sensor.govee_thermometer_nursery_h5104_temperature'')
             }}).
 
             '
@@ -993,13 +950,13 @@
           minutes: 30
     - conditions:
       - condition: numeric_state
-        entity_id: sensor.govee_thermometer_nursery_h5075_temperature
+        entity_id: sensor.govee_thermometer_nursery_h5104_temperature
         below: 66
       sequence:
       - action: notify.mobile_app_pixel_10
         data:
           title: Nursery Alert
-          message: 'Nursery temperature is below 66°F (current: {{ states(''sensor.govee_thermometer_nursery_h5075_temperature'')
+          message: 'Nursery temperature is below 66°F (current: {{ states(''sensor.govee_thermometer_nursery_h5104_temperature'')
             }}).
 
             '
@@ -1162,14 +1119,14 @@
       area_id:
       - basement_hue_lights
       - main_level_lights
-      - kitchen_deck
+      - kitchen_deck_hue_light
       - crawl_space
       - office_lights
     data:
       transition: 2
     action: light.turn_off
   - target:
-      entity_id: light.hue_white_lamp_hallway_middle
+      entity_id: light.staircase_hue_lights_hue_white_lamp_middle_staircase
     action: light.turn_off
     data: {}
   - choose:
@@ -1302,7 +1259,7 @@
     '
   triggers:
   - trigger: state
-    entity_id: light.hue_white_lamp_hallway_middle
+    entity_id: light.staircase_hue_lights_hue_white_lamp_middle_staircase
   - trigger: state
     entity_id: light.hue_candle_upper_staircase
     to: 'off'
@@ -1310,10 +1267,10 @@
   - choose:
     - conditions:
       - condition: state
-        entity_id: light.hue_white_lamp_hallway_middle
+        entity_id: light.staircase_hue_lights_hue_white_lamp_middle_staircase
         state: 'on'
       - condition: template
-        value_template: '{{ (state_attr(''light.hue_white_lamp_hallway_middle'',''brightness'')|int(0))
+        value_template: '{{ (state_attr(''light.staircase_hue_lights_hue_white_lamp_middle_staircase'',''brightness'')|int(0))
           >= 77 }}
 
           '
@@ -1329,10 +1286,10 @@
           brightness_pct: 3
     - conditions:
       - condition: state
-        entity_id: light.hue_white_lamp_hallway_middle
+        entity_id: light.staircase_hue_lights_hue_white_lamp_middle_staircase
         state: 'on'
       - condition: template
-        value_template: '{% set b = state_attr(''light.hue_white_lamp_hallway_middle'',''brightness'')|int(0)
+        value_template: '{% set b = state_attr(''light.staircase_hue_lights_hue_white_lamp_middle_staircase'',''brightness'')|int(0)
           %} {{ b > 0 and b < 77 }}
 
           '
@@ -1348,7 +1305,7 @@
           transition: 1
     - conditions:
       - condition: state
-        entity_id: light.hue_white_lamp_hallway_middle
+        entity_id: light.staircase_hue_lights_hue_white_lamp_middle_staircase
         state: 'off'
       sequence:
       - action: light.turn_off
@@ -1367,7 +1324,7 @@
     - choose:
       - conditions:
         - condition: state
-          entity_id: light.hue_white_lamp_hallway_middle
+          entity_id: light.staircase_hue_lights_hue_white_lamp_middle_staircase
           state: 'off'
         sequence:
         - action: light.turn_on
