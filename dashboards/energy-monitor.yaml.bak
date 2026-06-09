@@ -6,12 +6,15 @@ views:
   - title: Overview
     path: overview
     icon: mdi:lightning-bolt
+    type: panel
     background: "url('/local/energy-bg.jpg') center/cover no-repeat, linear-gradient(160deg, #071a28 0%, #030d10 60%, #0a1a10 100%)"
     cards:
-      #   Masonry: each vertical-stack below is one reflow unit.
-      #   Side by side on wide screens, one-per-row on mobile.
       - type: vertical-stack
         cards:
+
+          # ══════════════════════════════════════════════════════
+          #  SECTION HEADER
+          # ══════════════════════════════════════════════════════
           - type: custom:button-card
             show_name: true
             show_state: false
@@ -51,9 +54,14 @@ views:
           # ══════════════════════════════════════════════════════
           - type: custom:auto-entities
             card:
-              type: grid
-              columns: 2
-              square: false
+              type: horizontal-stack
+              # ── mobile: wrap chips into a centered cluster instead of squishing ──
+              card_mod:
+                style: |
+                  @media (max-width: 600px) {
+                    #root { flex-wrap: wrap !important; justify-content: center; }
+                    #root > * { flex: 0 1 auto !important; margin-left: 0 !important; }
+                  }
             card_param: cards
             sort:
               method: friendly_name
@@ -135,119 +143,137 @@ views:
           # ══════════════════════════════════════════════════════
           #  TOP ROW: PECO | Totals | Cost summary
           # ══════════════════════════════════════════════════════
-          - type: entities
-            title: peco
-            show_header_toggle: false
-            card_mod:
+          - type: horizontal-stack
+            # ── mobile: stack PECO / totals / summary vertically, not 3 cramped columns ──
+            card_mod: &mobile_stack_full
               style: |
-                ha-card {
-                  background: var(--ha-card-background, var(--card-background-color));
-                  border-radius: 16px;
-                  box-shadow: none;
-                  height: 100%;
+                @media (max-width: 600px) {
+                  #root { flex-wrap: wrap !important; }
+                  #root > * { flex-basis: 100% !important; margin-left: 0 !important; }
+                  #root > *:not(:first-child) { margin-top: 12px !important; }
                 }
-                .card-header {
-                  background: linear-gradient(135deg, #00b4ab, #6b2fa0) !important;
-                  border-radius: 16px 16px 0 0 !important;
-                  color: white !important;
-                  font-size: 20px !important;
-                  font-weight: 700 !important;
-                  letter-spacing: 5px !important;
-                  text-transform: lowercase !important;
-                  padding: 10px 16px !important;
-                }
-                .card-content { padding-top: 16px !important; }
-            entities:
-              - entity: sensor.peco_variable_rate
-                name: Combined Rate ($/kWh)
-                icon: mdi:lightning-bolt
-              - type: divider
-              - entity: input_number.peco_delivery_rate
-                name: Delivery ($/kWh)
-              - entity: input_number.peco_supply_rate
-                name: Supply ($/kWh)
-              - entity: input_number.peco_transmission_rate
-                name: Transmission ($/kWh)
-              - entity: input_number.peco_customer_charge
-                name: Customer Charge ($/mo)
-              - type: divider
-              - entity: input_number.billing_cycle_start_day
-                name: Billing Cycle Start Day
-      - type: vertical-stack
-        cards:
-          - type: entity
-            entity: sensor.total_energy_today
-            name: Total Usage Today
-            icon: mdi:lightning-bolt
-            card_mod:
-              style: |
-                ha-card { background: var(--ha-card-background, var(--card-background-color)); border-radius: 16px; box-shadow: none; }
-          - type: entity
-            entity: sensor.total_energy_this_month
-            name: Total This Month
-            icon: mdi:lightning-bolt-circle
-            card_mod:
-              style: |
-                ha-card { background: var(--ha-card-background, var(--card-background-color)); border-radius: 16px; box-shadow: none; }
-          - type: grid
-            columns: 2
-            square: false
             cards:
-              - type: entity
-                entity: sensor.total_power_draw_now
-                name: Live Power
-                icon: mdi:flash
+              - type: entities
+                title: peco
+                show_header_toggle: false
                 card_mod:
                   style: |
-                    ha-card { background: var(--ha-card-background, var(--card-background-color)); border-radius: 16px; box-shadow: none; min-height: 120px; }
-              - type: entity
-                entity: sensor.total_energy_cost_today
-                name: Cost Today
-                icon: mdi:currency-usd
-                card_mod:
-                  style: |
-                    ha-card { background: var(--ha-card-background, var(--card-background-color)); border-radius: 16px; box-shadow: none; min-height: 120px; }
-              - type: entity
-                entity: sensor.total_energy_cost_monthly
-                name: Cost This Month
-                icon: mdi:calendar-month
-                card_mod:
-                  style: |
-                    ha-card { background: var(--ha-card-background, var(--card-background-color)); border-radius: 16px; box-shadow: none; min-height: 120px; }
-              - type: entity
-                entity: sensor.projected_monthly_energy_cost
-                name: Projected Bill
-                icon: mdi:chart-line-variant
-                card_mod:
-                  style: |
-                    ha-card { background: var(--ha-card-background, var(--card-background-color)); border-radius: 16px; box-shadow: none; min-height: 120px; }
-              - type: entity
-                entity: sensor.daily_average_energy_cost_this_month
-                name: Daily Avg Cost
-                icon: mdi:chart-bar
-                card_mod:
-                  style: |
-                    ha-card { background: var(--ha-card-background, var(--card-background-color)); border-radius: 16px; box-shadow: none; min-height: 120px; }
-              - type: entity
-                entity: sensor.estimated_annual_energy_cost
-                name: Est. Annual
-                icon: mdi:calendar-clock
-                card_mod:
-                  style: |
-                    ha-card { background: var(--ha-card-background, var(--card-background-color)); border-radius: 16px; box-shadow: none; min-height: 120px; }
-              - type: entity
-                entity: sensor.daily_average_energy_this_month
-                name: Daily Avg kWh
-                icon: mdi:chart-line
-                card_mod:
-                  style: |
-                    ha-card { background: var(--ha-card-background, var(--card-background-color)); border-radius: 16px; box-shadow: none; }
+                    ha-card {
+                      background: var(--ha-card-background, var(--card-background-color));
+                      border-radius: 16px;
+                      box-shadow: none;
+                      height: 100%;
+                    }
+                    .card-header {
+                      background: linear-gradient(135deg, #00b4ab, #6b2fa0) !important;
+                      border-radius: 16px 16px 0 0 !important;
+                      color: white !important;
+                      font-size: 20px !important;
+                      font-weight: 700 !important;
+                      letter-spacing: 5px !important;
+                      text-transform: lowercase !important;
+                      padding: 10px 16px !important;
+                    }
+                    .card-content { padding-top: 16px !important; }
+                entities:
+                  - entity: sensor.peco_variable_rate
+                    name: Combined Rate ($/kWh)
+                    icon: mdi:lightning-bolt
+                  - type: divider
+                  - entity: input_number.peco_delivery_rate
+                    name: Delivery ($/kWh)
+                  - entity: input_number.peco_supply_rate
+                    name: Supply ($/kWh)
+                  - entity: input_number.peco_transmission_rate
+                    name: Transmission ($/kWh)
+                  - entity: input_number.peco_customer_charge
+                    name: Customer Charge ($/mo)
+                  - type: divider
+                  - entity: input_number.billing_cycle_start_day
+                    name: Billing Cycle Start Day
+              - type: vertical-stack
+                cards:
+                  - type: entity
+                    entity: sensor.total_energy_today
+                    name: Total Usage Today
+                    icon: mdi:lightning-bolt
+                    card_mod:
+                      style: |
+                        ha-card { background: var(--ha-card-background, var(--card-background-color)); border-radius: 16px; box-shadow: none; }
+                  - type: entity
+                    entity: sensor.total_energy_this_month
+                    name: Total This Month
+                    icon: mdi:lightning-bolt-circle
+                    card_mod:
+                      style: |
+                        ha-card { background: var(--ha-card-background, var(--card-background-color)); border-radius: 16px; box-shadow: none; }
+              - type: vertical-stack
+                cards:
+                  - type: horizontal-stack
+                    # ── mobile: 2-up KPI tiles instead of 3 cramped columns ──
+                    card_mod: &mobile_stack_half
+                      style: |
+                        @media (max-width: 600px) {
+                          #root { flex-wrap: wrap !important; gap: 8px; }
+                          #root > * { flex: 1 1 calc(50% - 4px) !important; margin: 0 !important; }
+                        }
+                    cards:
+                      - type: entity
+                        entity: sensor.total_power_draw_now
+                        name: Live Power
+                        icon: mdi:flash
+                        card_mod:
+                          style: |
+                            ha-card { background: var(--ha-card-background, var(--card-background-color)); border-radius: 16px; box-shadow: none; min-height: 120px; }
+                      - type: entity
+                        entity: sensor.total_energy_cost_today
+                        name: Cost Today
+                        icon: mdi:currency-usd
+                        card_mod:
+                          style: |
+                            ha-card { background: var(--ha-card-background, var(--card-background-color)); border-radius: 16px; box-shadow: none; min-height: 120px; }
+                      - type: entity
+                        entity: sensor.total_energy_cost_monthly
+                        name: Cost This Month
+                        icon: mdi:calendar-month
+                        card_mod:
+                          style: |
+                            ha-card { background: var(--ha-card-background, var(--card-background-color)); border-radius: 16px; box-shadow: none; min-height: 120px; }
+                  - type: horizontal-stack
+                    card_mod: *mobile_stack_half
+                    cards:
+                      - type: entity
+                        entity: sensor.projected_monthly_energy_cost
+                        name: Projected Bill
+                        icon: mdi:chart-line-variant
+                        card_mod:
+                          style: |
+                            ha-card { background: var(--ha-card-background, var(--card-background-color)); border-radius: 16px; box-shadow: none; min-height: 120px; }
+                      - type: entity
+                        entity: sensor.daily_average_energy_cost_this_month
+                        name: Daily Avg Cost
+                        icon: mdi:chart-bar
+                        card_mod:
+                          style: |
+                            ha-card { background: var(--ha-card-background, var(--card-background-color)); border-radius: 16px; box-shadow: none; min-height: 120px; }
+                      - type: entity
+                        entity: sensor.estimated_annual_energy_cost
+                        name: Est. Annual
+                        icon: mdi:calendar-clock
+                        card_mod:
+                          style: |
+                            ha-card { background: var(--ha-card-background, var(--card-background-color)); border-radius: 16px; box-shadow: none; min-height: 120px; }
+                  - type: entity
+                    entity: sensor.daily_average_energy_this_month
+                    name: Daily Avg kWh
+                    icon: mdi:chart-line
+                    card_mod:
+                      style: |
+                        ha-card { background: var(--ha-card-background, var(--card-background-color)); border-radius: 16px; box-shadow: none; }
 
           # ══════════════════════════════════════════════════════
           #  SECTION HEADER — power
           # ══════════════════════════════════════════════════════
-      - type: vertical-stack
-        cards:
           - type: custom:button-card
             entity: sensor.total_power_draw_now
             show_name: true
@@ -291,374 +317,379 @@ views:
           # ══════════════════════════════════════════════════════
           #  BOTTOM ROW: gradient meter bars | Daily Energy chart
           # ══════════════════════════════════════════════════════
-          - type: custom:vertical-stack-in-card
-            card_mod:
-              style: |
-                ha-card {
-                  background: var(--ha-card-background, var(--card-background-color));
-                  border-radius: 16px;
-                  box-shadow: none;
-                  padding: 14px 14px 10px;
-                }
+          - type: horizontal-stack
+            card_mod: *mobile_stack_full
             cards:
-              - type: markdown
-                content: "### Current Usage"
+
+              # ── Left: Current Usage as gradient-filled bar rows ──
+              - type: custom:vertical-stack-in-card
                 card_mod:
                   style: |
-                    ha-card { background: transparent; box-shadow: none; }
-                    ha-markdown { padding: 0 4px 10px !important; }
-                    ha-markdown h3 {
-                      margin: 0 !important;
-                      font-size: 0.95em !important;
-                      color: var(--secondary-text-color) !important;
-                      font-weight: 600 !important;
-                      text-transform: lowercase;
-                      letter-spacing: 2px;
+                    ha-card {
+                      background: var(--ha-card-background, var(--card-background-color));
+                      border-radius: 16px;
+                      box-shadow: none;
+                      padding: 14px 14px 10px;
                     }
-              - type: custom:auto-entities
-                card:
-                  type: vertical-stack
-                card_param: cards
-                sort:
-                  method: state
-                  reverse: true
-                  numeric: true
-                filter:
-                  include:
-                    - entity_id: "sensor.*_current_consumption"
-                      attributes:
-                        device_class: power
-                      options:
-                        type: custom:button-card
-                        entity: this.entity_id
-                        show_state: true
-                        show_name: true
-                        show_icon: true
-                        tap_action:
-                          action: more-info
-                        name: |
-                          [[[
-                            return (entity.attributes.friendly_name || '')
-                              .replace(' Current consumption','')
-                              .replace(' Current Consumption','')
-                              .replace(' Plug','')
-                              .trim();
-                          ]]]
-                        state_display: |
-                          [[[ return Math.round(parseFloat(entity.state) || 0) + ' W'; ]]]
-                        styles:
-                          card:
-                            - background: |
-                                [[[
-                                  const w = parseFloat(entity.state) || 0;
-                                  const max = 1500;
-                                  const pct = Math.min((w / max) * 100, 100);
-                                  if (pct <= 0.5) {
-                                    return 'var(--divider-color)';
-                                  }
-                                  return `linear-gradient(90deg, #00b4ab 0%, #6b2fa0 ${pct}%, var(--divider-color) ${pct}%, var(--divider-color) 100%)`;
-                                ]]]
-                            - border-radius: "8px"
-                            - padding: "10px 14px"
-                            - margin: "4px 0"
-                            - box-shadow: "none"
-                            - height: "auto"
-                            - min-height: "0"
-                            - transition: "background 0.4s ease"
-                          grid:
-                            - grid-template-areas: '"i n s"'
-                            - grid-template-columns: "24px 1fr min-content"
-                            - grid-template-rows: "min-content"
-                          icon:
-                            - color: "white"
-                            - width: "18px"
-                          name:
-                            - color: "white"
-                            - text-align: "left"
-                            - justify-self: "start"
-                            - font-size: "0.88em"
-                            - font-weight: "500"
-                            - text-shadow: "0 1px 2px rgba(0,0,0,0.4)"
-                          state:
-                            - color: "white"
-                            - font-weight: "700"
-                            - font-size: "0.88em"
-                            - justify-self: "end"
-                            - text-shadow: "0 1px 2px rgba(0,0,0,0.4)"
-                  exclude:
-                    - entity_id: "sensor.total_*"
-                    - state: "unavailable"
-                    - state: "unknown"
+                cards:
+                  - type: markdown
+                    content: "### Current Usage"
+                    card_mod:
+                      style: |
+                        ha-card { background: transparent; box-shadow: none; }
+                        ha-markdown { padding: 0 4px 10px !important; }
+                        ha-markdown h3 {
+                          margin: 0 !important;
+                          font-size: 0.95em !important;
+                          color: var(--secondary-text-color) !important;
+                          font-weight: 600 !important;
+                          text-transform: lowercase;
+                          letter-spacing: 2px;
+                        }
+                  - type: custom:auto-entities
+                    card:
+                      type: vertical-stack
+                    card_param: cards
+                    sort:
+                      method: state
+                      reverse: true
+                      numeric: true
+                    filter:
+                      include:
+                        - entity_id: "sensor.*_current_consumption"
+                          attributes:
+                            device_class: power
+                          options:
+                            type: custom:button-card
+                            entity: this.entity_id
+                            show_state: true
+                            show_name: true
+                            show_icon: true
+                            tap_action:
+                              action: more-info
+                            name: |
+                              [[[
+                                return (entity.attributes.friendly_name || '')
+                                  .replace(' Current consumption','')
+                                  .replace(' Current Consumption','')
+                                  .replace(' Plug','')
+                                  .trim();
+                              ]]]
+                            state_display: |
+                              [[[ return Math.round(parseFloat(entity.state) || 0) + ' W'; ]]]
+                            styles:
+                              card:
+                                - background: |
+                                    [[[
+                                      const w = parseFloat(entity.state) || 0;
+                                      const max = 1500;
+                                      const pct = Math.min((w / max) * 100, 100);
+                                      if (pct <= 0.5) {
+                                        return 'var(--divider-color)';
+                                      }
+                                      return `linear-gradient(90deg, #00b4ab 0%, #6b2fa0 ${pct}%, var(--divider-color) ${pct}%, var(--divider-color) 100%)`;
+                                    ]]]
+                                - border-radius: "8px"
+                                - padding: "10px 14px"
+                                - margin: "4px 0"
+                                - box-shadow: "none"
+                                - height: "auto"
+                                - min-height: "0"
+                                - transition: "background 0.4s ease"
+                              grid:
+                                - grid-template-areas: '"i n s"'
+                                - grid-template-columns: "24px 1fr min-content"
+                                - grid-template-rows: "min-content"
+                              icon:
+                                - color: "white"
+                                - width: "18px"
+                              name:
+                                - color: "white"
+                                - text-align: "left"
+                                - justify-self: "start"
+                                - font-size: "0.88em"
+                                - font-weight: "500"
+                                - text-shadow: "0 1px 2px rgba(0,0,0,0.4)"
+                              state:
+                                - color: "white"
+                                - font-weight: "700"
+                                - font-size: "0.88em"
+                                - justify-self: "end"
+                                - text-shadow: "0 1px 2px rgba(0,0,0,0.4)"
+                      exclude:
+                        - entity_id: "sensor.total_*"
+                        - state: "unavailable"
+                        - state: "unknown"
 
               # ── Right: Daily energy 7d/14d/30d toggle ──
-          - type: vertical-stack
-            cards:
-              - type: horizontal-stack
+              - type: vertical-stack
                 cards:
-                  - type: custom:button-card
-                    entity: input_select.energy_chart_period
-                    name: "7d"
-                    show_name: true
-                    show_icon: false
-                    show_state: false
-                    tap_action:
-                      action: call-service
-                      service: input_select.select_option
-                      service_data:
-                        entity_id: input_select.energy_chart_period
-                        option: "7d"
-                    state:
-                      - value: "7d"
+                  - type: horizontal-stack
+                    cards:
+                      - type: custom:button-card
+                        entity: input_select.energy_chart_period
+                        name: "7d"
+                        show_name: true
+                        show_icon: false
+                        show_state: false
+                        tap_action:
+                          action: call-service
+                          service: input_select.select_option
+                          service_data:
+                            entity_id: input_select.energy_chart_period
+                            option: "7d"
+                        state:
+                          - value: "7d"
+                            styles:
+                              card:
+                                - background: "linear-gradient(135deg, #00b4ab, #6b2fa0)"
+                              name:
+                                - color: "white"
                         styles:
                           card:
-                            - background: "linear-gradient(135deg, #00b4ab, #6b2fa0)"
+                            - background: "var(--ha-card-background, var(--card-background-color))"
+                            - border-radius: "16px 0 0 0"
+                            - box-shadow: none
+                            - padding: "8px 0"
+                            - border-bottom: "1px solid var(--divider-color)"
                           name:
-                            - color: "white"
-                    styles:
-                      card:
-                        - background: "var(--ha-card-background, var(--card-background-color))"
-                        - border-radius: "16px 0 0 0"
-                        - box-shadow: none
-                        - padding: "8px 0"
-                        - border-bottom: "1px solid var(--divider-color)"
-                      name:
-                        - font-size: "12px"
-                        - font-weight: "600"
-                        - letter-spacing: "2px"
-                        - color: "var(--secondary-text-color)"
-                        - text-transform: uppercase
-                  - type: custom:button-card
-                    entity: input_select.energy_chart_period
-                    name: "14d"
-                    show_name: true
-                    show_icon: false
-                    show_state: false
-                    tap_action:
-                      action: call-service
-                      service: input_select.select_option
-                      service_data:
-                        entity_id: input_select.energy_chart_period
-                        option: "14d"
-                    state:
-                      - value: "14d"
+                            - font-size: "12px"
+                            - font-weight: "600"
+                            - letter-spacing: "2px"
+                            - color: "var(--secondary-text-color)"
+                            - text-transform: uppercase
+                      - type: custom:button-card
+                        entity: input_select.energy_chart_period
+                        name: "14d"
+                        show_name: true
+                        show_icon: false
+                        show_state: false
+                        tap_action:
+                          action: call-service
+                          service: input_select.select_option
+                          service_data:
+                            entity_id: input_select.energy_chart_period
+                            option: "14d"
+                        state:
+                          - value: "14d"
+                            styles:
+                              card:
+                                - background: "linear-gradient(135deg, #00b4ab, #6b2fa0)"
+                              name:
+                                - color: "white"
                         styles:
                           card:
-                            - background: "linear-gradient(135deg, #00b4ab, #6b2fa0)"
+                            - background: "var(--ha-card-background, var(--card-background-color))"
+                            - border-radius: "0"
+                            - box-shadow: none
+                            - padding: "8px 0"
+                            - border-bottom: "1px solid var(--divider-color)"
                           name:
-                            - color: "white"
-                    styles:
-                      card:
-                        - background: "var(--ha-card-background, var(--card-background-color))"
-                        - border-radius: "0"
-                        - box-shadow: none
-                        - padding: "8px 0"
-                        - border-bottom: "1px solid var(--divider-color)"
-                      name:
-                        - font-size: "12px"
-                        - font-weight: "600"
-                        - letter-spacing: "2px"
-                        - color: "var(--secondary-text-color)"
-                        - text-transform: uppercase
-                  - type: custom:button-card
-                    entity: input_select.energy_chart_period
-                    name: "30d"
-                    show_name: true
-                    show_icon: false
-                    show_state: false
-                    tap_action:
-                      action: call-service
-                      service: input_select.select_option
-                      service_data:
-                        entity_id: input_select.energy_chart_period
-                        option: "30d"
-                    state:
-                      - value: "30d"
+                            - font-size: "12px"
+                            - font-weight: "600"
+                            - letter-spacing: "2px"
+                            - color: "var(--secondary-text-color)"
+                            - text-transform: uppercase
+                      - type: custom:button-card
+                        entity: input_select.energy_chart_period
+                        name: "30d"
+                        show_name: true
+                        show_icon: false
+                        show_state: false
+                        tap_action:
+                          action: call-service
+                          service: input_select.select_option
+                          service_data:
+                            entity_id: input_select.energy_chart_period
+                            option: "30d"
+                        state:
+                          - value: "30d"
+                            styles:
+                              card:
+                                - background: "linear-gradient(135deg, #00b4ab, #6b2fa0)"
+                              name:
+                                - color: "white"
                         styles:
                           card:
-                            - background: "linear-gradient(135deg, #00b4ab, #6b2fa0)"
+                            - background: "var(--ha-card-background, var(--card-background-color))"
+                            - border-radius: "0 16px 0 0"
+                            - box-shadow: none
+                            - padding: "8px 0"
+                            - border-bottom: "1px solid var(--divider-color)"
                           name:
-                            - color: "white"
-                    styles:
+                            - font-size: "12px"
+                            - font-weight: "600"
+                            - letter-spacing: "2px"
+                            - color: "var(--secondary-text-color)"
+                            - text-transform: uppercase
+                  - type: conditional
+                    conditions:
+                      - condition: state
+                        entity: input_select.energy_chart_period
+                        state: "7d"
+                    card:
+                      type: custom:auto-entities
                       card:
-                        - background: "var(--ha-card-background, var(--card-background-color))"
-                        - border-radius: "0 16px 0 0"
-                        - box-shadow: none
-                        - padding: "8px 0"
-                        - border-bottom: "1px solid var(--divider-color)"
-                      name:
-                        - font-size: "12px"
-                        - font-weight: "600"
-                        - letter-spacing: "2px"
-                        - color: "var(--secondary-text-color)"
-                        - text-transform: uppercase
-              - type: conditional
-                conditions:
-                  - condition: state
-                    entity: input_select.energy_chart_period
-                    state: "7d"
-                card:
-                  type: custom:auto-entities
-                  card:
-                    type: custom:apexcharts-card
-                    graph_span: 7d
-                    span:
-                      end: day
-                    update_interval: 5m
-                    header:
-                      title: "Daily Energy by Device (kWh)"
-                      show: true
-                      show_states: false
-                    card_mod:
-                      style: |
-                        ha-card { background: var(--ha-card-background, var(--card-background-color)); border-radius: 0 0 16px 16px; box-shadow: none; margin-top: -1px; }
-                    apex_config:
-                      chart:
-                        type: bar
-                        stacked: true
-                        height: 280
-                      plotOptions:
-                        bar:
-                          columnWidth: "70%"
-                      legend:
-                        show: true
-                        position: bottom
-                        horizontalAlign: center
-                        fontSize: "11px"
-                      yaxis:
-                        forceNiceScale: true
-                        tickAmount: 5
-                        decimalsInFloat: 1
-                  card_param: series
-                  filter:
-                    template: |
-                      {%- set raw = states('input_text.energy_hidden_devices') -%}
-                      {%- set hidden = (raw if raw not in [none,'unknown','unavailable'] else '').split(',') | reject('eq','') | list -%}
-                      {%- set colors = ['#f39c12','#3498db','#2ecc71','#e74c3c','#9b59b6','#1abc9c','#e67e22','#8e44ad'] -%}
-                      {%- set ns = namespace(idx=0) -%}
-                      {%- for s in states.sensor
-                          if s.entity_id.endswith('_today_s_consumption')
-                          and 'total_' not in s.entity_id
-                          and s.state not in ['unavailable','unknown'] -%}
-                        {%- set slug = s.entity_id | replace('sensor.','') | replace('_today_s_consumption','') -%}
-                        {%- if slug not in hidden -%}
-                          {%- set color = colors[ns.idx % (colors | length)] -%}
-                          {%- set ns.idx = ns.idx + 1 -%}
-                          {%- set name = s.attributes.get('friendly_name', slug) | replace(" Today's Consumption",'') | replace(" Today's consumption",'') | replace(' Plug','') | trim -%}
-                          {{ {'entity': s.entity_id, 'name': name, 'color': color, 'type': 'column', 'statistics': {'type': 'change', 'period': 'day'}, 'group_by': {'func': 'max', 'duration': '1d'}} }},
-                        {%- endif -%}
-                      {%- endfor -%}
-              - type: conditional
-                conditions:
-                  - condition: state
-                    entity: input_select.energy_chart_period
-                    state: "14d"
-                card:
-                  type: custom:auto-entities
-                  card:
-                    type: custom:apexcharts-card
-                    graph_span: 14d
-                    span:
-                      end: day
-                    update_interval: 5m
-                    header:
-                      title: "Daily Energy by Device (kWh)"
-                      show: true
-                      show_states: false
-                    card_mod:
-                      style: |
-                        ha-card { background: var(--ha-card-background, var(--card-background-color)); border-radius: 0 0 16px 16px; box-shadow: none; margin-top: -1px; }
-                    apex_config:
-                      chart:
-                        type: bar
-                        stacked: true
-                        height: 280
-                      plotOptions:
-                        bar:
-                          columnWidth: "70%"
-                      legend:
-                        show: true
-                        position: bottom
-                        horizontalAlign: center
-                        fontSize: "11px"
-                      yaxis:
-                        forceNiceScale: true
-                        tickAmount: 5
-                        decimalsInFloat: 1
-                  card_param: series
-                  filter:
-                    template: |
-                      {%- set raw = states('input_text.energy_hidden_devices') -%}
-                      {%- set hidden = (raw if raw not in [none,'unknown','unavailable'] else '').split(',') | reject('eq','') | list -%}
-                      {%- set colors = ['#f39c12','#3498db','#2ecc71','#e74c3c','#9b59b6','#1abc9c','#e67e22','#8e44ad'] -%}
-                      {%- set ns = namespace(idx=0) -%}
-                      {%- for s in states.sensor
-                          if s.entity_id.endswith('_today_s_consumption')
-                          and 'total_' not in s.entity_id
-                          and s.state not in ['unavailable','unknown'] -%}
-                        {%- set slug = s.entity_id | replace('sensor.','') | replace('_today_s_consumption','') -%}
-                        {%- if slug not in hidden -%}
-                          {%- set color = colors[ns.idx % (colors | length)] -%}
-                          {%- set ns.idx = ns.idx + 1 -%}
-                          {%- set name = s.attributes.get('friendly_name', slug) | replace(" Today's Consumption",'') | replace(" Today's consumption",'') | replace(' Plug','') | trim -%}
-                          {{ {'entity': s.entity_id, 'name': name, 'color': color, 'type': 'column', 'statistics': {'type': 'change', 'period': 'day'}, 'group_by': {'func': 'max', 'duration': '1d'}} }},
-                        {%- endif -%}
-                      {%- endfor -%}
-              - type: conditional
-                conditions:
-                  - condition: state
-                    entity: input_select.energy_chart_period
-                    state: "30d"
-                card:
-                  type: custom:auto-entities
-                  card:
-                    type: custom:apexcharts-card
-                    graph_span: 30d
-                    span:
-                      end: day
-                    update_interval: 5m
-                    header:
-                      title: "Daily Energy by Device (kWh)"
-                      show: true
-                      show_states: false
-                    card_mod:
-                      style: |
-                        ha-card { background: var(--ha-card-background, var(--card-background-color)); border-radius: 0 0 16px 16px; box-shadow: none; margin-top: -1px; }
-                    apex_config:
-                      chart:
-                        type: bar
-                        stacked: true
-                        height: 280
-                      plotOptions:
-                        bar:
-                          columnWidth: "70%"
-                      legend:
-                        show: true
-                        position: bottom
-                        horizontalAlign: center
-                        fontSize: "11px"
-                      yaxis:
-                        forceNiceScale: true
-                        tickAmount: 5
-                        decimalsInFloat: 1
-                  card_param: series
-                  filter:
-                    template: |
-                      {%- set raw = states('input_text.energy_hidden_devices') -%}
-                      {%- set hidden = (raw if raw not in [none,'unknown','unavailable'] else '').split(',') | reject('eq','') | list -%}
-                      {%- set colors = ['#f39c12','#3498db','#2ecc71','#e74c3c','#9b59b6','#1abc9c','#e67e22','#8e44ad'] -%}
-                      {%- set ns = namespace(idx=0) -%}
-                      {%- for s in states.sensor
-                          if s.entity_id.endswith('_today_s_consumption')
-                          and 'total_' not in s.entity_id
-                          and s.state not in ['unavailable','unknown'] -%}
-                        {%- set slug = s.entity_id | replace('sensor.','') | replace('_today_s_consumption','') -%}
-                        {%- if slug not in hidden -%}
-                          {%- set color = colors[ns.idx % (colors | length)] -%}
-                          {%- set ns.idx = ns.idx + 1 -%}
-                          {%- set name = s.attributes.get('friendly_name', slug) | replace(" Today's Consumption",'') | replace(" Today's consumption",'') | replace(' Plug','') | trim -%}
-                          {{ {'entity': s.entity_id, 'name': name, 'color': color, 'type': 'column', 'statistics': {'type': 'change', 'period': 'day'}, 'group_by': {'func': 'max', 'duration': '1d'}} }},
-                        {%- endif -%}
-                      {%- endfor -%}
+                        type: custom:apexcharts-card
+                        graph_span: 7d
+                        span:
+                          end: day
+                        update_interval: 5m
+                        header:
+                          title: "Daily Energy by Device (kWh)"
+                          show: true
+                          show_states: false
+                        card_mod:
+                          style: |
+                            ha-card { background: var(--ha-card-background, var(--card-background-color)); border-radius: 0 0 16px 16px; box-shadow: none; margin-top: -1px; }
+                        apex_config:
+                          chart:
+                            type: bar
+                            stacked: true
+                            height: 280
+                          plotOptions:
+                            bar:
+                              columnWidth: "70%"
+                          legend:
+                            show: true
+                            position: bottom
+                            horizontalAlign: center
+                            fontSize: "11px"
+                          yaxis:
+                            forceNiceScale: true
+                            tickAmount: 5
+                            decimalsInFloat: 1
+                      card_param: series
+                      filter:
+                        template: |
+                          {%- set raw = states('input_text.energy_hidden_devices') -%}
+                          {%- set hidden = (raw if raw not in [none,'unknown','unavailable'] else '').split(',') | reject('eq','') | list -%}
+                          {%- set colors = ['#f39c12','#3498db','#2ecc71','#e74c3c','#9b59b6','#1abc9c','#e67e22','#8e44ad'] -%}
+                          {%- set ns = namespace(idx=0) -%}
+                          {%- for s in states.sensor
+                              if s.entity_id.endswith('_today_s_consumption')
+                              and 'total_' not in s.entity_id
+                              and s.state not in ['unavailable','unknown'] -%}
+                            {%- set slug = s.entity_id | replace('sensor.','') | replace('_today_s_consumption','') -%}
+                            {%- if slug not in hidden -%}
+                              {%- set color = colors[ns.idx % (colors | length)] -%}
+                              {%- set ns.idx = ns.idx + 1 -%}
+                              {%- set name = s.attributes.get('friendly_name', slug) | replace(" Today's Consumption",'') | replace(" Today's consumption",'') | replace(' Plug','') | trim -%}
+                              {{ {'entity': s.entity_id, 'name': name, 'color': color, 'type': 'column', 'statistics': {'type': 'change', 'period': 'day'}, 'group_by': {'func': 'max', 'duration': '1d'}} }},
+                            {%- endif -%}
+                          {%- endfor -%}
+                  - type: conditional
+                    conditions:
+                      - condition: state
+                        entity: input_select.energy_chart_period
+                        state: "14d"
+                    card:
+                      type: custom:auto-entities
+                      card:
+                        type: custom:apexcharts-card
+                        graph_span: 14d
+                        span:
+                          end: day
+                        update_interval: 5m
+                        header:
+                          title: "Daily Energy by Device (kWh)"
+                          show: true
+                          show_states: false
+                        card_mod:
+                          style: |
+                            ha-card { background: var(--ha-card-background, var(--card-background-color)); border-radius: 0 0 16px 16px; box-shadow: none; margin-top: -1px; }
+                        apex_config:
+                          chart:
+                            type: bar
+                            stacked: true
+                            height: 280
+                          plotOptions:
+                            bar:
+                              columnWidth: "70%"
+                          legend:
+                            show: true
+                            position: bottom
+                            horizontalAlign: center
+                            fontSize: "11px"
+                          yaxis:
+                            forceNiceScale: true
+                            tickAmount: 5
+                            decimalsInFloat: 1
+                      card_param: series
+                      filter:
+                        template: |
+                          {%- set raw = states('input_text.energy_hidden_devices') -%}
+                          {%- set hidden = (raw if raw not in [none,'unknown','unavailable'] else '').split(',') | reject('eq','') | list -%}
+                          {%- set colors = ['#f39c12','#3498db','#2ecc71','#e74c3c','#9b59b6','#1abc9c','#e67e22','#8e44ad'] -%}
+                          {%- set ns = namespace(idx=0) -%}
+                          {%- for s in states.sensor
+                              if s.entity_id.endswith('_today_s_consumption')
+                              and 'total_' not in s.entity_id
+                              and s.state not in ['unavailable','unknown'] -%}
+                            {%- set slug = s.entity_id | replace('sensor.','') | replace('_today_s_consumption','') -%}
+                            {%- if slug not in hidden -%}
+                              {%- set color = colors[ns.idx % (colors | length)] -%}
+                              {%- set ns.idx = ns.idx + 1 -%}
+                              {%- set name = s.attributes.get('friendly_name', slug) | replace(" Today's Consumption",'') | replace(" Today's consumption",'') | replace(' Plug','') | trim -%}
+                              {{ {'entity': s.entity_id, 'name': name, 'color': color, 'type': 'column', 'statistics': {'type': 'change', 'period': 'day'}, 'group_by': {'func': 'max', 'duration': '1d'}} }},
+                            {%- endif -%}
+                          {%- endfor -%}
+                  - type: conditional
+                    conditions:
+                      - condition: state
+                        entity: input_select.energy_chart_period
+                        state: "30d"
+                    card:
+                      type: custom:auto-entities
+                      card:
+                        type: custom:apexcharts-card
+                        graph_span: 30d
+                        span:
+                          end: day
+                        update_interval: 5m
+                        header:
+                          title: "Daily Energy by Device (kWh)"
+                          show: true
+                          show_states: false
+                        card_mod:
+                          style: |
+                            ha-card { background: var(--ha-card-background, var(--card-background-color)); border-radius: 0 0 16px 16px; box-shadow: none; margin-top: -1px; }
+                        apex_config:
+                          chart:
+                            type: bar
+                            stacked: true
+                            height: 280
+                          plotOptions:
+                            bar:
+                              columnWidth: "70%"
+                          legend:
+                            show: true
+                            position: bottom
+                            horizontalAlign: center
+                            fontSize: "11px"
+                          yaxis:
+                            forceNiceScale: true
+                            tickAmount: 5
+                            decimalsInFloat: 1
+                      card_param: series
+                      filter:
+                        template: |
+                          {%- set raw = states('input_text.energy_hidden_devices') -%}
+                          {%- set hidden = (raw if raw not in [none,'unknown','unavailable'] else '').split(',') | reject('eq','') | list -%}
+                          {%- set colors = ['#f39c12','#3498db','#2ecc71','#e74c3c','#9b59b6','#1abc9c','#e67e22','#8e44ad'] -%}
+                          {%- set ns = namespace(idx=0) -%}
+                          {%- for s in states.sensor
+                              if s.entity_id.endswith('_today_s_consumption')
+                              and 'total_' not in s.entity_id
+                              and s.state not in ['unavailable','unknown'] -%}
+                            {%- set slug = s.entity_id | replace('sensor.','') | replace('_today_s_consumption','') -%}
+                            {%- if slug not in hidden -%}
+                              {%- set color = colors[ns.idx % (colors | length)] -%}
+                              {%- set ns.idx = ns.idx + 1 -%}
+                              {%- set name = s.attributes.get('friendly_name', slug) | replace(" Today's Consumption",'') | replace(" Today's consumption",'') | replace(' Plug','') | trim -%}
+                              {{ {'entity': s.entity_id, 'name': name, 'color': color, 'type': 'column', 'statistics': {'type': 'change', 'period': 'day'}, 'group_by': {'func': 'max', 'duration': '1d'}} }},
+                            {%- endif -%}
+                          {%- endfor -%}
 
           # ══════════════════════════════════════════════════════
           #  POWER ROW 2: Avg power draw 24h/7d
@@ -853,8 +884,6 @@ views:
           # ══════════════════════════════════════════════════════
           #  SECTION HEADER — cost
           # ══════════════════════════════════════════════════════
-      - type: vertical-stack
-        cards:
           - type: custom:button-card
             entity: sensor.total_energy_cost_monthly
             show_name: true
@@ -1231,8 +1260,6 @@ views:
           # ══════════════════════════════════════════════════════
           #  SECTION HEADER — usage
           # ══════════════════════════════════════════════════════
-      - type: vertical-stack
-        cards:
           - type: custom:button-card
             entity: sensor.total_energy_this_month
             show_name: true

@@ -142,15 +142,6 @@ zone:
     radius: 500
     icon: mdi:home
 
-# Zigbee2MQTT network-map sensor (diagnostics)
-mqtt:
-  sensor:
-    - name: Zigbee2mqtt Networkmap
-      state_topic: zigbee2mqtt/bridge/response/networkmap
-      value_template: "{{ now().strftime('%Y-%m-%d %H:%M:%S') }}"
-      json_attributes_topic: zigbee2mqtt/bridge/response/networkmap
-      json_attributes_template: "{{ value_json.data.value | tojson }}"
-
 # Git sync scripts (GitHub dashboard buttons + nightly backup)
 shell_command:
   git_push: "sh /config/git_push.sh"
