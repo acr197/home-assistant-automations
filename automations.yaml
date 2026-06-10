@@ -1358,38 +1358,6 @@
       transition: 3600
       brightness_pct: 80
   mode: single
-- id: '1765587351000'
-  alias: 'Living Room: Dyson Heater Follows Living Room Light'
-  description: ''
-  triggers:
-  - trigger: state
-    entity_id: light.living_room
-    to: 'off'
-  - trigger: state
-    entity_id: light.living_room
-    to: 'on'
-  conditions: []
-  actions:
-  - choose:
-    - conditions:
-      - condition: state
-        entity_id: light.living_room
-        state: 'off'
-      sequence:
-      - type: turn_off
-        device_id: 8eb53185a2bc6133516bb05b5b51017a
-        entity_id: 9b7e188f89321693221091ce119f4d25
-        domain: switch
-    - conditions:
-      - condition: state
-        entity_id: light.living_room
-        state: 'on'
-      sequence:
-      - type: turn_on
-        device_id: 8eb53185a2bc6133516bb05b5b51017a
-        entity_id: 9b7e188f89321693221091ce119f4d25
-        domain: switch
-  mode: single
 - id: '1768008079253'
   alias: 'Nursery: Govee battery low or missing (6hr nag)'
   description: Alerts every 6 hours if Govee battery is <5% or state is null/unknown/unavailable.
