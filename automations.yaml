@@ -112,25 +112,28 @@
     domain: remote
   mode: single
 - id: '02020101'
-  alias: 'Living Room: Cap Hue 2 & 5 at 70%'
-  description: Keep Hue Living Room lamps 2 and 5 from exceeding 70% brightness.
-  trigger:
-  - platform: numeric_state
-    entity_id: light.hue_color_lamp_living_room_2
+  alias: 'Living Room: Cap Hue Lamps at 70%'
+  description: Hue Living Room lamps 2, 5, and 6 must never exceed 70%. Snap whichever
+    one goes higher straight back to 70%, no matter what set it there (Hue app, a
+    scene, or a dimmer).
+  triggers:
+  - trigger: numeric_state
+    entity_id:
+    - light.hue_color_lamp_living_room_2
+    - light.hue_color_lamp_living_room_5
+    - light.hue_color_lamp_living_room_6
     attribute: brightness
-    above: 179
-  - platform: numeric_state
-    entity_id: light.hue_color_lamp_living_room_5
-    attribute: brightness
-    above: 179
-  action:
-  - service: light.turn_on
+    above: 178
+  conditions: []
+  actions:
+  - action: light.turn_on
     target:
       entity_id: '{{ trigger.entity_id }}'
     data:
       brightness_pct: 70
       transition: 1
-  mode: single
+  mode: parallel
+  max: 10
 - id: '02020102'
   alias: 'Living Room: Bar Cart Brightness Based on Room Brightness'
   description: Keep the bar cart switch in sync with Living Room lamp brightness and
@@ -173,6 +176,46 @@
         target:
           device_id: 0bd4a90c86eae6fe3052348e14462756
   mode: single
+- id: '02020104'
+  alias: 'Living Room: Hue 2 & 5 Follow Room Brightness (Max 70%)'
+  description: Hue Living Room lamps 2 and 5 mirror lamp 1, the room brightness reference.
+    They follow lamp 1 on, off, and dimming, but hold at 70% whenever lamp 1 is brighter
+    than 70%.
+  triggers:
+  - trigger: state
+    entity_id: light.hue_color_lamp_living_room_1
+  conditions: []
+  actions:
+  - delay:
+      milliseconds: 500
+  - choose:
+    - conditions:
+      - condition: state
+        entity_id: light.hue_color_lamp_living_room_1
+        state: 'on'
+      sequence:
+      - action: light.turn_on
+        target:
+          entity_id:
+          - light.hue_color_lamp_living_room_2
+          - light.hue_color_lamp_living_room_5
+        data:
+          brightness_pct: '{{ [ (state_attr(''light.hue_color_lamp_living_room_1'',
+            ''brightness'') | float(0) / 255 * 100) | round(0) | int, 70 ] | min }}'
+          transition: 1
+    - conditions:
+      - condition: state
+        entity_id: light.hue_color_lamp_living_room_1
+        state: 'off'
+      sequence:
+      - action: light.turn_off
+        target:
+          entity_id:
+          - light.hue_color_lamp_living_room_2
+          - light.hue_color_lamp_living_room_5
+        data:
+          transition: 1
+  mode: restart
 - id: '02030201'
   alias: 'Staircase: Keep Lower Wall Light On'
   description: Maintain a nightlight on the lower stairwell wall (1% after 8pm, 20%

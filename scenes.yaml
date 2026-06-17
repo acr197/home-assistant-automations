@@ -1,1 +1,101 @@
-[]
+# Living Room "fun pattern" scenes for the Lights dashboard.
+# Each one sets the five living room color bulbs (hue_color_lamp_living_room_1-5)
+# to a different color so the room shows a multi-color pattern, not one flat color.
+# Brightness is held at 204 (80%) on every bulb. Lamps 2 and 5 are capped at 80% by
+# the "Cap Hue Lamps at 80%" automation, so 204 keeps the scene from fighting the cap.
+- id: '2026061601'
+  name: Living Room Sunset
+  icon: mdi:weather-sunset
+  entities:
+    light.hue_color_lamp_living_room_1:
+      state: 'on'
+      rgb_color: [255, 69, 0]
+      brightness: 204
+    light.hue_color_lamp_living_room_2:
+      state: 'on'
+      rgb_color: [255, 115, 10]
+      brightness: 204
+    light.hue_color_lamp_living_room_3:
+      state: 'on'
+      rgb_color: [255, 165, 30]
+      brightness: 204
+    light.hue_color_lamp_living_room_4:
+      state: 'on'
+      rgb_color: [255, 65, 120]
+      brightness: 204
+    light.hue_color_lamp_living_room_5:
+      state: 'on'
+      rgb_color: [170, 40, 150]
+      brightness: 204
+- id: '2026061602'
+  name: Living Room Ocean
+  icon: mdi:waves
+  entities:
+    light.hue_color_lamp_living_room_1:
+      state: 'on'
+      rgb_color: [10, 40, 200]
+      brightness: 204
+    light.hue_color_lamp_living_room_2:
+      state: 'on'
+      rgb_color: [0, 95, 225]
+      brightness: 204
+    light.hue_color_lamp_living_room_3:
+      state: 'on'
+      rgb_color: [0, 170, 220]
+      brightness: 204
+    light.hue_color_lamp_living_room_4:
+      state: 'on'
+      rgb_color: [0, 205, 165]
+      brightness: 204
+    light.hue_color_lamp_living_room_5:
+      state: 'on'
+      rgb_color: [0, 220, 190]
+      brightness: 204
+- id: '2026061603'
+  name: Living Room Party
+  icon: mdi:party-popper
+  entities:
+    light.hue_color_lamp_living_room_1:
+      state: 'on'
+      rgb_color: [255, 0, 0]
+      brightness: 204
+    light.hue_color_lamp_living_room_2:
+      state: 'on'
+      rgb_color: [0, 230, 0]
+      brightness: 204
+    light.hue_color_lamp_living_room_3:
+      state: 'on'
+      rgb_color: [0, 90, 255]
+      brightness: 204
+    light.hue_color_lamp_living_room_4:
+      state: 'on'
+      rgb_color: [255, 0, 200]
+      brightness: 204
+    light.hue_color_lamp_living_room_5:
+      state: 'on'
+      rgb_color: [255, 210, 0]
+      brightness: 204
+- id: '2026061604'
+  name: Living Room Forest
+  icon: mdi:pine-tree
+  entities:
+    light.hue_color_lamp_living_room_1:
+      state: 'on'
+      rgb_color: [0, 120, 30]
+      brightness: 204
+    light.hue_color_lamp_living_room_2:
+      state: 'on'
+      rgb_color: [60, 180, 40]
+      brightness: 204
+    light.hue_color_lamp_living_room_3:
+      state: 'on'
+      rgb_color: [130, 210, 40]
+      brightness: 204
+    light.hue_color_lamp_living_room_4:
+      state: 'on'
+      rgb_color: [220, 150, 40]
+      brightness: 204
+    light.hue_color_lamp_living_room_5:
+      state: 'on'
+      rgb_color: [90, 190, 70]
+      brightness: 204
