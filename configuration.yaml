@@ -3,7 +3,9 @@ cloud:
 default_config:
 
 wake_on_lan:
-  # for PC Wake button on Dashboard - lights yellow if PC is on by responding to packets sent
+  # Enables wake_on_lan.send_magic_packet, used by script.wake_andrews_desktop (the
+  # "Wake Desktop" dashboard button). Whether the tile lights yellow (PC on) is decided
+  # by binary_sensor.desktop_on in the template section below, not by this integration.
 
 # Recorder: batch writes every 30s (SD-card wear) and skip recording history for the
 # noisy plug voltage/amps sensors. Live values still update; only their history graphs
@@ -72,6 +74,23 @@ input_button:
 # Template sensors: guest-mode status, thermostat heat/cool state, and OpenMeteo
 # outdoor weather. (Energy/cost templates live in packages/energy.yaml.)
 template:
+  # Desktop on/off detector for the "Wake Desktop" dashboard tile. Ping alone is
+  # unreliable: Windows blocks ICMP by default, so a powered-on PC answers nothing
+  # and reads as off. This also watches the Desktop Desk Plug's live power draw and
+  # reports ON when the plug pulls real watts OR the PC still answers ping.
+  - binary_sensor:
+      - name: Desktop On
+        unique_id: desktop_on
+        device_class: running
+        # Debounce brief power dips so the tile doesn't flicker off under load swings.
+        delay_off: "00:00:30"
+        # Wall watts above this = PC running. Soft-off/sleep sits under ~10W (WoL
+        # standby); a running desktop idles well above it. To tune: watch
+        # sensor.tapo_p110m_1_current_consumption on the Energy dashboard with the
+        # PC on vs off, then pick a value between the two readings.
+        state: >
+          {{ states('sensor.tapo_p110m_1_current_consumption') | float(0) > 25
+             or is_state('binary_sensor.192_168_0_24', 'on') }}
   - sensor:
       - name: Guest Mode Status
         unique_id: guest_mode_status
