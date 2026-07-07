@@ -1,0 +1,3 @@
+# Keep shell scripts LF even when a commit is made from Windows. Git would
+# otherwise convert them to CRLF and break the /bin/sh shebang on the Pi.
+*.sh text eol=lf
