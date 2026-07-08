@@ -61,6 +61,9 @@ input_boolean:
   cost_view_today:
     name: "Cost View: Today"
     icon: mdi:calendar-today
+  climate_chart_humidity:
+    name: "Climate Chart: Humidity View"
+    icon: mdi:water-percent
 
 # Buttons that fire the GitHub push/pull shell commands
 input_button:

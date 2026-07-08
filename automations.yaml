@@ -558,32 +558,66 @@
   mode: single
 - id: '06000001'
   alias: 'System: Auto Update All'
-  description: Sundays at 2am, install all available updates and restart if needed.
+  description: >-
+    Sundays at 7am, after the automatic backup. Installs add-on, integration,
+    and HACS updates first (continue on error), pushes the config to GitHub,
+    then installs Home Assistant Core, OS, and Supervisor last because those
+    restart HA. Skips ESPHome and device firmware. Notifies when done.
   triggers:
   - trigger: time
-    at: 02:00:00
+    at: '07:00:00'
   conditions:
   - condition: time
     weekday:
     - sun
+  variables:
+    big_three:
+    - update.home_assistant_core_update
+    - update.home_assistant_operating_system_update
+    - update.home_assistant_supervisor_update
+    other_updates: >-
+      {{ states.update | selectattr('state','eq','on')
+      | rejectattr('entity_id','search','_firmware')
+      | rejectattr('entity_id','in', big_three)
+      | map(attribute='entity_id') | list }}
+    core_updates: >-
+      {{ states.update | selectattr('state','eq','on')
+      | selectattr('entity_id','in', big_three)
+      | map(attribute='entity_id') | list }}
   actions:
-  - variables:
-      to_update: "{{ states.update\n   | selectattr('state','eq','on')\n   | rejectattr('entity_id','match','.*_firmware')\n
-        \  | map(attribute='entity_id') | list }}"
   - repeat:
-      for_each: '{{ to_update }}'
+      for_each: '{{ other_updates }}'
       sequence:
-      - condition: template
-        value_template: '{{ is_state(repeat.item, ''on'') }}'
       - action: update.install
+        continue_on_error: true
         target:
           entity_id: '{{ repeat.item }}'
         data:
           backup: false
-  - condition: template
-    value_template: '{{ to_update | length > 0 }}'
-  - delay: 00:02:00
-  - action: homeassistant.restart
+  - action: notify.mobile_app_pixel_10
+    continue_on_error: true
+    data:
+      title: HA Auto-Update
+      message: >-
+        Installed {{ other_updates | length }} update(s). Core/OS pending
+        {{ core_updates | length }}.
+  - action: shell_command.git_push
+    continue_on_error: true
+  - if:
+    - condition: template
+      value_template: '{{ core_updates | length == 0 and other_updates | length > 0 }}'
+    then:
+    - delay: 00:00:30
+    - action: homeassistant.restart
+  - repeat:
+      for_each: '{{ core_updates }}'
+      sequence:
+      - action: update.install
+        continue_on_error: true
+        target:
+          entity_id: '{{ repeat.item }}'
+        data:
+          backup: true
   mode: single
 - id: '07010101'
   alias: 'Basement Hue Tap Dial: Rotary — Sonos Volume Control'
@@ -1485,7 +1519,24 @@
   conditions: []
   actions:
   - action: shell_command.git_pull
+    response_variable: pull_result
+  - condition: template
+    value_template: '{{ pull_result[''returncode''] == 0 and ''changed'' in pull_result.get(''stdout'', '''') }}'
   - delay:
       seconds: 3
   - action: homeassistant.restart
+  mode: single
+- id: '1771270799107'
+  alias: 'GitHub: Nightly Auto Push'
+  description: >-
+    Every day at 3am, push the current config to GitHub so changes made
+    directly on the Pi, including by Claude Code, are backed up even if the
+    manual Push button is never pressed. No-op when nothing changed.
+  triggers:
+  - trigger: time
+    at: '03:00:00'
+  conditions: []
+  actions:
+  - action: shell_command.git_push
+    continue_on_error: true
   mode: single
