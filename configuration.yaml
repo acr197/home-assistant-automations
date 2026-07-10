@@ -85,14 +85,18 @@ template:
       - name: Desktop On
         unique_id: desktop_on
         device_class: running
-        # Debounce brief power dips so the tile doesn't flicker off under load swings.
-        delay_off: "00:00:30"
-        # Wall watts above this = PC running. Soft-off/sleep sits under ~10W (WoL
-        # standby); a running desktop idles well above it. To tune: watch
-        # sensor.tapo_p110m_1_current_consumption on the Energy dashboard with the
-        # PC on vs off, then pick a value between the two readings.
+        # Detect the PC by its desk-plug power draw. Recorder history is decisive:
+        # running pulls 200-540W through this plug, while off/standby sits low
+        # (currently ~23-27W, and never above ~44W across the plug's whole history).
+        # 60W splits the two with wide margin on both sides. The old 25W threshold
+        # sat inside the standby band, so the tile jittered on/off and read "on"
+        # around the clock while the PC was off. Ping stays as a backup for if ICMP
+        # is ever enabled on Windows; it cannot cause a false "on" while off.
+        # Debounce both edges: swallow a brief inrush spike and a shutdown ramp-down.
+        delay_on: "00:00:15"
+        delay_off: "00:01:00"
         state: >
-          {{ states('sensor.tapo_p110m_1_current_consumption') | float(0) > 25
+          {{ states('sensor.tapo_p110m_1_current_consumption') | float(0) > 60
              or is_state('binary_sensor.192_168_0_24', 'on') }}
   - sensor:
       - name: Guest Mode Status
