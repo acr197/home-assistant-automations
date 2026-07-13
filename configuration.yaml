@@ -149,6 +149,7 @@ sensor:
     value_template: "{{ value_json.current.temperature_2m if value_json.current is defined else 'unavailable' }}"
     unit_of_measurement: "°F"
     scan_interval: 600
+    timeout: 30
 
 # Work + home zones for geolocation automations
 zone:

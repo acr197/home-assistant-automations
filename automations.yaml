@@ -111,8 +111,6 @@
     entity_id: 243f87a8269b1f3cf446847dbfa0795d
     domain: remote
   mode: single
-# Cap living room Hue lamps 2 and 5 at 70% brightness. Lamp 3 is handled
-# separately by 02020103; lamps 1 and 4 are intentionally uncapped.
 - id: '02020101'
   alias: 'Living Room: Cap Hue Lamps at 70%'
   description: Hue Living Room lamps 2 and 5 must never exceed 70% brightness. Snap
@@ -135,15 +133,12 @@
       transition: 1
   mode: parallel
   max: 10
-# Cap living room Hue lamp 3 at 40% brightness and lock its color to 2700K.
-# Brightness threshold above 104 = the measured 40% value (102) plus a couple
-# points of buffer so the lamp resting at 40% does not retrigger. Color
-# tolerance 25K clears the ~2K settle drift (2700 lands at 2702) with margin.
 - id: '02020103'
   alias: 'Living Room: Cap Hue Lamp 3 at 40% and Lock 2700K'
-  description: Hue Living Room lamp 3 holds at 40% brightness and stays locked to 2700K.
-    Snap brightness back to 40% whenever it climbs higher, and pull color back to 2700K
-    whenever a scene or manual change moves it off, at any brightness from 1-100%.
+  description: Hue Living Room lamp 3 holds at 40% brightness and stays locked to
+    2700K. Snap brightness back to 40% whenever it climbs higher, and pull color back
+    to 2700K whenever a scene or manual change moves it off, at any brightness from
+    1-100%.
   triggers:
   - trigger: numeric_state
     entity_id: light.hue_color_lamp_living_room_3
@@ -610,28 +605,32 @@
   mode: single
 - id: '06000001'
   alias: 'System: Auto Update All'
-  description: Sundays at 7am, after the automatic backup. Installs add-on, integration,
-    and HACS updates first (continue on error), pushes the config to GitHub, then
+  description: Sundays at 7am, after the automatic backup. Forces a fresh update check
+    first, because update entities can be stale at trigger time and a stale "off"
+    hides an available update so nothing installs. Then installs add-on, integration,
+    and HACS software updates (continue on error), pushes the config to GitHub, and
     installs Home Assistant Core, OS, and Supervisor last because those restart HA.
-    Skips ESPHome and device firmware. Notifies when done.
+    Skips device firmware (ESPHome, cameras, Z-Wave) by device_class. Notifies when
+    done.
   triggers:
   - trigger: time
-    at: 07:00:00
+    at: 06:00:00
   conditions:
   - condition: time
     weekday:
     - sun
-  variables:
-    big_three:
-    - update.home_assistant_core_update
-    - update.home_assistant_operating_system_update
-    - update.home_assistant_supervisor_update
-    other_updates: '{{ states.update | selectattr(''state'',''eq'',''on'') | rejectattr(''entity_id'',''search'',''_firmware'')
-      | rejectattr(''entity_id'',''in'', big_three) | map(attribute=''entity_id'')
-      | list }}'
-    core_updates: '{{ states.update | selectattr(''state'',''eq'',''on'') | selectattr(''entity_id'',''in'',
-      big_three) | map(attribute=''entity_id'') | list }}'
   actions:
+  - action: homeassistant.update_entity
+    continue_on_error: true
+    target:
+      entity_id: '{{ states.update | map(attribute=''entity_id'') | list }}'
+  - delay: 00:02:00
+  - variables:
+      other_updates: '{{ states.update | selectattr(''state'',''eq'',''on'') | rejectattr(''entity_id'',''in'',
+        big_three) | rejectattr(''attributes.device_class'',''eq'',''firmware'') |
+        map(attribute=''entity_id'') | list }}'
+      core_updates: '{{ states.update | selectattr(''state'',''eq'',''on'') | selectattr(''entity_id'',''in'',
+        big_three) | map(attribute=''entity_id'') | list }}'
   - repeat:
       for_each: '{{ other_updates }}'
       sequence:
@@ -665,6 +664,11 @@
           entity_id: '{{ repeat.item }}'
         data:
           backup: true
+  variables:
+    big_three:
+    - update.home_assistant_core_update
+    - update.home_assistant_operating_system_update
+    - update.home_assistant_supervisor_update
   mode: single
 - id: '07010101'
   alias: 'Basement Hue Tap Dial: Rotary — Sonos Volume Control'
@@ -1547,8 +1551,8 @@
   - action: shell_command.git_pull
     response_variable: pull_result
   - condition: template
-    value_template: '{{ pull_result[''returncode''] == 0 and ''changed'' in pull_result.get(''stdout'',
-      '''') }}'
+    value_template: '{{ pull_result[''returncode''] == 0 and (pull_result.get(''stdout'', '''') | trim)
+      == ''changed'' }}'
   - delay:
       seconds: 3
   - action: homeassistant.restart
@@ -1568,8 +1572,8 @@
   - action: shell_command.git_pull
     response_variable: pull_result
   - condition: template
-    value_template: '{{ pull_result[''returncode''] == 0 and ''changed'' in pull_result.get(''stdout'',
-      '''') }}'
+    value_template: '{{ pull_result[''returncode''] == 0 and (pull_result.get(''stdout'', '''') | trim)
+      == ''changed'' }}'
   - delay:
       seconds: 3
   - action: homeassistant.restart
