@@ -1591,3 +1591,82 @@
   - action: shell_command.git_push
     continue_on_error: true
   mode: single
+- id: '08000001'
+  alias: 'Nursery: Knob toggles night mode (heater + Sonos + hallway light)'
+  description: 'Single press of the MOES rotary knob (Tuya TS004F on ZHA) toggles
+    nursery night mode, independent of the time-based heater automation. Press when
+    the heater automation is disabled: enables it, runs it once so the heater reacts
+    to the current temperature, turns off the middle staircase light, and drops Sonos
+    Roam to night volume. Press when it is enabled: disables it, shuts the heater
+    plug off, restores the light to its 1% night glow and the Roam to normal volume.
+    Sends Andrew a notification each way because the knob gives no feedback of its
+    own. The knob has two firmware modes toggled by a fast triple press: command
+    mode (factory default, single press sends "toggle") and event mode (single press
+    sends "remote_button_short_press"). Both triggers are listed so the automation
+    works in either mode. No device filter is needed while the knob is the only
+    device on the ZHA network; if another ZHA remote is ever added, add its
+    device_ieee to event_data to keep the triggers apart.
+
+    '
+  triggers:
+  - id: press_command_mode
+    trigger: event
+    event_type: zha_event
+    event_data:
+      command: toggle
+  - id: press_event_mode
+    trigger: event
+    event_type: zha_event
+    event_data:
+      command: remote_button_short_press
+  conditions: []
+  actions:
+  - choose:
+    - conditions:
+      - condition: state
+        entity_id: automation.nursery_heater_control_67_70_degrees
+        state: 'off'
+      sequence:
+      - action: automation.turn_on
+        target:
+          entity_id: automation.nursery_heater_control_67_70_degrees
+      - action: automation.trigger
+        data:
+          skip_condition: false
+        target:
+          entity_id: automation.nursery_heater_control_67_70_degrees
+      - action: light.turn_off
+        target:
+          entity_id: light.staircase_hue_lights_hue_white_lamp_middle_staircase
+      - action: media_player.volume_set
+        data:
+          volume_level: 0.04
+        target:
+          entity_id: media_player.sonos_roam
+      - action: notify.mobile_app_pixel_10
+        data:
+          message: 'Nursery night mode ON (knob): heater automation enabled'
+    default:
+    - action: automation.turn_off
+      data:
+        stop_actions: true
+      target:
+        entity_id: automation.nursery_heater_control_67_70_degrees
+    - action: switch.turn_off
+      target:
+        entity_id: switch.tapo_p110m_2_nursery_heater
+    - action: light.turn_on
+      data:
+        brightness_pct: 1
+      target:
+        entity_id: light.staircase_hue_lights_hue_white_lamp_middle_staircase
+    - action: media_player.volume_set
+      data:
+        volume_level: 0.32
+      target:
+        entity_id: media_player.sonos_roam
+    - action: notify.mobile_app_pixel_10
+      data:
+        message: 'Nursery night mode OFF (knob): heater automation disabled, heater
+          off'
+  mode: single
