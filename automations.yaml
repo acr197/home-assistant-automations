@@ -1670,3 +1670,26 @@
         message: 'Nursery night mode OFF (knob): heater automation disabled, heater
           off'
   mode: single
+- id: '09000001'
+  alias: 'Desktop: Heartbeat marks the PC awake'
+  description: 'The desktop POSTs this webhook once a minute from the "HA Desktop
+    Heartbeat" Windows scheduled task (installed by desktop/install-heartbeat.ps1)
+    whenever it is awake with Andrew logged in; locked still counts, and heartbeats
+    stop on sleep, shutdown, or sign-out. Each POST stamps
+    input_datetime.desktop_last_heartbeat, and binary_sensor.desktop_on shows the
+    Wake Desktop tile as running while the stamp is under 3 minutes old. local_only
+    keeps the unauthenticated webhook reachable from the LAN only.'
+  triggers:
+  - trigger: webhook
+    webhook_id: desktop-heartbeat-e9f6ccd24a0242d9870d86a50f04eceea1a3d2685e4a43a5a6b2a99295bcf178
+    allowed_methods:
+    - POST
+    local_only: true
+  conditions: []
+  actions:
+  - action: input_datetime.set_datetime
+    target:
+      entity_id: input_datetime.desktop_last_heartbeat
+    data:
+      datetime: '{{ now().strftime(''%Y-%m-%d %H:%M:%S'') }}'
+  mode: single

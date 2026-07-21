@@ -10,6 +10,7 @@ A production Home Assistant configuration running 31 automations across lighting
 - Nursery heater that holds a 69 to 71 F range, synced to the Hatch sound machine state, with alerts and a cooldown to prevent notification spam
 - Guest mode toggle that disables all presence-based thermostat automations with one switch
 - Dashboard Pi-hole button that pauses DNS ad-blocking for 15 minutes with a live countdown, then re-enables automatically
+- Wake Desktop tile that wakes the PC over LAN and shows it as running via a per-minute heartbeat the PC itself POSTs to a webhook (Windows scheduled task in `desktop/`), with smart-plug wattage as fallback
 - Time-aware lighting with brightness caps, room syncing, and nightlight behavior that adjusts by time of day
 - Hue Tap Dial mapped to Sonos volume with smooth 0.002 increments, plus button press and hold for mute and unmute
 - Nightly Git backup that auto-commits and pushes config changes at 5 AM

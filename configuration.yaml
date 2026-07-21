@@ -74,30 +74,43 @@ input_button:
     name: Pull from GitHub
     icon: mdi:cloud-download
 
+# Timestamp of the desktop's last heartbeat POST. Written by the "Desktop:
+# Heartbeat" automation, read by binary_sensor.desktop_on, restored across
+# restarts so a quick HA reboot does not blank the tile.
+input_datetime:
+  desktop_last_heartbeat:
+    name: Desktop Last Heartbeat
+    has_date: true
+    has_time: true
+
 # Template sensors: guest-mode status, thermostat heat/cool state, and OpenMeteo
 # outdoor weather. (Energy/cost templates live in packages/energy.yaml.)
 template:
-  # Desktop on/off detector for the "Wake Desktop" dashboard tile. Ping alone is
-  # unreliable: Windows blocks ICMP by default, so a powered-on PC answers nothing
-  # and reads as off. This also watches the Desktop Desk Plug's live power draw and
-  # reports ON when the plug pulls real watts OR the PC still answers ping.
+  # Desktop on/off detector for the "Wake Desktop" dashboard tile. The PC reports
+  # itself: a Windows scheduled task ("HA Desktop Heartbeat", installed by
+  # desktop/install-heartbeat.ps1) POSTs the heartbeat webhook once a minute while
+  # the PC is awake, and the "Desktop: Heartbeat" automation stamps
+  # input_datetime.desktop_last_heartbeat with each POST.
   - binary_sensor:
       - name: Desktop On
         unique_id: desktop_on
         device_class: running
-        # Detect the PC by its desk-plug power draw. Recorder history is decisive:
-        # running pulls 200-540W through this plug, while off/standby sits low
-        # (currently ~23-27W, and never above ~44W across the plug's whole history).
-        # 60W splits the two with wide margin on both sides. The old 25W threshold
-        # sat inside the standby band, so the tile jittered on/off and read "on"
-        # around the clock while the PC was off. Ping stays as a backup for if ICMP
-        # is ever enabled on Windows; it cannot cause a false "on" while off.
-        # Debounce both edges: swallow a brief inrush spike and a shutdown ramp-down.
+        # ON while the last heartbeat is under 3 minutes old (tolerates one missed
+        # minute) OR the desk plug pulls real watts. The plug term only backs up
+        # the heartbeat during boot (before login) or if the task ever breaks:
+        # heavy use pulls 200-540W, but idle draw can dip below any workable
+        # threshold while off/standby sits at ~23-44W, which is why watts alone
+        # misread an idle PC as off. The old ping term is gone: Windows blocks
+        # ICMP and the PC's DHCP address moved off 192.168.0.24, so ping read
+        # "off" while the PC was on and could read "on" if another device ever
+        # takes that IP.
+        # Debounce both edges: swallow a brief plug spike and a shutdown ramp-down.
         delay_on: "00:00:15"
         delay_off: "00:01:00"
         state: >
-          {{ states('sensor.tapo_p110m_1_current_consumption') | float(0) > 60
-             or is_state('binary_sensor.192_168_0_24', 'on') }}
+          {% set hb = state_attr('input_datetime.desktop_last_heartbeat', 'timestamp') | float(0) %}
+          {{ (now().timestamp() - hb) < 180
+             or states('sensor.tapo_p110m_1_current_consumption') | float(0) > 60 }}
   - sensor:
       - name: Guest Mode Status
         unique_id: guest_mode_status
