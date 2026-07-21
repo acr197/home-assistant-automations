@@ -5,3 +5,26 @@ wake_andrews_desktop:
       mac: 04-7C-16-C1-3C-72
     action: wake_on_lan.send_magic_packet
   description: ''
+
+# Dashboard Pi-hole button: tap to pause blocking for 15 minutes, tap again to
+# re-enable early. Pi-hole's own timer restores blocking when it hits zero. The
+# delay + update_entity refreshes the card right after a tap instead of waiting
+# up to 5s for the next poll.
+pihole_toggle_blocking:
+  alias: 'Pi-hole: Toggle (15m off or re-enable)'
+  mode: restart
+  sequence:
+  - choose:
+    - conditions: "{{ is_state('sensor.pi_hole_blocking', 'disabled') }}"
+      sequence:
+      - action: shell_command.pihole_enable
+      - delay: '00:00:01'
+      - action: homeassistant.update_entity
+        target:
+          entity_id: sensor.pi_hole_blocking
+    default:
+    - action: shell_command.pihole_disable
+    - delay: '00:00:01'
+    - action: homeassistant.update_entity
+      target:
+        entity_id: sensor.pi_hole_blocking

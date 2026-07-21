@@ -151,6 +151,20 @@ sensor:
     scan_interval: 600
     timeout: 30
 
+# Pi-hole blocking state via pihole_api.sh (the API needs a login session; the
+# script handles auth with the app password from secrets.yaml). State is
+# "enabled"/"disabled"; the timer attribute is seconds left on the disable
+# window. The 5s poll is what makes the dashboard card countdown tick.
+# Pi-hole re-enables itself when the timer expires, so no automation is needed.
+command_line:
+  - sensor:
+      name: Pi-hole Blocking
+      command: "sh /config/pihole_api.sh status"
+      value_template: "{{ value_json.blocking }}"
+      json_attributes:
+        - timer
+      scan_interval: 5
+
 # Work + home zones for geolocation automations
 zone:
   - name: Andrew-Work
@@ -169,10 +183,14 @@ zone:
     radius: 500
     icon: mdi:home
 
-# Git sync scripts (GitHub dashboard buttons + nightly backup)
+# Git sync scripts (GitHub dashboard buttons + nightly backup) plus the Pi-hole
+# API helper (auth handled inside pihole_api.sh; driven by
+# script.pihole_toggle_blocking; 900 = 15 minutes)
 shell_command:
   git_push: "sh /config/git_push.sh"
   git_pull: "sh /config/git_pull.sh"
+  pihole_disable: "sh /config/pihole_api.sh disable 900"
+  pihole_enable: "sh /config/pihole_api.sh enable"
 
 # Dashboards: storage-mode Overview + two YAML dashboards
 lovelace:
