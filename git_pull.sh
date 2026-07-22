@@ -59,8 +59,11 @@ fi
 # pull instead of running reset --hard. The nightly push then carries the local
 # state up to GitHub. Only a clean, strictly-behind Pi (a true fast-forward) is
 # allowed to reset. Applies to both the Pull button and the webhook auto-pull.
-if ! git diff --quiet HEAD 2>/dev/null; then
+if ! git diff --quiet HEAD >> "$LOG" 2>&1; then
   log "ABORT: local uncommitted changes present — refusing reset --hard. Pi left untouched."
+  log "DIAG git version: $(git --version 2>&1)"
+  git status --porcelain=v1 >> "$LOG" 2>&1
+  git diff HEAD --stat >> "$LOG" 2>&1
   echo "aborted"
   exit 0
 fi
