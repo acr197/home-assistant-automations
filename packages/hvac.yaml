@@ -1,0 +1,145 @@
+# ========================================================
+#  HVAC RUNTIME & COST MONITORING  (package)
+#
+#  Tracks how much the Nest thermostat (climate.thermostat) runs heating vs
+#  cooling, and estimates what that's costing. Nest reports run state
+#  (heating/cooling/idle) but never actual power draw, so cost is
+#  hours-run x an assumed wattage x the PECO blended rate from
+#  packages/energy.yaml. Loaded via:
+#  homeassistant > packages > !include_dir_named packages
+# ========================================================
+
+# Estimated running watts while the system is actively heating/cooling.
+# Nest can't report this directly - adjust to match your actual equipment:
+#   Central AC (condenser + blower): ~3000-4500W depending on tonnage
+#   Gas furnace (blower motor only): ~300-600W
+#   Heat pump or electric strip heat: ~3000-5000W (heat pump) to 5000-15000W (strips)
+# Defaults below assume a typical rowhome central-AC + gas-furnace setup.
+input_number:
+  hvac_cooling_watts:
+    name: "HVAC Estimated Cooling Watts"
+    unit_of_measurement: "W"
+    min: 0
+    max: 20000
+    step: 50
+    mode: box
+    icon: mdi:snowflake
+    initial: 3500
+  hvac_heating_watts:
+    name: "HVAC Estimated Heating Watts"
+    unit_of_measurement: "W"
+    min: 0
+    max: 20000
+    step: 50
+    mode: box
+    icon: mdi:fire
+    initial: 500
+  hvac_cooling_alert_hours:
+    name: "HVAC Cooling Alert Threshold"
+    unit_of_measurement: "h"
+    min: 0
+    max: 24
+    step: 0.5
+    mode: box
+    icon: mdi:bell-alert
+    initial: 8
+
+template:
+  # Mirrors climate.thermostat's hvac_action as a plain state string so
+  # history_stats below can track time spent in each state.
+  - sensor:
+      - name: "HVAC State"
+        unique_id: hvac_state
+        state: "{{ state_attr('climate.thermostat', 'hvac_action') | default('idle', true) }}"
+
+  # Cost sensors: recomputed every 5 min off the history_stats runtime sensors.
+  - trigger:
+      - platform: time_pattern
+        minutes: "/5"
+      - platform: homeassistant
+        event: start
+    sensor:
+      - name: "HVAC Cooling Cost Today"
+        unique_id: hvac_cooling_cost_today
+        unit_of_measurement: "$"
+        state: >
+          {% set hours = states('sensor.hvac_cooling_hours_today') | float(0) %}
+          {% set watts = states('input_number.hvac_cooling_watts') | float(0) %}
+          {% set rate = states('sensor.peco_variable_rate') | float(0) %}
+          {{ (hours * (watts / 1000) * rate) | round(2) }}
+
+      - name: "HVAC Heating Cost Today"
+        unique_id: hvac_heating_cost_today
+        unit_of_measurement: "$"
+        state: >
+          {% set hours = states('sensor.hvac_heating_hours_today') | float(0) %}
+          {% set watts = states('input_number.hvac_heating_watts') | float(0) %}
+          {% set rate = states('sensor.peco_variable_rate') | float(0) %}
+          {{ (hours * (watts / 1000) * rate) | round(2) }}
+
+      - name: "HVAC Cooling Cost This Month"
+        unique_id: hvac_cooling_cost_month
+        unit_of_measurement: "$"
+        state: >
+          {% set hours = states('sensor.hvac_cooling_hours_this_month') | float(0) %}
+          {% set watts = states('input_number.hvac_cooling_watts') | float(0) %}
+          {% set rate = states('sensor.peco_variable_rate') | float(0) %}
+          {{ (hours * (watts / 1000) * rate) | round(2) }}
+
+      - name: "HVAC Heating Cost This Month"
+        unique_id: hvac_heating_cost_month
+        unit_of_measurement: "$"
+        state: >
+          {% set hours = states('sensor.hvac_heating_hours_this_month') | float(0) %}
+          {% set watts = states('input_number.hvac_heating_watts') | float(0) %}
+          {% set rate = states('sensor.peco_variable_rate') | float(0) %}
+          {{ (hours * (watts / 1000) * rate) | round(2) }}
+
+      # Tracked smart-plug cost + estimated HVAC cost, today. Still not the
+      # whole house (no water heater/fridge/lighting/baseline circuits), but
+      # meaningfully closer than either figure alone - this is what the daily
+      # cost alert automation checks against.
+      - name: "Estimated Whole-Home Cost Today"
+        unique_id: estimated_whole_home_cost_today
+        unit_of_measurement: "$"
+        state: >
+          {% set tracked = states('sensor.total_energy_cost_today') | float(0) %}
+          {% set cooling = states('sensor.hvac_cooling_cost_today') | float(0) %}
+          {% set heating = states('sensor.hvac_heating_cost_today') | float(0) %}
+          {{ (tracked + cooling + heating) | round(2) }}
+
+# How long the thermostat has spent actively heating/cooling. "Today" resets
+# at midnight; "This Month" resets on the 1st (independent of the PECO
+# billing_cycle_start_day, since this tracks calendar runtime, not the bill).
+# history_stats has no dedicated top-level config domain (unlike template or
+# utility_meter above) - it's a sensor platform, merged into the same sensor:
+# domain as the OpenMeteo REST sensor in configuration.yaml.
+sensor:
+  - platform: history_stats
+    name: "HVAC Cooling Hours Today"
+    entity_id: sensor.hvac_state
+    state: "cooling"
+    type: time
+    start: "{{ today_at('00:00') }}"
+    end: "{{ now() }}"
+  - platform: history_stats
+    name: "HVAC Heating Hours Today"
+    entity_id: sensor.hvac_state
+    state: "heating"
+    type: time
+    start: "{{ today_at('00:00') }}"
+    end: "{{ now() }}"
+  - platform: history_stats
+    name: "HVAC Cooling Hours This Month"
+    entity_id: sensor.hvac_state
+    state: "cooling"
+    type: time
+    start: "{{ now().replace(day=1, hour=0, minute=0, second=0) }}"
+    end: "{{ now() }}"
+  - platform: history_stats
+    name: "HVAC Heating Hours This Month"
+    entity_id: sensor.hvac_state
+    state: "heating"
+    type: time
+    start: "{{ now().replace(day=1, hour=0, minute=0, second=0) }}"
+    end: "{{ now() }}"

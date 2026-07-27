@@ -607,11 +607,12 @@
   alias: 'System: Auto Update All'
   description: Sundays at 7am, after the automatic backup. Forces a fresh update check
     first, because update entities can be stale at trigger time and a stale "off"
-    hides an available update so nothing installs. Then installs add-on, integration,
-    and HACS software updates (continue on error), pushes the config to GitHub, and
-    installs Home Assistant Core, OS, and Supervisor last because those restart HA.
-    Skips device firmware (ESPHome, cameras, Z-Wave) by device_class. Notifies when
-    done.
+    hides an available update so nothing installs. Installs add-on, integration,
+    HACS, and Supervisor software updates (continue on error), pushes the config to
+    GitHub, then restarts HA to apply them. Leaves Home Assistant Core and OS updates
+    alone, since installing those can hang the box with no one around to power-cycle
+    it, and just notifies that they're pending so they can be installed manually.
+    Skips device firmware (ESPHome, cameras, Z-Wave) by device_class.
   triggers:
   - trigger: time
     at: 06:00:00
@@ -627,10 +628,10 @@
   - delay: 00:02:00
   - variables:
       other_updates: '{{ states.update | selectattr(''state'',''eq'',''on'') | rejectattr(''entity_id'',''in'',
-        big_three) | rejectattr(''attributes.device_class'',''eq'',''firmware'') |
+        held_back_updates) | rejectattr(''attributes.device_class'',''eq'',''firmware'') |
         map(attribute=''entity_id'') | list }}'
       core_updates: '{{ states.update | selectattr(''state'',''eq'',''on'') | selectattr(''entity_id'',''in'',
-        big_three) | map(attribute=''entity_id'') | list }}'
+        held_back_updates) | map(attribute=''entity_id'') | list }}'
   - repeat:
       for_each: '{{ other_updates }}'
       sequence:
@@ -645,30 +646,19 @@
     data:
       title: HA Auto-Update
       message: Installed {{ other_updates | length }} update(s). Core/OS pending {{
-        core_updates | length }}.
+        core_updates | length }} — install manually.
   - action: shell_command.git_push
     continue_on_error: true
   - if:
     - condition: template
-      value_template: '{{ core_updates | length == 0 and other_updates | length >
-        0 }}'
+      value_template: '{{ other_updates | length > 0 }}'
     then:
     - delay: 00:00:30
     - action: homeassistant.restart
-  - repeat:
-      for_each: '{{ core_updates }}'
-      sequence:
-      - action: update.install
-        continue_on_error: true
-        target:
-          entity_id: '{{ repeat.item }}'
-        data:
-          backup: true
   variables:
-    big_three:
+    held_back_updates:
     - update.home_assistant_core_update
     - update.home_assistant_operating_system_update
-    - update.home_assistant_supervisor_update
   mode: single
 - id: '07010101'
   alias: 'Basement Hue Tap Dial: Rotary — Sonos Volume Control'
@@ -1692,4 +1682,74 @@
       entity_id: input_datetime.desktop_last_heartbeat
     data:
       datetime: '{{ now().strftime(''%Y-%m-%d %H:%M:%S'') }}'
+  mode: single
+- id: '10000003'
+  alias: 'PECO: High Estimated Daily Cost Alert'
+  description: Notifies once at 9:15pm if today's combined tracked-device +
+    HVAC estimated cost (sensor.estimated_whole_home_cost_today) exceeds
+    input_number.peco_bill_alert_threshold, so a high-usage day shows up the
+    same day rather than a month later on the bill. Still an underestimate of
+    the true whole-home cost (no whole-home meter), so this is an early
+    warning, not a precise forecast.
+  triggers:
+  - trigger: time
+    at: '21:15:00'
+  conditions:
+  - condition: numeric_state
+    entity_id: sensor.estimated_whole_home_cost_today
+    above: input_number.peco_bill_alert_threshold
+  actions:
+  - action: notify.mobile_app_pixel_10
+    data:
+      title: High Estimated Usage Today
+      message: >-
+        Estimated cost today (tracked devices + HVAC) is
+        ${{ states('sensor.estimated_whole_home_cost_today') }}, above your
+        ${{ states('input_number.peco_bill_alert_threshold') }} threshold.
+        This still excludes the fridge, water heater, and general circuits.
+  mode: single
+- id: '10000001'
+  alias: 'PECO: Heavy AC Day Alert'
+  description: Notifies once at 9pm if the Nest ran cooling longer than
+    input_number.hvac_cooling_alert_hours today, so a hot-weather usage
+    spike shows up the same day instead of a month later on the bill.
+  triggers:
+  - trigger: time
+    at: '21:00:00'
+  conditions:
+  - condition: numeric_state
+    entity_id: sensor.hvac_cooling_hours_today
+    above: input_number.hvac_cooling_alert_hours
+  actions:
+  - action: notify.mobile_app_pixel_10
+    data:
+      title: Heavy AC Day
+      message: >-
+        Cooling ran {{ states('sensor.hvac_cooling_hours_today') }}h today
+        (est. ${{ states('sensor.hvac_cooling_cost_today') }}). Outdoor high
+        was {{ states('sensor.outdoor_temperature_openmeteo') }}°F.
+  mode: single
+- id: '10000002'
+  alias: 'PECO: Previous Balance Reminder'
+  description: Weekly nag on Mondays if input_number.peco_previous_balance
+    is still above zero, so an unpaid balance from a missed payment doesn't
+    quietly ride along and rack up more late fees.
+  triggers:
+  - trigger: time
+    at: '09:00:00'
+  conditions:
+  - condition: time
+    weekday:
+    - mon
+  - condition: state
+    entity_id: binary_sensor.peco_account_past_due
+    state: 'on'
+  actions:
+  - action: notify.mobile_app_pixel_10
+    data:
+      title: PECO Balance Still Open
+      message: >-
+        ${{ states('input_number.peco_previous_balance') }} previous balance
+        is still on the account. Zero out input_number.peco_previous_balance
+        once it's paid.
   mode: single

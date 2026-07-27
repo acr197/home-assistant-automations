@@ -33,7 +33,7 @@ input_number:
     step: 0.00001
     mode: box
     icon: mdi:flash
-    initial: 0.10237
+    initial: 0.10785
   peco_transmission_rate:
     name: PECO Transmission Rate
     unit_of_measurement: "$/kWh"
@@ -42,7 +42,7 @@ input_number:
     step: 0.00001
     mode: box
     icon: mdi:lightning-bolt
-    initial: 0.00787
+    initial: 0.00974
   peco_customer_charge:
     name: PECO Customer Charge
     unit_of_measurement: "$/mo"
@@ -52,6 +52,10 @@ input_number:
     mode: box
     icon: mdi:account-cash
     initial: 11.30
+  # Last real bill on file: 07/20/2026, service period 06/18-07/20/2026 (32 days).
+  # Update these three whenever a new bill arrives so the coverage/ground-truth
+  # sensors below stay meaningful. Use the "New Charges" amount, not the total
+  # amount due, since total-due can include a carried-over unpaid balance.
   peco_last_bill_amount:
     name: PECO Last Bill Amount
     unit_of_measurement: "$"
@@ -60,7 +64,7 @@ input_number:
     step: 0.01
     mode: box
     icon: mdi:receipt-text
-    initial: 103.73
+    initial: 335.49
   peco_last_bill_kwh:
     name: PECO Last Bill kWh
     unit_of_measurement: "kWh"
@@ -69,7 +73,7 @@ input_number:
     step: 1
     mode: box
     icon: mdi:counter
-    initial: 434
+    initial: 1471
   peco_last_bill_days:
     name: PECO Last Bill Days
     unit_of_measurement: "days"
@@ -78,7 +82,34 @@ input_number:
     step: 1
     mode: box
     icon: mdi:calendar-range
-    initial: 29
+    initial: 32
+  # Unpaid balance carried on the account, e.g. from a missed payment. Set this
+  # from the "Charges/Credits from previous bill" line on a new bill; zero it
+  # out once paid. Drives the past-due alert below so a missed payment doesn't
+  # go unnoticed again.
+  peco_previous_balance:
+    name: PECO Previous Balance
+    unit_of_measurement: "$"
+    min: 0
+    max: 10000
+    step: 0.01
+    mode: box
+    icon: mdi:alert-circle
+    initial: 211.48
+  # Notify once/day if today's combined tracked-device + HVAC estimated cost
+  # (sensor.estimated_whole_home_cost_today, see packages/hvac.yaml) exceeds
+  # this. Default matches the last real bill's $/day (335.49 / 32 days).
+  # Still an underestimate (no water heater/fridge/lighting), so treat it as
+  # an early-warning tripwire, not a precise forecast.
+  peco_bill_alert_threshold:
+    name: PECO Daily Cost Alert Threshold
+    unit_of_measurement: "$"
+    min: 0
+    max: 200
+    step: 0.5
+    mode: box
+    icon: mdi:bell-alert
+    initial: 10.5
   billing_cycle_start_day:
     name: Billing Cycle Start Day
     unit_of_measurement: "day"
@@ -329,3 +360,43 @@ template:
           {% endfor %}
           {% set daily_avg = (ns.total / day) if day > 0 else 0 %}
           {{ (daily_avg * 365 * rate + cust * 12) | round(2) }}
+
+  # ---- Bill accuracy: ground-truth reference from the last real PECO bill ----
+  # The tracked-device sensors above only sum whatever is plugged into a smart
+  # plug (space heaters, a toaster, a dryer, a desk...). None of that is the
+  # AC, water heater, fridge, or general house circuits, so "Projected Bill" /
+  # "Est. Annual" above are always a floor, never the real number. These
+  # sensors compare tracked usage against the real last bill so the dashboard
+  # says so instead of silently under-reporting.
+  - sensor:
+      - name: "PECO Last Bill Daily kWh"
+        unique_id: peco_last_bill_daily_kwh
+        unit_of_measurement: "kWh"
+        state: >
+          {% set kwh = states('input_number.peco_last_bill_kwh') | float(0) %}
+          {% set days = states('input_number.peco_last_bill_days') | float(1) %}
+          {{ (kwh / days) | round(2) if days > 0 else 0 }}
+
+      - name: "PECO Last Bill Daily Cost"
+        unique_id: peco_last_bill_daily_cost
+        unit_of_measurement: "$"
+        state: >
+          {% set amt = states('input_number.peco_last_bill_amount') | float(0) %}
+          {% set days = states('input_number.peco_last_bill_days') | float(1) %}
+          {{ (amt / days) | round(2) if days > 0 else 0 }}
+
+      - name: "PECO Tracked Coverage"
+        unique_id: peco_tracked_coverage_pct
+        unit_of_measurement: "%"
+        icon: mdi:magnify-scan
+        state: >
+          {% set tracked_daily = states('sensor.daily_average_energy_this_month') | float(0) %}
+          {% set bill_daily = states('sensor.peco_last_bill_daily_kwh') | float(0) %}
+          {{ ((tracked_daily / bill_daily) * 100) | round(1) if bill_daily > 0 else 0 }}
+
+  - binary_sensor:
+      - name: "PECO Account Past Due"
+        unique_id: peco_account_past_due
+        device_class: problem
+        state: "{{ states('input_number.peco_previous_balance') | float(0) > 0 }}"
+

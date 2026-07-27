@@ -242,6 +242,96 @@ views:
                 card_mod:
                   style: |
                     ha-card { background: var(--ha-card-background, var(--card-background-color)); border-radius: 16px; box-shadow: none; }
+      - type: vertical-stack
+        cards:
+          - type: custom:button-card
+            show_name: true
+            show_state: false
+            show_icon: true
+            icon: mdi:magnify-scan
+            name: bill accuracy
+            tap_action:
+              action: none
+            hold_action:
+              action: none
+            styles:
+              card:
+                - background: transparent
+                - box-shadow: none
+                - border-radius: "0"
+                - padding: "6px 8px 4px"
+                - border-bottom: "1px solid #f39c12"
+                - margin-bottom: "4px"
+              grid:
+                - grid-template-areas: '"i n"'
+                - grid-template-columns: "min-content 1fr"
+                - grid-template-rows: min-content
+              icon:
+                - color: "#f39c12"
+                - width: "15px"
+                - margin-right: "6px"
+              name:
+                - text-transform: lowercase
+                - letter-spacing: "3px"
+                - font-size: "11px"
+                - color: "var(--secondary-text-color)"
+                - text-align: left
+                - justify-self: start
+          - type: conditional
+            conditions:
+              - condition: state
+                entity: binary_sensor.peco_account_past_due
+                state: "on"
+            card:
+              type: markdown
+              content: >-
+                ⚠ **${{ states('input_number.peco_previous_balance') }} previous
+                balance is unpaid** — check for a missed payment before another
+                late fee lands.
+              card_mod:
+                style: |
+                  ha-card {
+                    background: rgba(231, 76, 60, 0.15);
+                    border: 1px solid #e74c3c;
+                    border-radius: 16px;
+                    box-shadow: none;
+                    padding: 10px 14px;
+                    margin-bottom: 8px;
+                  }
+          - type: markdown
+            content: >-
+              Smart plugs only see space heaters, a toaster, a dryer, and a
+              desk — not the AC, water heater, or fridge. Coverage below is
+              measured against your last real PECO bill.
+            card_mod:
+              style: |
+                ha-card { background: transparent; box-shadow: none; }
+                ha-markdown { padding: 0 4px 8px !important; font-size: 0.8em; color: var(--secondary-text-color); }
+          - type: grid
+            columns: 2
+            square: false
+            cards:
+              - type: entity
+                entity: sensor.peco_tracked_coverage
+                name: Tracked Coverage
+                icon: mdi:magnify-scan
+                card_mod:
+                  style: |
+                    ha-card { background: var(--ha-card-background, var(--card-background-color)); border-radius: 16px; box-shadow: none; min-height: 100px; }
+              - type: entity
+                entity: sensor.peco_last_bill_daily_cost
+                name: Last Bill $/Day
+                icon: mdi:receipt-text
+                card_mod:
+                  style: |
+                    ha-card { background: var(--ha-card-background, var(--card-background-color)); border-radius: 16px; box-shadow: none; min-height: 100px; }
+              - type: entity
+                entity: sensor.estimated_whole_home_cost_today
+                name: Tracked + HVAC Today
+                icon: mdi:home-lightning-bolt
+                card_mod:
+                  style: |
+                    ha-card { background: var(--ha-card-background, var(--card-background-color)); border-radius: 16px; box-shadow: none; min-height: 100px; }
 
           # ══════════════════════════════════════════════════════
           #  SECTION HEADER — power
@@ -1327,7 +1417,84 @@ views:
                 {%- endfor -%}
 
   # ═══════════════════════════════════════════════════════════
-  #  VIEW 2: DEVICES
+  #  VIEW 2: HVAC
+  # ═══════════════════════════════════════════════════════════
+  - title: HVAC
+    path: hvac
+    icon: mdi:thermostat
+    cards:
+      - type: markdown
+        content: |
+          ## Nest heating & cooling
+
+          Cost here is an **estimate**, not a meter reading — the Nest reports
+          run state (heating/cooling/idle) but never actual power draw. Tune
+          the assumed wattage under Settings below to match your actual system.
+
+      - type: entities
+        title: Current State
+        show_header_toggle: false
+        entities:
+          - entity: climate.thermostat
+            name: Thermostat
+          - entity: sensor.hvac_state
+            name: Current Action
+            icon: mdi:hvac
+          - entity: sensor.outdoor_temperature_openmeteo
+            name: Outdoor Temp
+          - entity: sensor.outdoor_humidity_openmeteo
+            name: Outdoor Humidity
+
+      - type: grid
+        columns: 2
+        square: false
+        cards:
+          - type: entity
+            entity: sensor.hvac_cooling_hours_today
+            name: Cooling Today
+            icon: mdi:snowflake
+          - type: entity
+            entity: sensor.hvac_heating_hours_today
+            name: Heating Today
+            icon: mdi:fire
+          - type: entity
+            entity: sensor.hvac_cooling_cost_today
+            name: Cooling Cost Today
+            icon: mdi:currency-usd
+          - type: entity
+            entity: sensor.hvac_heating_cost_today
+            name: Heating Cost Today
+            icon: mdi:currency-usd
+          - type: entity
+            entity: sensor.hvac_cooling_hours_this_month
+            name: Cooling This Month
+            icon: mdi:snowflake
+          - type: entity
+            entity: sensor.hvac_heating_hours_this_month
+            name: Heating This Month
+            icon: mdi:fire
+          - type: entity
+            entity: sensor.hvac_cooling_cost_this_month
+            name: Cooling Cost This Month
+            icon: mdi:currency-usd
+          - type: entity
+            entity: sensor.hvac_heating_cost_this_month
+            name: Heating Cost This Month
+            icon: mdi:currency-usd
+
+      - type: entities
+        title: Settings — Adjust to Your System
+        show_header_toggle: false
+        entities:
+          - entity: input_number.hvac_cooling_watts
+            name: Est. Cooling Watts
+          - entity: input_number.hvac_heating_watts
+            name: Est. Heating Watts
+          - entity: input_number.hvac_cooling_alert_hours
+            name: Heavy AC Day Alert (hours)
+
+  # ═══════════════════════════════════════════════════════════
+  #  VIEW 3: DEVICES
   # ═══════════════════════════════════════════════════════════
   - title: Devices
     path: devices
@@ -1439,11 +1606,8 @@ views:
           exclude:
             - entity_id: "sensor.total_*"
 
-      - type: custom:energy-bill-drop-card
-        title: Upload Energy Bill
-
   # ═══════════════════════════════════════════════════════════
-  #  VIEW 3: SETTINGS
+  #  VIEW 4: SETTINGS
   # ═══════════════════════════════════════════════════════════
   - title: Settings
     path: settings
@@ -1472,3 +1636,9 @@ views:
           - entity: input_number.peco_last_bill_days
             name: Billing Period (days)
             icon: mdi:calendar-range
+          - entity: input_number.peco_previous_balance
+            name: Previous Balance ($)
+            icon: mdi:alert-circle
+          - entity: input_number.peco_bill_alert_threshold
+            name: Bill Alert Threshold ($)
+            icon: mdi:bell-alert
