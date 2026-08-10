@@ -605,14 +605,15 @@
   mode: single
 - id: '06000001'
   alias: 'System: Auto Update All'
-  description: Sundays at 7am, after the automatic backup. Forces a fresh update check
-    first, because update entities can be stale at trigger time and a stale "off"
-    hides an available update so nothing installs. Installs add-on, integration,
-    HACS, and Supervisor software updates (continue on error), pushes the config to
-    GitHub, then restarts HA to apply them. Leaves Home Assistant Core and OS updates
-    alone, since installing those can hang the box with no one around to power-cycle
-    it, and just notifies that they're pending so they can be installed manually.
-    Skips device firmware (ESPHome, cameras, Z-Wave) by device_class.
+  description: 'Sundays at 6am, an hour after the 5am automatic backup. Installs add-on,
+    integration, HACS, and Supervisor updates, pushes the config to GitHub, then restarts
+    to apply them. The 7am "System: Post-Update Settle Restart" automation does the
+    cleanup pass. Home Assistant Core and OS are held back on purpose, since installing
+    those can hang the box with no one around to power-cycle it; it just notifies that
+    they are pending. Device firmware (ESPHome, cameras, Z-Wave) is skipped by device_class.
+    Install order matters: Supervisor goes first and alone, because updating it restarts
+    the Supervisor container, and an add-on install running alongside that restart is
+    what leaves add-ons half-started ("App failed to start at boot").'
   triggers:
   - trigger: time
     at: 06:00:00
@@ -620,18 +621,54 @@
   - condition: time
     weekday:
     - sun
+  variables:
+    held_back_updates:
+    - update.home_assistant_core_update
+    - update.home_assistant_operating_system_update
+    supervisor_update: update.home_assistant_supervisor_update
   actions:
+  # Never install on top of a running backup. The Sunday backup normally finishes by
+  # 5am, but a slow one would otherwise collide with the first add-on install.
+  - wait_template: '{{ is_state(''sensor.backup_backup_manager_state'', ''idle'') }}'
+    timeout: '00:30:00'
+    continue_on_timeout: true
+  # Flag the cycle for the 7am settle pass, which is the only thing that clears it.
+  # Set here rather than at the end so the settle pass still runs if this one dies.
+  - action: input_boolean.turn_on
+    target:
+      entity_id: input_boolean.auto_update_running
+  # Force a fresh check. Update entities can be stale at trigger time and a stale "off"
+  # hides an available update, so nothing would install. Firmware entities are left out:
+  # they poll cameras and ESP devices, which slows the refresh down for updates this
+  # automation will not install anyway.
   - action: homeassistant.update_entity
     continue_on_error: true
     target:
-      entity_id: '{{ states.update | map(attribute=''entity_id'') | list }}'
-  - delay: 00:02:00
+      entity_id: '{{ states.update | rejectattr(''attributes.device_class'', ''eq'',
+        ''firmware'') | map(attribute=''entity_id'') | list }}'
+  - delay: '00:03:00'
   - variables:
-      other_updates: '{{ states.update | selectattr(''state'',''eq'',''on'') | rejectattr(''entity_id'',''in'',
-        held_back_updates) | rejectattr(''attributes.device_class'',''eq'',''firmware'') |
-        map(attribute=''entity_id'') | list }}'
-      core_updates: '{{ states.update | selectattr(''state'',''eq'',''on'') | selectattr(''entity_id'',''in'',
-        held_back_updates) | map(attribute=''entity_id'') | list }}'
+      pending: '{{ states.update | selectattr(''state'', ''eq'', ''on'') | rejectattr(''attributes.device_class'',
+        ''eq'', ''firmware'') | map(attribute=''entity_id'') | list }}'
+      supervisor_pending: '{{ pending | select(''eq'', supervisor_update) | list }}'
+      other_updates: '{{ pending | reject(''in'', held_back_updates) | reject(''eq'',
+        supervisor_update) | list }}'
+      core_updates: '{{ states.update | selectattr(''state'', ''eq'', ''on'') | selectattr(''entity_id'',
+        ''in'', held_back_updates) | map(attribute=''entity_id'') | list }}'
+  # Supervisor on its own, then let it come all the way back before touching add-ons.
+  - if:
+    - condition: template
+      value_template: '{{ supervisor_pending | count > 0 }}'
+    then:
+    - action: update.install
+      continue_on_error: true
+      target:
+        entity_id: '{{ supervisor_update }}'
+      data:
+        backup: false
+    - delay: '00:03:00'
+  # Everything else one at a time, pausing after each so Supervisor finishes restarting
+  # that add-on before the next install starts.
   - repeat:
       for_each: '{{ other_updates }}'
       sequence:
@@ -641,82 +678,188 @@
           entity_id: '{{ repeat.item }}'
         data:
           backup: false
+      - delay: '00:00:45'
+  # HACS updates rewrite custom_components/ and www/, so push before the restart.
+  - action: shell_command.git_push
+    continue_on_error: true
+  - variables:
+      installed: '{{ supervisor_pending + other_updates }}'
   - action: notify.mobile_app_pixel_10
     continue_on_error: true
     data:
       title: HA Auto-Update
-      message: Installed {{ other_updates | length }} update(s). Core/OS pending {{
-        core_updates | length }} — install manually.
-  - action: shell_command.git_push
-    continue_on_error: true
+      message: '{% set names = installed | map(''replace'', ''update.'', '''') | map(''replace'',
+        ''_update'', '''') | map(''replace'', ''_'', '' '') | list %}Installed {{ installed
+        | count }}{% if names %}: {{ names | join('', '') }}{% endif %}. Core/OS pending:
+        {{ core_updates | count }} (install manually). Settle restart at 7am.'
+  # Only restart now if something installed. The 7am pass restarts either way, so an
+  # empty week costs nothing.
   - if:
     - condition: template
-      value_template: '{{ other_updates | length > 0 }}'
+      value_template: '{{ installed | count > 0 }}'
     then:
-    - delay: 00:00:30
+    - delay: '00:02:00'
     - action: homeassistant.restart
+  mode: single
+- id: '06000002'
+  alias: 'System: Post-Update Settle Restart'
+  description: 'Sundays at 7am, the cleanup pass for "System: Auto Update All". Two
+    things go wrong after an update run and neither fixes itself: an add-on can fail
+    to come back (Supervisor raises "App failed to start at boot", and when it is Samba
+    the Z: share disappears), and homeassistant.restart only restarts Core, so it can
+    never revive a dead add-on. This waits for the update run to finish, starts any
+    add-on that is not running, then does one final full restart to pick up anything
+    that landed in the background after the update automation had already looked. Runs
+    whether or not updates were found, and clears the cycle flag so it fires once per
+    run.'
+  triggers:
+  - trigger: time
+    at: 07:00:00
+  # Backstop: if HA is still restarting at 7am the time trigger is missed outright,
+  # so also check on startup for the rest of Sunday morning.
+  - trigger: homeassistant
+    event: start
+  conditions:
+  - condition: state
+    entity_id: input_boolean.auto_update_running
+    state: 'on'
+  - condition: template
+    value_template: '{{ now().weekday() == 6 and now().hour >= 7 and now().hour < 12
+      }}'
   variables:
-    held_back_updates:
-    - update.home_assistant_core_update
-    - update.home_assistant_operating_system_update
+    # Add-on slug -> its "running" binary sensor. The slugs are the Supervisor device
+    # identifiers, which is what hassio.addon_start expects. A sensor that is missing
+    # or disabled reads as not-running, so the start below still fires; starting an
+    # add-on that is already up is a harmless no-op swallowed by continue_on_error.
+    addons:
+      core_samba: binary_sensor.samba_share_running
+      core_ssh: binary_sensor.terminal_ssh_running
+      core_duckdns: binary_sensor.duck_dns_running
+      core_zwave_js: binary_sensor.z_wave_js_running
+      '5c53de3b_esphome': binary_sensor.esphome_running
+      core_configurator: binary_sensor.file_editor_running
+      a0d7b954_vscode: binary_sensor.studio_code_server_running
+  actions:
+  # Do not restart on top of a still-running update or backup.
+  - wait_template: '{{ state_attr(''automation.system_auto_update_all'', ''current'')
+      | int(0) == 0 and is_state(''sensor.backup_backup_manager_state'', ''idle'') }}'
+    timeout: '00:45:00'
+    continue_on_timeout: true
+  - variables:
+      down: '{{ addons.values() | reject(''is_state'', ''on'') | list }}'
+  - repeat:
+      for_each: '{{ addons.keys() | list }}'
+      sequence:
+      - if:
+        - condition: template
+          value_template: '{{ not is_state(addons[repeat.item], ''on'') }}'
+        then:
+        - action: hassio.addon_start
+          continue_on_error: true
+          data:
+            addon: '{{ repeat.item }}'
+        - delay: '00:00:20'
+  # Only report a partial failure. If every sensor reads not-running then the sensors
+  # are disabled rather than the add-ons being down, the starts above were no-ops, and
+  # there is nothing worth a 7am push notification.
+  - if:
+    - condition: template
+      value_template: '{{ down | count > 0 and down | count < addons | count }}'
+    then:
+    - action: notify.mobile_app_pixel_10
+      continue_on_error: true
+      data:
+        title: HA Auto-Update
+        message: 'Restarted {{ down | count }} add-on(s) that did not come back: {{
+          down | map(''replace'', ''binary_sensor.'', '''') | map(''replace'', ''_running'',
+          '''') | map(''replace'', ''_'', '' '') | join('', '') }}.'
+  - action: input_boolean.turn_off
+    target:
+      entity_id: input_boolean.auto_update_running
+  - delay: '00:01:00'
+  - action: homeassistant.restart
   mode: single
 - id: '07010101'
   alias: 'Basement Hue Tap Dial: Rotary — Sonos Volume Control'
-  description: Rotate to adjust Sonos Basement volume with smooth steps.
+  description: >-
+    Rotate the dial to set the volume on media_player.basement (the SYMFONISK
+    picture frame).
+
+    Listens to the raw hue_event bus event instead of a `domain: hue` device
+    trigger. The device triggers silently stopped attaching after the 2026-08-05
+    restart: the dial kept firing identical hue_events but this automation never
+    ran again. The event trigger matches the exact payload the dial sends, so it
+    does not depend on the Hue device-automation layer.
+
+    Smoothing. The dial sends a batch roughly every 400ms carrying a `steps`
+    count, starting with type `start` and then `repeat`. The old version ignored
+    `start`, so the first move of every turn was dropped and a short flick did
+    nothing. It also scaled straight off `steps`, and a fast spin sends batches
+    of 90+ steps, which is where the ~20-point jumps came from. Now every batch
+    counts, and the change is damped and capped at 8 points per batch: a fast
+    spin still ramps at about 20 points/sec across several batches instead of
+    leaping in one.
+
+    Each batch adds to input_number.basement_volume_target rather than to the
+    speaker's reported volume. Sonos reports a new volume back over the network a
+    beat after it is set, so consecutive batches used to read the same stale
+    value and overwrite each other, which is why turning fast often moved the
+    volume only one step. The target re-syncs from the speaker at the start of
+    each turn and after 3s idle, so a volume change made in the Sonos app or on a
+    dashboard is still picked up.
   triggers:
-  - device_id: f51ebbabc5d2ee26b85cd5fcce863ac1
-    domain: hue
-    type: repeat
-    subtype: clock_wise
-    id: clockwise
-    trigger: device
-  - device_id: f51ebbabc5d2ee26b85cd5fcce863ac1
-    domain: hue
-    type: repeat
-    subtype: counter_clock_wise
-    id: counterclockwise
-    trigger: device
+  - trigger: event
+    event_type: hue_event
+    event_data:
+      device_id: f51ebbabc5d2ee26b85cd5fcce863ac1
+      subtype: clock_wise
+  - trigger: event
+    event_type: hue_event
+    event_data:
+      device_id: f51ebbabc5d2ee26b85cd5fcce863ac1
+      subtype: counter_clock_wise
   actions:
   - variables:
-      steps: '{{ trigger.event.data.steps | int(1) }}'
-      current: '{{ state_attr(''media_player.basement'',''volume_level'')|float(0)
-        }}'
-  - choose:
-    - conditions:
-      - condition: template
-        value_template: '{{ trigger.id == ''clockwise'' }}'
-      sequence:
-      - target:
-          entity_id: media_player.basement
-        data:
-          volume_level: '{{ [current + (0.002 * steps), 1] | min }}
-
-            '
-        action: media_player.volume_set
-    - conditions:
-      - condition: template
-        value_template: '{{ trigger.id == ''counterclockwise'' }}'
-      sequence:
-      - target:
-          entity_id: media_player.basement
-        data:
-          volume_level: '{{ [current - (0.002 * steps), 0] | max }}
-
-            '
-        action: media_player.volume_set
+      steps: '{{ trigger.event.data.steps | int(15) }}'
+      direction: '{{ 1 if trigger.event.data.subtype == ''clock_wise'' else -1 }}'
+      delta: >-
+        {{ [[ (2 + (steps - 15) * 0.08) | round | int, 1 ] | max, 8 ] | min }}
+      resync: >-
+        {{ trigger.event.data.type == 'start'
+           or (now() - states.input_number.basement_volume_target.last_reported).total_seconds() > 3 }}
+      base: >-
+        {{ (state_attr('media_player.basement','volume_level') | float(0) * 100) | round | int
+           if resync else states('input_number.basement_volume_target') | float(0) | round | int }}
+      target: >-
+        {{ [[ base + direction * delta, 0 ] | max, 100 ] | min }}
+  - action: input_number.set_value
+    target:
+      entity_id: input_number.basement_volume_target
+    data:
+      value: '{{ target }}'
+  - action: media_player.volume_set
+    target:
+      entity_id: media_player.basement
+    data:
+      volume_level: '{{ target / 100 }}'
   mode: queued
-  max: 50
+  max: 10
 - id: '07010102'
   alias: 'Basement Hue Tap Dial: Button 3 Press — Unmute Sonos'
-  description: Quick unmute of Sonos Basement.
-  trigger:
-  - platform: device
-    domain: hue
-    device_id: f51ebbabc5d2ee26b85cd5fcce863ac1
-    type: initial_press
-    subtype: 3
-  action:
-  - service: media_player.volume_mute
+  description: >-
+    Quick press of button 3 unmutes Sonos Basement. On the raw hue_event for the
+    same reason as the rotary automation above. Fires on short_release rather
+    than initial_press, so a press-and-hold no longer unmutes on its way to
+    muting.
+  triggers:
+  - trigger: event
+    event_type: hue_event
+    event_data:
+      device_id: f51ebbabc5d2ee26b85cd5fcce863ac1
+      type: short_release
+      subtype: 3
+  actions:
+  - action: media_player.volume_mute
     target:
       entity_id: media_player.basement
     data:
@@ -724,15 +867,19 @@
   mode: single
 - id: '07010103'
   alias: 'Basement Hue Tap Dial: Button 3 Hold — Mute Sonos'
-  description: Hold to mute Sonos Basement.
-  trigger:
-  - platform: device
-    domain: hue
-    device_id: f51ebbabc5d2ee26b85cd5fcce863ac1
-    type: repeat
-    subtype: 3
-  action:
-  - service: media_player.volume_mute
+  description: >-
+    Hold button 3 to mute Sonos Basement. On the raw hue_event for the same
+    reason as the rotary automation above. Fires once on long_press instead of
+    on every repeat event sent while the button is held down.
+  triggers:
+  - trigger: event
+    event_type: hue_event
+    event_data:
+      device_id: f51ebbabc5d2ee26b85cd5fcce863ac1
+      type: long_press
+      subtype: 3
+  actions:
+  - action: media_player.volume_mute
     target:
       entity_id: media_player.basement
     data:
@@ -1170,37 +1317,50 @@
     turns on immediately at 1% and stays on at least 8 seconds. Upper stairwell stays
     as-is if already on, otherwise turns on after 8 seconds at 1%. If master bedroom
     lights are on at press time, they fade off and are never turned back on
+  # Same button-4 hold as before, but on the raw hue_event bus event rather than
+  # `domain: hue` device triggers. Those stopped attaching after the 2026-08-05
+  # restart and took this automation down with them: on 2026-08-09 01:25 the
+  # MBedroom New switch sent five repeat/subtype-4 events and nothing ran. The
+  # event payload is what the device trigger matched on anyway, so behavior is
+  # unchanged. Devices in order: Tap Dial Kitchen, Dimmer Living Room, Dimmer
+  # Master Bedroom, Dimmer MBedroom New, Dimmer Staircase, Dimmer Office.
   triggers:
-  - domain: hue
-    device_id: b15d677491a7497de59365f5dea4c945
-    type: repeat
-    subtype: 4
-    trigger: device
-  - domain: hue
-    device_id: 48b9d3de2efffbfed643a5ac00f13926
-    type: repeat
-    subtype: 4
-    trigger: device
-  - domain: hue
-    device_id: e03fa8af8290ae5c57c0776d82a416d9
-    type: repeat
-    subtype: 4
-    trigger: device
-  - domain: hue
-    device_id: 698d6ba5799b5b5ca23efd22f8351e5a
-    type: repeat
-    subtype: 4
-    trigger: device
-  - domain: hue
-    device_id: b375919e018ef239c9a07a3402ed2aee
-    type: repeat
-    subtype: 4
-    trigger: device
-  - domain: hue
-    device_id: 423448d0af3195726f2bf3482315d5c8
-    type: repeat
-    subtype: 4
-    trigger: device
+  - trigger: event
+    event_type: hue_event
+    event_data:
+      device_id: b15d677491a7497de59365f5dea4c945
+      type: repeat
+      subtype: 4
+  - trigger: event
+    event_type: hue_event
+    event_data:
+      device_id: 48b9d3de2efffbfed643a5ac00f13926
+      type: repeat
+      subtype: 4
+  - trigger: event
+    event_type: hue_event
+    event_data:
+      device_id: e03fa8af8290ae5c57c0776d82a416d9
+      type: repeat
+      subtype: 4
+  - trigger: event
+    event_type: hue_event
+    event_data:
+      device_id: 698d6ba5799b5b5ca23efd22f8351e5a
+      type: repeat
+      subtype: 4
+  - trigger: event
+    event_type: hue_event
+    event_data:
+      device_id: b375919e018ef239c9a07a3402ed2aee
+      type: repeat
+      subtype: 4
+  - trigger: event
+    event_type: hue_event
+    event_data:
+      device_id: 423448d0af3195726f2bf3482315d5c8
+      type: repeat
+      subtype: 4
   actions:
   - target:
       entity_id: light.hue_candle_lower_staircase
@@ -1752,4 +1912,54 @@
         ${{ states('input_number.peco_previous_balance') }} previous balance
         is still on the account. Zero out input_number.peco_previous_balance
         once it's paid.
+  mode: single
+- id: '1786291200000'
+  alias: 'Cameras: Block silent firmware upgrades and flag new firmware'
+  description: >-
+    The nursery camera upgraded itself from firmware 1.5.3 to 1.5.4 at 06:44 on
+    2026-08-03 and its live stream stopped working that morning. Tapo firmware
+    controls the streaming handshake the integration depends on, so an unattended
+    upgrade can take the baby monitor offline with no warning. This holds both
+    cameras' "automatically upgrade firmware" switch off and sends a phone alert
+    when new firmware appears, so installing it is a decision made while someone
+    is around to check the stream afterwards.
+  triggers:
+  - trigger: homeassistant
+    event: start
+  - trigger: time_pattern
+    hours: /6
+  conditions: []
+  actions:
+  # Match by name instead of a fixed entity_id list. Renaming a camera in the Tapo
+  # app rewrites its entity IDs (the nursery already went cole_cam -> nursery_cam),
+  # which would quietly break a hardcoded list. The rejectattr drops the leftover
+  # unavailable copies from that rename so the service call does not warn.
+  - variables:
+      fw_switches: >-
+        {{ states.switch
+           | selectattr('entity_id', 'search', 'automatically_upgrade_firmware')
+           | rejectattr('state', 'in', ['unavailable', 'unknown'])
+           | map(attribute='entity_id') | list }}
+      pending: >-
+        {{ states.update
+           | selectattr('entity_id', 'search', 'cam.*_update$')
+           | selectattr('state', 'eq', 'on')
+           | map(attribute='name') | list }}
+  - if:
+    - condition: template
+      value_template: '{{ fw_switches | count > 0 }}'
+    then:
+    - target:
+        entity_id: '{{ fw_switches }}'
+      action: switch.turn_off
+  - if:
+    - condition: template
+      value_template: '{{ pending | count > 0 }}'
+    then:
+    - action: notify.mobile_app_pixel_10
+      data:
+        title: Camera Firmware
+        message: >-
+          New Tapo camera firmware is available: {{ pending | join(', ') }}.
+          Install it by hand, then check the nursery live stream still works.
   mode: single

@@ -64,6 +64,12 @@ input_boolean:
   climate_chart_humidity:
     name: "Climate Chart: Humidity View"
     icon: mdi:water-percent
+  # Set by "System: Auto Update All" at 6am Sunday, cleared by "System: Post-Update
+  # Settle Restart" at 7am. It survives the restart in between, which is how the 7am
+  # pass knows an update run happened and that it still owes the final restart.
+  auto_update_running:
+    name: "Auto-Update Cycle Running"
+    icon: mdi:package-down
 
 # Buttons that fire the GitHub push/pull shell commands
 input_button:
@@ -82,6 +88,21 @@ input_datetime:
     name: Desktop Last Heartbeat
     has_date: true
     has_time: true
+
+# Volume the basement Hue tap dial is aiming for, 0-100. The dial writes here
+# first and the Sonos follows, so a fast spin keeps counting from the last
+# commanded value instead of from the speaker's slower network state report,
+# which is what used to make fast turns move the volume only one step. Written
+# and read only by "Basement Hue Tap Dial: Rotary". (Energy/HVAC input_numbers
+# live in their packages.)
+input_number:
+  basement_volume_target:
+    name: Basement Volume Target
+    min: 0
+    max: 100
+    step: 1
+    mode: box
+    icon: mdi:volume-high
 
 # Template sensors: guest-mode status, thermostat heat/cool state, and OpenMeteo
 # outdoor weather. (Energy/cost templates live in packages/energy.yaml.)
