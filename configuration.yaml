@@ -23,10 +23,10 @@ homeassistant:
   internal_url: "http://192.168.0.100:8123"
   country: "US"
 
-# HTTPS via DuckDNS / Let's Encrypt certs
-http:
-  ssl_certificate: /ssl/fullchain.pem
-  ssl_key: /ssl/privkey.pem
+# HTTPS via DuckDNS / Let's Encrypt certs is no longer configured here. HA migrated
+# the http: block into the UI on 2026-08-09 and now ignores this file for it; the same
+# cert paths live in .storage/http and are edited under Settings > System > Network.
+# Putting the block back does nothing and re-raises the repair notice.
 
 # Text-to-speech
 tts:

@@ -67,25 +67,23 @@
   mode: single
 - id: '01000002'
   alias: 'Geolocation: Lights & Thermostat Off When Leaving Home'
-  description: ''
+  description: 'Shut the house down once it has been empty for 5 continuous minutes.
+    The 5-minute hold is a GPS debounce, not a courtesy delay. Andrew''s Pixel 10
+    intermittently reports a coarse fix (gps_accuracy 200m, landing ~930m from home,
+    outside the 500m Home zone) that reads as not_home for 6-60 seconds before the
+    good fix returns. On 2026-08-08/09 six of those false departures blacked out
+    24-42 lights each while he was sitting in the house, because Amy was genuinely
+    away so the everyone-is-out test passed. Triggering off the group instead of the
+    two people also fixes a second bug: a per-person "from: home" trigger would miss
+    a real departure to Andrew-Work, which is only ~1.7km away and reachable inside
+    the hold. The group stays not_home across a not_home to zone transition, so the
+    timer never resets on the way out.'
   triggers:
-  - entity_id: person.andrew
-    from: home
-    trigger: state
-  - entity_id: person.amy
-    from: home
-    trigger: state
-  conditions:
-  - condition: not
-    conditions:
-    - condition: state
-      entity_id: person.andrew
-      state: home
-  - condition: not
-    conditions:
-    - condition: state
-      entity_id: person.amy
-      state: home
+  - trigger: state
+    entity_id: group.household_anyone_home
+    to: not_home
+    for: '00:05:00'
+  conditions: []
   actions:
   - data:
       preset_mode: eco
