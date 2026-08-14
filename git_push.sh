@@ -45,7 +45,10 @@ if [ -z "$REMOTE_URL" ]; then
   exit 1
 fi
 
-log "Remote: $REMOTE_URL"
+# Log the remote with any embedded credential stripped. The URL carries the GitHub
+# token, and this log is world-readable over the /config Samba share, so printing it
+# raw put the token in plain text on disk on every run.
+log "Remote: $(printf '%s' "$REMOTE_URL" | sed 's#://[^@/]*@#://***@#')"
 
 git config user.name "Home Assistant"
 git config user.email "homeassistant@local"

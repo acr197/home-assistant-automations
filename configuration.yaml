@@ -10,12 +10,32 @@ wake_on_lan:
 # Recorder: batch writes every 30s (SD-card wear) and skip recording history for the
 # noisy plug voltage/amps sensors. Live values still update; only their history graphs
 # are dropped. Watts (current_consumption) and signal strength are kept.
+#
+# purge_keep_days is 3, down from the default 10, after the Pi hard-froze three times
+# between 2026-08-09 and 2026-08-13. The 2026-08-13 freeze started four minutes into
+# the nightly purge, which HA always runs at 04:12 and which was chewing through a
+# 435 MB database. Three days of detail keeps the history graphs useful while cutting
+# the purge to a fraction of the work. Long-term statistics are stored separately and
+# are NOT affected, so the Energy dashboard and every monthly/yearly total survive
+# this in full.
 recorder:
   commit_interval: 30
+  purge_keep_days: 3
   exclude:
+    entities:
+      # The Sony cast player rewrites its state every ~5 seconds all day (170k rows in
+      # 10 days, the single largest writer in the database). The universal remote card
+      # only reads its live state, which excluding does not touch; all that is dropped
+      # is a history graph nothing looks at.
+      - media_player.sony_google_cast_2
     entity_globs:
       - sensor.*_voltage
       - sensor.*_current
+      # Both Tapo cameras drop and reconnect roughly every 40 seconds around the clock,
+      # and each flap writes these button entities twice (43k rows in 10 days). Nothing
+      # references them. The flapping itself is a separate problem worth fixing at the
+      # camera; this only stops it from filling the database.
+      - button.*_sync_time
 
 homeassistant:
   packages: !include_dir_named packages   # load packages/*.yaml (Energy)
