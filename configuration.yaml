@@ -11,16 +11,16 @@ wake_on_lan:
 # noisy plug voltage/amps sensors. Live values still update; only their history graphs
 # are dropped. Watts (current_consumption) and signal strength are kept.
 #
-# purge_keep_days is 3, down from the default 10, after the Pi hard-froze three times
-# between 2026-08-09 and 2026-08-13. The 2026-08-13 freeze started four minutes into
-# the nightly purge, which HA always runs at 04:12 and which was chewing through a
-# 435 MB database. Three days of detail keeps the history graphs useful while cutting
-# the purge to a fraction of the work. Long-term statistics are stored separately and
-# are NOT affected, so the Energy dashboard and every monthly/yearly total survive
-# this in full.
+# purge_keep_days is back to the default 10. It was cut to 3 on 2026-08-13 on the
+# theory that the crashes started inside the 04:12 nightly purge. The recorder_runs
+# table says otherwise: the crashes were at 19:27, 13:59 and 18:11, and none has ever
+# landed near 04:12. On 2026-08-14 `dmesg` caught the actual cause, the kernel OOM
+# killer taking Home Assistant at 902 MB on a 1.8 GB Pi. The purge was never involved,
+# and 3 days also truncates statistics_short_term, which is the 5-minute history you
+# need to pinpoint an outage after the fact.
 recorder:
   commit_interval: 30
-  purge_keep_days: 3
+  purge_keep_days: 10
   exclude:
     entities:
       # The Sony cast player rewrites its state every ~5 seconds all day (170k rows in
@@ -208,8 +208,13 @@ sensor:
 # Pi-hole blocking state via pihole_api.sh (the API needs a login session; the
 # script handles auth with the app password from secrets.yaml). State is
 # "enabled"/"disabled"; the timer attribute is seconds left on the disable
-# window. The 5s poll is what makes the dashboard card countdown tick.
-# Pi-hole re-enables itself when the timer expires, so no automation is needed.
+# window. Pi-hole re-enables itself when the timer expires, so no automation is needed.
+#
+# scan_interval is 60, up from 5. Every poll forks a shell that runs cat, curl, sed and
+# printf, so a 5s poll meant roughly 17,000 shell invocations and 100,000 short-lived
+# processes a day on a Pi that OOMed on 2026-08-14. At 60s that is ~1,400 a day for the
+# same feature. The card's countdown now ticks once a minute instead of every 5 seconds,
+# which is still fine for reading a 15-minute disable window.
 command_line:
   - sensor:
       name: Pi-hole Blocking
@@ -217,7 +222,7 @@ command_line:
       value_template: "{{ value_json.blocking }}"
       json_attributes:
         - timer
-      scan_interval: 5
+      scan_interval: 60
 
 # Work + home zones for geolocation automations
 zone:

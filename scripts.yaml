@@ -7,24 +7,66 @@ wake_andrews_desktop:
   description: ''
 
 # Dashboard Pi-hole button: tap to pause blocking for 15 minutes, tap again to
-# re-enable early. Pi-hole's own timer restores blocking when it hits zero. The
-# delay + update_entity refreshes the card right after a tap instead of waiting
-# up to 5s for the next poll.
+# re-enable early. Pi-hole's own timer restores blocking when it hits zero.
+#
+# The card must never flip colour on optimism. It used to fire the shell command,
+# wait a flat 1 second, refresh once, and show whatever came back, so a failed call
+# (Pi-hole down, expired session, wrong app password) looked identical to a stale
+# reading and you could not tell the difference. Now the script re-reads the sensor,
+# which reads Pi-hole's own API, until Pi-hole itself reports the new state. The card
+# changes only on confirmation, usually inside a second. If 5 seconds pass without
+# Pi-hole agreeing, it says so on screen rather than leaving a card that looks fine.
+#
+# This is also why the sensor's scan_interval can sit at 60s: the toggle confirms
+# itself on demand, and the poll only covers passive drift such as Pi-hole's own
+# timer expiring.
 pihole_toggle_blocking:
   alias: 'Pi-hole: Toggle (15m off or re-enable)'
   mode: restart
   sequence:
-  - choose:
-    - conditions: "{{ is_state('sensor.pi_hole_blocking', 'disabled') }}"
+  # Decide the target up front so the verification below knows what "worked" means.
+  - variables:
+      target_state: "{{ 'enabled' if is_state('sensor.pi_hole_blocking', 'disabled') else 'disabled' }}"
+  - if:
+    - condition: template
+      value_template: "{{ target_state == 'enabled' }}"
+    then:
+    - action: shell_command.pihole_enable
+      continue_on_error: true
+    else:
+    - action: shell_command.pihole_disable
+      continue_on_error: true
+  # Re-read Pi-hole until it agrees, up to about 5 seconds. continue_on_error above
+  # means a failed call still reaches this check instead of aborting silently.
+  - repeat:
       sequence:
-      - action: shell_command.pihole_enable
-      - delay: '00:00:01'
       - action: homeassistant.update_entity
         target:
           entity_id: sensor.pi_hole_blocking
-    default:
-    - action: shell_command.pihole_disable
-    - delay: '00:00:01'
-    - action: homeassistant.update_entity
-      target:
-        entity_id: sensor.pi_hole_blocking
+      - delay:
+          milliseconds: 700
+      until:
+      - condition: or
+        conditions:
+        - condition: template
+          value_template: "{{ is_state('sensor.pi_hole_blocking', target_state) }}"
+        - condition: template
+          value_template: "{{ repeat.index >= 7 }}"
+  # Only reached when Pi-hole never confirmed. Say it plainly and on screen.
+  - if:
+    - condition: template
+      value_template: "{{ not is_state('sensor.pi_hole_blocking', target_state) }}"
+    then:
+    - action: persistent_notification.create
+      data:
+        title: Pi-hole did not confirm
+        notification_id: pihole_toggle_failed
+        message: >-
+          Asked Pi-hole to turn blocking {{ target_state }}, but after 5 seconds it
+          still reads "{{ states('sensor.pi_hole_blocking') }}". The change did not
+          take. Check that Pi-hole is up at 192.168.0.250:8080.
+    else:
+    # Clear any earlier failure notice once a tap works again.
+    - action: persistent_notification.dismiss
+      data:
+        notification_id: pihole_toggle_failed

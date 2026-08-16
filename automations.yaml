@@ -1912,15 +1912,17 @@
         once it's paid.
   mode: single
 - id: '1786291200000'
-  alias: 'Cameras: Block silent firmware upgrades and flag new firmware'
+  alias: 'Cameras: Flag new camera firmware'
   description: >-
     The nursery camera upgraded itself from firmware 1.5.3 to 1.5.4 at 06:44 on
-    2026-08-03 and its live stream stopped working that morning. Tapo firmware
-    controls the streaming handshake the integration depends on, so an unattended
-    upgrade can take the baby monitor offline with no warning. This holds both
-    cameras' "automatically upgrade firmware" switch off and sends a phone alert
-    when new firmware appears, so installing it is a decision made while someone
-    is around to check the stream afterwards.
+    2026-08-03 and its live stream stopped working that morning, so new firmware
+    is worth hearing about before it installs itself. This only sends the alert.
+    It used to also switch each camera's "automatically upgrade firmware" setting
+    off, but the cameras rejected every one of those calls with "Invalid login
+    credentials" (error -40209) and the automation threw an unhandled exception
+    on all 4 daily runs from 2026-08-09 on. The switch was never actually being
+    held off, so turn auto-upgrade off in the Tapo app instead. Restoring that
+    action here means fixing the tapo_control credentials first.
   triggers:
   - trigger: homeassistant
     event: start
@@ -1930,26 +1932,13 @@
   actions:
   # Match by name instead of a fixed entity_id list. Renaming a camera in the Tapo
   # app rewrites its entity IDs (the nursery already went cole_cam -> nursery_cam),
-  # which would quietly break a hardcoded list. The rejectattr drops the leftover
-  # unavailable copies from that rename so the service call does not warn.
+  # which would quietly break a hardcoded list.
   - variables:
-      fw_switches: >-
-        {{ states.switch
-           | selectattr('entity_id', 'search', 'automatically_upgrade_firmware')
-           | rejectattr('state', 'in', ['unavailable', 'unknown'])
-           | map(attribute='entity_id') | list }}
       pending: >-
         {{ states.update
            | selectattr('entity_id', 'search', 'cam.*_update$')
            | selectattr('state', 'eq', 'on')
            | map(attribute='name') | list }}
-  - if:
-    - condition: template
-      value_template: '{{ fw_switches | count > 0 }}'
-    then:
-    - target:
-        entity_id: '{{ fw_switches }}'
-      action: switch.turn_off
   - if:
     - condition: template
       value_template: '{{ pending | count > 0 }}'
