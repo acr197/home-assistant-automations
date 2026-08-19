@@ -1950,3 +1950,39 @@
           New Tapo camera firmware is available: {{ pending | join(', ') }}.
           Install it by hand, then check the nursery live stream still works.
   mode: single
+- id: tplink_manual_poll_30s
+  alias: 'TP-Link: manual 30s poll'
+  description: >-
+    Replaces the TP-Link integration's built-in 5-second polling, which is
+    disabled per config entry under Settings > Devices & services > TP-Link >
+    System options. At 5 seconds the plugs wrote ~73,700 state rows a day, more
+    than every other integration combined, and all of it lands on the SD card
+    that also holds swap. The 2026-08-18 freeze was swap thrashing against that
+    card, so cutting plug writes ~6x frees I/O for swap. Nothing depends on
+    fast wattage: no automation reads current_consumption, and the energy
+    package only needs it for running totals.
+
+    One entity per device is enough. Refreshing any entity refreshes that
+    device's whole coordinator, so every sensor on the plug updates with it.
+    The P316M strip is a single host, so its one target covers all six outlets.
+  triggers:
+  - trigger: time_pattern
+    seconds: /30
+  conditions: []
+  actions:
+  - action: homeassistant.update_entity
+    target:
+      entity_id:
+      - switch.chest_freezer
+      - switch.guest_bedroom_desk_plug
+      - switch.master_bedroom_devices_bedroom_humidifier
+      - switch.ninja_toaster
+      - switch.tapo_3_prong_power_strip
+      - switch.tapo_p110m_2_nursery_heater
+      - switch.tapo_p110m_3
+      - switch.tapo_p110m_4_basement_heater
+      # Covers the whole P316M strip. Deliberately not the router_ha outlet,
+      # which powers this Home Assistant instance.
+      - switch.first_floor_devices_tapo_p316m_1_tapo_p316m_sonos
+  mode: single
+  max_exceeded: silent
